@@ -33,7 +33,7 @@ jobs:
 
       - name: Upload macOS artifacts
         if: steps.build.outcome == 'success'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           name: Before It's Gone ${{ github.ref_name }}
@@ -44,7 +44,7 @@ jobs:
 
       - name: Create draft release (build failed)
         if: steps.build.outcome == 'failure'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           draft: true
           name: Before It's Gone ${{ github.ref_name }}
