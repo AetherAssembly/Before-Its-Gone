@@ -10,6 +10,7 @@ extraResources:
     to: web-dist
     filter:
       - '**/*'
+artifactName: 'before-its-gone-${version}-mac.${ext}'
 mac:
   target:
     - dmg

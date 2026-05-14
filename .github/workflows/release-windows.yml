@@ -69,15 +69,17 @@ jobs:
             }
 
             const files = fs.readdirSync('release');
-            const installer = files.find(f => f.endsWith('.exe') && f.includes('Setup'));
-            const portable  = files.find(f => f.endsWith('.exe') && !f.includes('Setup'));
+            const installer = files.find(f => f.endsWith('.exe') && f.includes('setup'));
+            const portable  = files.find(f => f.endsWith('.exe') && f.includes('portable'));
 
             const tag = context.ref.replace('refs/tags/', '');
-            const { data: release } = await github.rest.repos.getReleaseByTag({
+            const { data: releases } = await github.rest.repos.listReleases({
               owner: context.repo.owner,
               repo:  context.repo.repo,
-              tag,
+              per_page: 10,
             });
+            const release = releases.find(r => r.tag_name === tag);
+            if (!release) throw new Error(`No release found for tag ${tag}`);
 
             let body = release.body;
             if (!body || !body.trim()) {

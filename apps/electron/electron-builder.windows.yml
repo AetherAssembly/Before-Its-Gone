@@ -19,7 +19,8 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
+  artifactName: 'before-its-gone-setup-${version}.exe'
 portable:
-  artifactName: '${productName}-${version}-portable.exe'
+  artifactName: 'before-its-gone-portable-${version}.exe'
 publish: []
 generateUpdatesFilesForAllChannels: false
