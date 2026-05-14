@@ -1,0 +1,84 @@
+name: Security audit
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Needed to open issues on scheduled runs if a new CVE is found
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Fails on high or critical vulnerabilities.
+      # --audit-level=high means moderate/low are reported but won't fail CI.
+      - name: Run npm audit
+        id: audit
+        run: |
+          npm audit --audit-level=high --json > audit-report.json || AUDIT_FAILED=true
+
+          # Always print a human-readable summary regardless of pass/fail
+          npm audit --audit-level=high || true
+
+          if [ "$AUDIT_FAILED" = "true" ]; then
+            echo "audit_failed=true" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+      # On scheduled runs, open a GitHub issue if vulnerabilities are found
+      # so the team gets notified even without an active PR
+      - name: Open issue for scheduled audit failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const title = '[Security] npm audit found high/critical vulnerabilities';
+
+            // Don't open a duplicate if one is already open
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security',
+            });
+
+            const alreadyOpen = issues.some(i => i.title === title);
+            if (alreadyOpen) {
+              console.log('Security issue already open — skipping.');
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ['security'],
+              body: [
+                '## Scheduled security audit failed',
+                '',
+                `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                '',
+                'One or more **high or critical** npm vulnerabilities were detected.',
+                'Please review the audit report in the Actions run above and update the affected dependencies.',
+                '',
+                '_This issue was opened automatically by the weekly security audit workflow._',
+              ].join('\n'),
+            });

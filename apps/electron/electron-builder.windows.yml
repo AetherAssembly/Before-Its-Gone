@@ -1,0 +1,25 @@
+appId: com.beforeitsgone.app
+productName: Before Its Gone
+icon: assets/app-icon.png
+directories:
+  output: ../../release
+files:
+  - dist/**/*
+extraResources:
+  - from: ../web/dist
+    to: web-dist
+    filter:
+      - '**/*'
+win:
+  target:
+    - nsis
+    - portable
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+portable:
+  artifactName: '${productName}-${version}-portable.exe'
+publish: []
+generateUpdatesFilesForAllChannels: false

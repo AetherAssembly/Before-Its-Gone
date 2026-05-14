@@ -1,0 +1,114 @@
+name: PR size check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  size:
+    name: Label PR by diff size
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Calculate diff and apply size label
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const base = context.payload.pull_request.base.sha;
+            const head = context.payload.pull_request.head.sha;
+
+            // Count added + deleted lines, excluding:
+            // - lock files (package-lock.json)
+            // - generated assets (anything in assets/)
+            const { execSync } = require('child_process');
+
+            let diff;
+            try {
+              diff = execSync(
+                `git diff --stat ${base}...${head} -- . ':(exclude)package-lock.json' ':(exclude)assets/'`
+              ).toString();
+            } catch (e) {
+              console.log('Could not compute diff — skipping size label.');
+              return;
+            }
+
+            // Parse the final summary line, e.g. "12 files changed, 340 insertions(+), 22 deletions(-)"
+            const match = diff.match(/(\d+) insertions?\(\+\)(?:, (\d+) deletions?\(-\))?/);
+            const additions  = match ? parseInt(match[1], 10) : 0;
+            const deletions  = match ? parseInt(match[2] || '0', 10) : 0;
+            const totalLines = additions + deletions;
+
+            console.log(`Diff size: +${additions} -${deletions} = ${totalLines} lines`);
+
+            // Size thresholds
+            let sizeLabel;
+            if      (totalLines <  10)  sizeLabel = 'size: XS';
+            else if (totalLines <  50)  sizeLabel = 'size: S';
+            else if (totalLines < 250)  sizeLabel = 'size: M';
+            else if (totalLines < 500)  sizeLabel = 'size: L';
+            else                        sizeLabel = 'size: XL';
+
+            const prNumber = context.payload.pull_request.number;
+
+            // Remove any existing size labels
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            for (const label of currentLabels) {
+              if (label.name.startsWith('size:')) {
+                await github.rest.issues.removeLabel({
+                  owner:        context.repo.owner,
+                  repo:         context.repo.repo,
+                  issue_number: prNumber,
+                  name:         label.name,
+                });
+              }
+            }
+
+            // Apply new size label
+            await github.rest.issues.addLabels({
+              owner:        context.repo.owner,
+              repo:         context.repo.repo,
+              issue_number: prNumber,
+              labels:       [sizeLabel],
+            });
+
+            console.log(`Applied label: ${sizeLabel}`);
+
+            // Leave a warning comment on XL PRs — but don't fail CI
+            if (sizeLabel === 'size: XL') {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner:        context.repo.owner,
+                repo:         context.repo.repo,
+                issue_number: prNumber,
+              });
+
+              const alreadyCommented = comments.some(c =>
+                c.user.type === 'Bot' && c.body.includes('<!-- pr-size-xl -->')
+              );
+
+              if (!alreadyCommented) {
+                await github.rest.issues.createComment({
+                  owner:        context.repo.owner,
+                  repo:         context.repo.repo,
+                  issue_number: prNumber,
+                  body: `<!-- pr-size-xl -->
+            ### Large PR (${totalLines} lines changed)
+
+            This PR is quite large — it might be worth checking whether it can be split into smaller, more focused PRs. Smaller PRs are faster to review and easier to revert if something goes wrong.
+
+            If the size is unavoidable, no worries — this is just a heads-up, not a blocker.`,
+                });
+              }
+            }

@@ -1,0 +1,24 @@
+{
+  "name": "before-its-gone-electron",
+  "private": true,
+  "version": "0.5.0",
+  "description": "Electron desktop shell for Before It's Gone",
+  "author": {
+    "name": "Before-Its-Gone",
+    "email": "maintainers@beforeitsgone.local"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AetherAssembly/Before-Its-Gone"
+  },
+  "main": "dist/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "npm run build && cross-env ELECTRON_OZONE_PLATFORM_HINT=auto electron .",
+    "build": "tsc -p tsconfig.json",
+    "package:appimage": "electron-builder --config electron-builder.linux.yml --linux AppImage --publish never -c.electronVersion=42.0.1",
+    "package:linux": "electron-builder --config electron-builder.linux.yml --linux --publish never -c.electronVersion=42.0.1",
+    "package:macos": "mkdir -p ../../release && electron-builder --config electron-builder.macos.yml --mac dmg --publish never -c.electronVersion=42.0.1",
+    "package:windows": "mkdir -p ../../release && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=42.0.1"
+  }
+}

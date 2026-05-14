@@ -1,0 +1,45 @@
+{
+  "name": "before-its-gone",
+  "private": true,
+  "version": "0.5.0",
+  "description": "Before It's Gone — cross-platform food expiry tracker for Linux, macOS, and Windows",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "npm run dev:electron",
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:electron": "concurrently -k \"npm run dev:web\" \"wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 ELECTRON_OZONE_PLATFORM_HINT=auto npm --workspace apps/electron run dev\"",
+    "clean:deps": "rm -rf node_modules apps/*/node_modules packages/*/node_modules package-lock.json",
+    "build:packages": "npm --workspace packages/core run build && npm --workspace packages/ui run build",
+    "build:web": "npm run build:packages && npm --workspace apps/web run build",
+    "build:electron": "npm run build:packages && npm run build:web && npm --workspace apps/electron run build",
+    "build": "npm run build:electron",
+    "package:linux": "npm run build:electron && npm --workspace apps/electron run package:linux",
+    "package:macos": "npm run build:electron && npm --workspace apps/electron run package:macos",
+    "package:windows": "npm run build:electron && npm --workspace apps/electron run package:windows",
+    "package:appimage": "npm run build:electron && npm --workspace apps/electron run package:appimage",
+    "checksums": "sha256sum release/*.AppImage release/*.deb release/*.rpm 2>/dev/null || true",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^42.0.1",
+    "electron-builder": "^26.8.1",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.6.2",
+    "typescript": "^6.0.3",
+    "wait-on": "^9.0.1"
+  }
+}
