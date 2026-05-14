@@ -46,16 +46,83 @@ Get the latest release from the [Releases](https://github.com/AetherAssembly/Bef
 | macOS | DMG |
 | Windows | NSIS installer · Portable `.exe` |
 
-### Arch Linux (AUR)
+## Arch Linux (AUR)
+
+### Install
 
 ```bash
 yay -S before-its-gone      # build from source
 yay -S before-its-gone-bin  # pre-built AppImage
 ```
 
+### Uninstall
+
+```bash
+yay -R before-its-gone
+yay -R before-its-gone-bin
+```
+
 ### Flatpak / Snap
 
-Coming soon — see [`packaging/linux/flatpak/`](packaging/linux/flatpak/) and [`packaging/linux/snap/`](packaging/linux/snap/) for the manifests.
+Coming soon
+
+## (Fedora / RHEL 9+ / Rocky / Alma)
+
+### Install
+
+```bash
+sudo dnf install ./before-its-gone-0.5.0.x86_64.rpm
+```
+
+### Uninstall
+
+```bash
+sudo dnf remove before-its-gone
+```
+
+## OpenSUSE (openSUSE Leap / Tumbleweed)
+
+### Install
+
+```bash
+sudo zypper install ./before-its-gone-0.5.0.x86_64.rpm
+```
+
+### Uninstall
+
+```bash
+sudo zypper remove before-its-gone
+```
+
+## Debian / Ubuntu
+
+### Install
+
+```bash
+sudo apt install ./before-its-gone_0.5.0_amd64.deb
+```
+
+> Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
+
+### Uninstall
+
+```bash
+sudo apt remove before-its-gone
+```
+
+## Raspberry Pi 4/5
+
+### Install
+
+```bash
+sudo apt install ./before-its-gone_0.5.0_amd64.deb
+```
+
+### Uninstall
+
+```bash
+sudo apt remove before-its-gone
+```
 
 ---
 
