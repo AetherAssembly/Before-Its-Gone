@@ -47,6 +47,8 @@ function getLanIp(): string {
   return '127.0.0.1';
 }
 
+export const LINUX_SCANNER_PORT = 45678;
+
 function tryAddWindowsFirewallRule(port: number): void {
   if (process.platform !== 'win32') return;
   const name = 'Before Its Gone Scanner';
@@ -56,6 +58,11 @@ function tryAddWindowsFirewallRule(port: number): void {
       () => {}
     );
   });
+}
+
+function tryAddLinuxFirewallRule(port: number): void {
+  if (process.platform !== 'linux') return;
+  exec(`ufw allow ${port}/tcp`, () => {});
 }
 
 function readBody(req: http.IncomingMessage): Promise<string> {
@@ -130,7 +137,8 @@ export async function startScannerServer(
 
     server.on('error', reject);
 
-    server.listen(0, '0.0.0.0', () => {
+    const listenPort = process.platform === 'linux' ? LINUX_SCANNER_PORT : 0;
+    server.listen(listenPort, '0.0.0.0', () => {
       const addr = server.address();
       if (!addr || typeof addr === 'string') {
         reject(new Error('Unexpected server address'));
@@ -139,6 +147,7 @@ export async function startScannerServer(
       activeServer = server;
       const port = addr.port;
       tryAddWindowsFirewallRule(port);
+      tryAddLinuxFirewallRule(port);
       resolve({ port, token, lanIp });
     });
   });

@@ -89,7 +89,7 @@ export function buildScannerHtml(token: string): string {
         body: JSON.stringify({ barcode: barcode, token: TOKEN })
       }).then(function(res) {
         if (res.ok) {
-          statusEl.textContent = '\\u2713 Barcode sent! You can close this page.';
+          statusEl.textContent = '\\u2713 Barcode sent to your desktop! You can close this page.';
           statusEl.className = 'success';
         } else {
           statusEl.textContent = 'Server error — please try again.';

@@ -51,7 +51,7 @@ function createWindow(): void {
   const window = new BrowserWindow({
     width: 1200,
     height: 780,
-    minWidth: 900,
+    minWidth: 600,
     minHeight: 600,
     autoHideMenuBar: true,
     ...(process.platform === 'darwin' && {

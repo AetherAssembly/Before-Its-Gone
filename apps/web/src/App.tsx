@@ -167,6 +167,8 @@ function App() {
     serverUrl: string;
     status: 'waiting' | 'received';
   } | null>(null);
+  const [scannerActive, setScannerActive] = useState(false);
+  const [platform, setPlatform] = useState<string | undefined>(undefined);
 
   const [notificationState, setNotificationState] = useState<NotificationPermission | 'unsupported'>(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -190,6 +192,10 @@ function App() {
 
   useEffect(() => {
     void getFrequentItems(5).then(setFrequentItems);
+  }, []);
+
+  useEffect(() => {
+    void window.beforeItsGone?.getPlatform?.().then(setPlatform);
   }, []);
 
   const [allItems, setAllItems] = useState<InventoryItem[]>([]);
@@ -249,11 +255,18 @@ function App() {
 
   const onBarcodeBlur = () => { void doBarcodeLookup(form.barcode); };
 
+  const onStopScanner = () => {
+    setScanModal(null);
+    setScannerActive(false);
+    void window.beforeItsGone?.stopBarcodeServer?.();
+  };
+
   const onScanWithPhone = async () => {
     const api = window.beforeItsGone;
     if (!api?.startBarcodeServer) return;
     try {
       const { url, qrDataUrl } = await api.startBarcodeServer();
+      setScannerActive(true);
       setScanModal({ qrDataUrl, serverUrl: url, status: 'waiting' });
       api.onBarcodeScanned?.((barcode) => {
         setField('barcode', barcode);
@@ -261,18 +274,15 @@ function App() {
         void doBarcodeLookup(barcode);
         setTimeout(() => {
           setScanModal(null);
-          void api.stopBarcodeServer?.();
         }, 1500);
       });
     } catch {
+      setScannerActive(false);
       setStatusMessage('Could not start phone scanner. Check that no other app is using the port.');
     }
   };
 
-  const onCloseScanModal = () => {
-    setScanModal(null);
-    void window.beforeItsGone?.stopBarcodeServer?.();
-  };
+  const onCloseScanModal = () => { setScanModal(null); };
 
   const onBarcodeLookup = async () => {
     const barcode = form.barcode.trim();
@@ -504,9 +514,15 @@ function App() {
           </button>
 
           {window.beforeItsGone?.startBarcodeServer && (
-            <button type="button" onClick={() => void onScanWithPhone()} disabled={loading}>
-              Scan with phone
-            </button>
+            scannerActive ? (
+              <button type="button" className="btn-ghost" onClick={onStopScanner}>
+                Scanner active — click to stop
+              </button>
+            ) : (
+              <button type="button" onClick={() => void onScanWithPhone()} disabled={loading}>
+                Scan with phone
+              </button>
+            )
           )}
 
           <label>
@@ -691,6 +707,7 @@ function App() {
         qrDataUrl={scanModal.qrDataUrl}
         serverUrl={scanModal.serverUrl}
         status={scanModal.status}
+        platform={platform}
         onClose={onCloseScanModal}
       />
     )}

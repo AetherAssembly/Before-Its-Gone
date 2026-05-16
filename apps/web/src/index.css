@@ -321,3 +321,26 @@ button:disabled {
 .file-label:hover {
   background: #06b6d4;
 }
+
+/* Responsive */
+
+@media (max-width: 780px) {
+  .app-shell {
+    padding: 1.25rem 0.75rem 3rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .app-shell {
+    padding: 1rem 0.5rem 2rem;
+  }
+
+  .stat-value {
+    font-size: 1.1rem;
+  }
+
+  .stat-card {
+    padding: 0.5rem 0.65rem;
+    min-width: 70px;
+  }
+}

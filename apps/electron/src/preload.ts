@@ -9,6 +9,6 @@ contextBridge.exposeInMainWorld('beforeItsGone', {
   stopBarcodeServer: () => ipcRenderer.invoke('scanner:stop') as Promise<void>,
   onBarcodeScanned: (cb: (barcode: string) => void) => {
     ipcRenderer.removeAllListeners('scanner:barcode-received');
-    ipcRenderer.once('scanner:barcode-received', (_e, barcode: string) => cb(barcode));
+    ipcRenderer.on('scanner:barcode-received', (_e, barcode: string) => cb(barcode));
   }
 });

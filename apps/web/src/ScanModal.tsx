@@ -4,10 +4,11 @@ interface ScanModalProps {
   qrDataUrl: string;
   serverUrl: string;
   status: 'waiting' | 'received';
+  platform?: string;
   onClose: () => void;
 }
 
-export function ScanModal({ qrDataUrl, serverUrl, status, onClose }: ScanModalProps): ReactElement {
+export function ScanModal({ qrDataUrl, serverUrl, status, platform, onClose }: ScanModalProps): ReactElement {
   return (
     <div
       onClick={onClose}
@@ -81,6 +82,9 @@ export function ScanModal({ qrDataUrl, serverUrl, status, onClose }: ScanModalPr
             <li>Make sure your phone and PC are on the <strong>same Wi-Fi network.</strong></li>
             <li>Your browser will show a <strong>&ldquo;connection not private&rdquo; warning</strong> because the certificate is self-signed. This is normal — tap <strong>Advanced → Proceed</strong> (Chrome) or <strong>Show Details → visit this website</strong> (Safari).</li>
             <li>If you still can&apos;t connect on Windows, right-click the app and choose <strong>Run as administrator</strong> once to set the firewall rule.</li>
+            {platform === 'linux' && (
+              <li>On Linux, run <code>sudo ufw allow 45678/tcp</code> once in a terminal to permanently allow connections — you only need to do this once.</li>
+            )}
           </ol>
         </details>
       </div>
