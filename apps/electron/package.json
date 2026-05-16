@@ -18,7 +18,7 @@
     "build": "tsc -p tsconfig.json",
     "package:appimage": "electron-builder --config electron-builder.linux.yml --linux AppImage --publish never -c.electronVersion=42.0.1",
     "package:linux": "electron-builder --config electron-builder.linux.yml --linux --publish never -c.electronVersion=42.0.1",
-    "package:macos": "mkdir -p ../../release && electron-builder --config electron-builder.macos.yml --mac dmg --publish never -c.electronVersion=42.0.1",
-    "package:windows": "mkdir -p ../../release && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=42.0.1"
+    "package:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish never -c.electronVersion=42.0.1",
+    "package:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=42.0.1"
   }
 }
