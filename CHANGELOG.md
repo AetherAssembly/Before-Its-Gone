@@ -4,22 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
-## [0.5.5] - 2026-05-??
+## [0.5.5] - 2026-05-16
 
 ### Added
 
+- **Phone barcode scanner** — "Scan with phone" button next to the barcode field opens a modal with a QR code. Scanning it on any phone browser (iOS Safari, Android Chrome, Firefox, Edge, Opera) opens a camera view that decodes barcodes and sends the result directly to the desktop form field.
+- The scanner page is served over **HTTPS with a self-signed certificate** so `getUserMedia` (camera access) works across all browsers, not just Chrome on Android.
+- **BarcodeDetector API** is used natively on browsers that support it (Chromium); falls back to the **ZXing library** (loaded from CDN) for Safari and all other browsers.
+
 ### Changed
+
+- `package:windows` and `package:macos` scripts now use a cross-platform Node.js `mkdirSync` call instead of `mkdir -p`, which failed on Windows CMD.
 
 ### Fixed
 
+- LAN IP detection now filters out virtual network adapters (Docker, Hyper-V, VMware, VirtualBox, Bluetooth, VPN tunnels) and rejects any non-RFC-1918 address, preventing the QR code from containing a public or virtual IP.
+- Windows Defender Firewall rule is automatically created for the scanner's port on each session start (requires the app to be run as Administrator once to stop dialog).
+
 ### Packaging
 
-- AppImage artifact: `before-its-gone-0.5.5.AppImage`
-- Debian artifact: `before-its-gone_0.5.5_amd64.deb`
-- CentOS artifact: `before-its-gone-0.5.5-x86_64.rpm`
-- AppImage (arm64) artifact: `before-its-gone-0.5.5-arm64.AppImage`
-- Debian (arm64) artifact: `before-its-gone_0.5.5_arm64.deb`
-- RPM (arm64) artifact: `before-its-gone-0.5.5-aarch64.rpm`
+- AppImage artifact (amd64): `before-its-gone-0.5.5.AppImage`
+- Debian artifact (amd64): `before-its-gone_0.5.5_amd64.deb`
+- RPM artifact (x86_64): `before-its-gone-0.5.5-x86_64.rpm`
+- AppImage artifact (arm64): `before-its-gone-0.5.5-arm64.AppImage`
+- Debian artifact (arm64): `before-its-gone_0.5.5_arm64.deb`
+- RPM artifact (arm64): `before-its-gone-0.5.5-aarch64.rpm`
 - macOS artifact: `Before Its Gone-0.5.5.dmg`
 - Windows (portable) artifact: `before-its-gone-portable-0.5.5.exe`
 - Windows (NSIS) artifact: `before-its-gone-setup-0.5.5.exe`

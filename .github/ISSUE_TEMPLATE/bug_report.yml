@@ -1,0 +1,65 @@
+name: Bug Report
+description: Something isn't working correctly.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much detail as you can.
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Found in the title bar or About section.
+      placeholder: "e.g. 0.5.5"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows (NSIS installer)
+        - Windows (portable)
+        - macOS
+        - Linux (AppImage)
+        - Linux (deb)
+        - Linux (rpm)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the app
+        2. Click …
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, logs, or anything else that might help.
+    validations:
+      required: false
