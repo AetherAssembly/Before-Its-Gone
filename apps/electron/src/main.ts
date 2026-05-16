@@ -1,5 +1,7 @@
 import path from 'node:path';
 import { app, BrowserWindow, ipcMain } from 'electron';
+import QRCode from 'qrcode';
+import { startScannerServer, stopScannerServer } from './scanner-server.js';
 
 const isDevelopment = !app.isPackaged;
 
@@ -70,6 +72,17 @@ app.whenReady().then(() => {
   ipcMain.handle('app:version', () => app.getVersion());
   ipcMain.handle('app:ping', () => 'pong');
   ipcMain.handle('app:platform', () => process.platform);
+
+  ipcMain.handle('scanner:start', async () => {
+    const { port, token, lanIp } = await startScannerServer((barcode) => {
+      BrowserWindow.getFocusedWindow()?.webContents.send('scanner:barcode-received', barcode);
+    });
+    const url = `https://${lanIp}:${port}/?token=${token}`;
+    const qrDataUrl = await QRCode.toDataURL(url, { width: 256, margin: 1 });
+    return { url, qrDataUrl };
+  });
+
+  ipcMain.handle('scanner:stop', () => { stopScannerServer(); });
 
   createWindow();
 

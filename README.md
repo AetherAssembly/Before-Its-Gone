@@ -46,32 +46,37 @@ Get the latest release from the [Releases](https://github.com/AetherAssembly/Bef
 | macOS | DMG |
 | Windows | NSIS installer · Portable `.exe` |
 
-## Arch Linux (AUR)
+## Arch Based Distros
 
 ### Install
 
 ```bash
-yay -S before-its-gone      # build from source
-yay -S before-its-gone-bin  # pre-built AppImage
+
+Download the `PKGBUILD` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then run 
+
+makepkg -si
+
+sudo pacman -Syu
+
 ```
 
 ### Uninstall
 
 ```bash
-yay -R before-its-gone
-yay -R before-its-gone-bin
+sudo pacman -R before-its-gone-bin
+sudo pacman -Syu
 ```
 
 ### Flatpak / Snap
 
 Coming soon
 
-## (Fedora / RHEL 9+ / Rocky / Alma)
+## Fedora / RHEL 9+ / Rocky / Alma
 
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.5.0.x86_64.rpm
+sudo dnf install ./before-its-gone-0.5.5.x86_64.rpm
 ```
 
 ### Uninstall
@@ -85,7 +90,9 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.5.0.x86_64.rpm
+sudo zypper install ./before-its-gone-0.5.5-x86_64.rpm
+or 
+sudo zypper install ./before-its-gone_0.5.5-aarch64.rpm
 ```
 
 ### Uninstall
@@ -94,12 +101,14 @@ sudo zypper install ./before-its-gone-0.5.0.x86_64.rpm
 sudo zypper remove before-its-gone
 ```
 
-## Debian / Ubuntu
+## Debian / Ubuntu / Raspberry Pi 4/5
 
 ### Install
 
 ```bash
-sudo apt install ./before-its-gone_0.5.0_amd64.deb
+sudo apt install ./before-its-gone_0.5.5_amd64.deb
+or
+sudo apt install ./before-its-gone_0.5.5_arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -110,23 +119,9 @@ sudo apt install ./before-its-gone_0.5.0_amd64.deb
 sudo apt remove before-its-gone
 ```
 
-## Raspberry Pi 4/5
-
-### Install
-
-```bash
-sudo apt install ./before-its-gone_0.5.0_amd64.deb
-```
-
-### Uninstall
-
-```bash
-sudo apt remove before-its-gone
-```
-
 ---
 
-## Development
+## Development / Install from Source
 
 ### Prerequisites
 

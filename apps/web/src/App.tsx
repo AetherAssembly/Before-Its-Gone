@@ -1,4 +1,5 @@
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ScanModal } from './ScanModal.js';
 import {
   calculateExpiryDateISO,
   calculateExpiryStatus,
@@ -161,6 +162,12 @@ function App() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
 
+  const [scanModal, setScanModal] = useState<{
+    qrDataUrl: string;
+    serverUrl: string;
+    status: 'waiting' | 'received';
+  } | null>(null);
+
   const [notificationState, setNotificationState] = useState<NotificationPermission | 'unsupported'>(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
       return 'unsupported';
@@ -213,17 +220,17 @@ function App() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const onBarcodeBlur = async () => {
-    const barcode = form.barcode.trim();
-    if (!barcode) return;
+  const doBarcodeLookup = async (barcode: string) => {
+    const trimmed = barcode.trim();
+    if (!trimmed) return;
 
     setLoading(true);
     try {
-      const profile = await findBarcodeProfile(barcode);
+      const profile = await findBarcodeProfile(trimmed);
       if (profile) {
         setForm((prev) => ({
           ...prev,
-          barcode,
+          barcode: trimmed,
           name: prev.name.trim() ? prev.name : profile.productName,
           location: profile.preferredLocation,
           shelfLifeDays: profile.defaultShelfLifeDays,
@@ -238,6 +245,33 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onBarcodeBlur = () => { void doBarcodeLookup(form.barcode); };
+
+  const onScanWithPhone = async () => {
+    const api = window.beforeItsGone;
+    if (!api?.startBarcodeServer) return;
+    try {
+      const { url, qrDataUrl } = await api.startBarcodeServer();
+      setScanModal({ qrDataUrl, serverUrl: url, status: 'waiting' });
+      api.onBarcodeScanned?.((barcode) => {
+        setField('barcode', barcode);
+        setScanModal((m) => m ? { ...m, status: 'received' } : null);
+        void doBarcodeLookup(barcode);
+        setTimeout(() => {
+          setScanModal(null);
+          void api.stopBarcodeServer?.();
+        }, 1500);
+      });
+    } catch {
+      setStatusMessage('Could not start phone scanner. Check that no other app is using the port.');
+    }
+  };
+
+  const onCloseScanModal = () => {
+    setScanModal(null);
+    void window.beforeItsGone?.stopBarcodeServer?.();
   };
 
   const onBarcodeLookup = async () => {
@@ -383,6 +417,7 @@ function App() {
   };
 
   return (
+    <>
     <main className="app-shell">
       <header>
         <h1>Before It&apos;s Gone</h1>
@@ -467,6 +502,12 @@ function App() {
           <button type="button" onClick={() => void onBarcodeLookup()} disabled={loading}>
             {loading ? 'Looking up…' : 'Lookup barcode online'}
           </button>
+
+          {window.beforeItsGone?.startBarcodeServer && (
+            <button type="button" onClick={() => void onScanWithPhone()} disabled={loading}>
+              Scan with phone
+            </button>
+          )}
 
           <label>
             Name
@@ -644,6 +685,16 @@ function App() {
         </div>
       </section>
     </main>
+
+    {scanModal && (
+      <ScanModal
+        qrDataUrl={scanModal.qrDataUrl}
+        serverUrl={scanModal.serverUrl}
+        status={scanModal.status}
+        onClose={onCloseScanModal}
+      />
+    )}
+    </>
   );
 }
 

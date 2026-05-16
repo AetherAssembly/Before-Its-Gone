@@ -65,7 +65,7 @@ v0.2.0   v0.3.0  v0.5.0   v0.6.0   v1.0.0
 ### Below the line: Lower priority, community input welcome
 
 - Multi-device sync (optional cloud storage)
-- Mobile app or web version
+- Mobile app
 - Recipe suggestions based on inventory
 - Grocery list integration
 - Expiry prediction based on item type

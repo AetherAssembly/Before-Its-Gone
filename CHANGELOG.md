@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [0.5.5] - 2026-05-??
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Packaging
+
+- AppImage artifact: `before-its-gone-0.5.5.AppImage`
+- Debian artifact: `before-its-gone_0.5.5_amd64.deb`
+- CentOS artifact: `before-its-gone-0.5.5-x86_64.rpm`
+- AppImage (arm64) artifact: `before-its-gone-0.5.5-arm64.AppImage`
+- Debian (arm64) artifact: `before-its-gone_0.5.5_arm64.deb`
+- RPM (arm64) artifact: `before-its-gone-0.5.5-aarch64.rpm`
+- macOS artifact: `Before Its Gone-0.5.5.dmg`
+- Windows (portable) artifact: `before-its-gone-portable-0.5.5.exe`
+- Windows (NSIS) artifact: `before-its-gone-setup-0.5.5.exe`
+
+---
+
 ## [0.5.0] - 2026-05-14
 
 ### Added
@@ -24,11 +46,17 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 - **Stats dashboard** — Summary cards show total products, total units, items expiring this week, expiring soon, and expired.
 - **Consolidated monorepo** — Linux, macOS, and Windows now live in one repo with shared `packages/core` and `packages/ui`, separate `electron-builder` configs per platform, and dedicated release workflows.
 
-### Platform
+### Packaging
 
-- Linux: AppImage + `.deb` via `npm run package:linux`
-- macOS: DMG + ZIP via `npm run package:macos` (see `packaging/macos/` for notarization notes)
-- Windows: NSIS installer + portable `.exe` via `npm run package:windows` (see `packaging/windows/` for signing notes)
+- AppImage artifact: `Before Its Gone-0.5.0.AppImage`
+- Debian artifact: `before-its-gone_0.5.0_amd64.deb`
+- CentOS artifact: `before-its-gone-0.5.0-x86_64.rpm`
+- AppImage (arm64) artifact: `Before Its Gone-0.5.0-arm64.AppImage`
+- Debian (arm64) artifact: `before-its-gone_0.5.0_arm64.deb`
+- RPM (arm64) artifact: `before-its-gone-0.5.0-aarch64.rpm`
+- macOS artifact: `Before Its Gone-0.5.0.dmg`
+- Windows (portable) artifact: `before-its-gone-portable-0.5.0.exe`
+- Windows (NSIS) artifact: `before-its-gone-setup-0.5.0.exe`
 
 ---
 
