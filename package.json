@@ -23,7 +23,8 @@
     "package:macos": "npm run build:electron && npm --workspace apps/electron run package:macos",
     "package:windows": "npm run build:electron && npm --workspace apps/electron run package:windows",
     "package:appimage": "npm run build:electron && npm --workspace apps/electron run package:appimage",
-    "checksums": "sha256sum release/*.AppImage release/*.deb release/*.rpm 2>/dev/null || true",
+    "checksum:linux": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>['.AppImage','.deb','.rpm'].some(e=>f.endsWith(e)));if(!files.length){console.log('No Linux artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",
+    "checksum:windows": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>f.endsWith('.exe'));if(!files.length){console.log('No Windows artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "devDependencies": {
