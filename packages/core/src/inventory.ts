@@ -79,7 +79,8 @@ export async function createInventoryItem(
     createdAt: timestamp,
     updatedAt: timestamp,
     category: item.category ?? null,
-    depletionThreshold: item.depletionThreshold ?? null
+    depletionThreshold: item.depletionThreshold ?? null,
+    tags: item.tags ?? []
   };
 
   await upsertInventoryItem(nextItem);
@@ -90,7 +91,7 @@ export async function createInventoryItem(
 export async function updateInventoryItem(
   id: string,
   patch: Partial<
-    Pick<InventoryItem, 'name' | 'quantity' | 'location' | 'barcode' | 'expiresAt' | 'category' | 'depletionThreshold'>
+    Pick<InventoryItem, 'name' | 'quantity' | 'location' | 'barcode' | 'expiresAt' | 'category' | 'depletionThreshold' | 'tags'>
   >
 ): Promise<InventoryItem | null> {
   const items = await listInventoryItems();
@@ -276,7 +277,8 @@ export async function importInventoryItems(items: InventoryItem[]): Promise<numb
     const sanitized: InventoryItem = {
       ...item,
       category: item.category ?? null,
-      depletionThreshold: item.depletionThreshold ?? null
+      depletionThreshold: item.depletionThreshold ?? null,
+      tags: item.tags ?? []
     };
     await upsertInventoryItem(sanitized);
     count++;

@@ -6,7 +6,88 @@ import { exec } from 'node:child_process';
 import selfsigned from 'selfsigned';
 import { buildScannerHtml } from './scanner-html.js';
 
+// Inline shelf-life prediction (avoids ESM/CJS boundary with @before-its-gone/core)
+type StorageLocation = 'fridge' | 'freezer' | 'pantry';
+
+const CATEGORY_SHELF_LIFE: Record<string, Record<StorageLocation, number>> = {
+  dairy:      { fridge: 10,  freezer: 90,  pantry: 3   },
+  eggs:       { fridge: 35,  freezer: 365, pantry: 7   },
+  meat:       { fridge: 4,   freezer: 120, pantry: 1   },
+  poultry:    { fridge: 3,   freezer: 120, pantry: 1   },
+  fish:       { fridge: 3,   freezer: 120, pantry: 1   },
+  fruits:     { fridge: 14,  freezer: 365, pantry: 7   },
+  vegetables: { fridge: 10,  freezer: 365, pantry: 5   },
+  bread:      { fridge: 14,  freezer: 90,  pantry: 7   },
+  pasta:      { fridge: 730, freezer: 730, pantry: 730 },
+  cereals:    { fridge: 365, freezer: 365, pantry: 365 },
+  canned:     { fridge: 7,   freezer: 1095, pantry: 1095 },
+  frozen:     { fridge: 7,   freezer: 365, pantry: 1   },
+  beverages:  { fridge: 30,  freezer: 365, pantry: 365 },
+  snacks:     { fridge: 180, freezer: 365, pantry: 180 },
+  condiments: { fridge: 365, freezer: 365, pantry: 365 },
+  spices:     { fridge: 730, freezer: 730, pantry: 730 },
+  oils:       { fridge: 365, freezer: 365, pantry: 365 },
+  nuts:       { fridge: 180, freezer: 365, pantry: 90  },
+  sweets:     { fridge: 180, freezer: 365, pantry: 180 },
+};
+
+const DEFAULTS: Record<StorageLocation, number> = { fridge: 14, freezer: 365, pantry: 30 };
+
+const OFB_CATEGORY_MAP: Array<[RegExp, string]> = [
+  [/dairy|milk|cream|fromage|cheese|yogurt|butter/i, 'dairy'],
+  [/egg/i,                                            'eggs'],
+  [/meat|beef|pork|lamb|veal|deli/i,                 'meat'],
+  [/poultry|chicken|turkey|duck/i,                   'poultry'],
+  [/fish|salmon|tuna|cod|seafood|shellfish/i,         'fish'],
+  [/fruit|berr|apple|orange|banana|grape|melon/i,     'fruits'],
+  [/vegetable|veggie|salad|greens|spinach|carrot/i,   'vegetables'],
+  [/bread|bakery|biscuit|cracker|pastry/i,            'bread'],
+  [/pasta|noodle|spaghetti|macaroni/i,                'pasta'],
+  [/rice|grain|quinoa|oat|cereal/i,                   'cereals'],
+  [/canned|tinned|conserv/i,                          'canned'],
+  [/frozen/i,                                         'frozen'],
+  [/beverage|drink|juice|water|soda|coffee|tea/i,     'beverages'],
+  [/snack|chip|crisp|popcorn/i,                       'snacks'],
+  [/sauce|condiment|ketchup|mustard|mayo/i,           'condiments'],
+  [/spice|herb|seasoning/i,                           'spices'],
+  [/oil|vinegar/i,                                    'oils'],
+  [/nut|almond|cashew|peanut|walnut/i,                'nuts'],
+  [/chocolate|candy|sweet|confection/i,               'sweets'],
+];
+
+function predictShelfLifeCategory(ofbCategories: string[]): string | null {
+  const combined = ofbCategories.join(' ').toLowerCase();
+  for (const [pattern, key] of OFB_CATEGORY_MAP) {
+    if (pattern.test(combined)) return key;
+  }
+  return null;
+}
+
+function predictShelfLife(ofbCategories: string[], location: StorageLocation): number {
+  const matched = predictShelfLifeCategory(ofbCategories);
+  const table = matched ? (CATEGORY_SHELF_LIFE[matched] ?? DEFAULTS) : DEFAULTS;
+  return table[location];
+}
+
+export type PhoneSavePayload = {
+  barcode: string;
+  name: string;
+  quantity: number;
+  location: 'fridge' | 'freezer' | 'pantry';
+  category: string | null;
+  shelfLifeDays: number;
+};
+
+type OFBProduct = {
+  name: string;
+  imageUrl: string | null;
+  suggestedShelfLifeDays: number;
+  category: string | null;
+};
+
 let activeServer: https.Server | null = null;
+
+export const LINUX_SCANNER_PORT = 45678;
 
 const VIRTUAL_ADAPTER_PATTERNS = [
   /vethernet/i, /vmware/i, /virtualbox/i, /docker/i,
@@ -47,8 +128,6 @@ function getLanIp(): string {
   return '127.0.0.1';
 }
 
-export const LINUX_SCANNER_PORT = 45678;
-
 function tryAddWindowsFirewallRule(port: number): void {
   if (process.platform !== 'win32') return;
   const name = 'Before Its Gone Scanner';
@@ -65,6 +144,44 @@ function tryAddLinuxFirewallRule(port: number): void {
   exec(`ufw allow ${port}/tcp`, () => {});
 }
 
+async function lookupProduct(barcode: string): Promise<OFBProduct> {
+  const defaultProduct: OFBProduct = {
+    name: '',
+    imageUrl: null,
+    suggestedShelfLifeDays: 30,
+    category: null,
+  };
+
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`
+    );
+    if (!res.ok) return defaultProduct;
+
+    const payload = await res.json() as {
+      product?: {
+        product_name?: string;
+        image_url?: string;
+        image_thumb_url?: string;
+        categories_tags?: string[];
+      };
+    };
+
+    const p = payload.product;
+    if (!p) return defaultProduct;
+
+    const name = p.product_name?.trim() ?? '';
+    const imageUrl = p.image_thumb_url ?? p.image_url ?? null;
+    const categoriesTags = p.categories_tags ?? [];
+    const category = predictShelfLifeCategory(categoriesTags);
+    const suggestedShelfLifeDays = predictShelfLife(categoriesTags, 'fridge');
+
+    return { name, imageUrl, suggestedShelfLifeDays, category };
+  } catch {
+    return defaultProduct;
+  }
+}
+
 function readBody(req: http.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = '';
@@ -75,7 +192,8 @@ function readBody(req: http.IncomingMessage): Promise<string> {
 }
 
 export async function startScannerServer(
-  onBarcode: (barcode: string) => void
+  onBarcode: (barcode: string) => void,
+  onSaveItem: (data: PhoneSavePayload) => Promise<void>
 ): Promise<{ port: number; token: string; lanIp: string }> {
   stopScannerServer();
 
@@ -124,9 +242,56 @@ export async function startScannerServer(
             res.end(JSON.stringify({ error: 'Missing barcode' }));
             return;
           }
+
+          const barcode = body.barcode.trim();
+          onBarcode(barcode);
+
+          const product = await lookupProduct(barcode);
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true }));
-          onBarcode(body.barcode.trim());
+          res.end(JSON.stringify({ ok: true, product }));
+          return;
+        }
+
+        if (req.method === 'POST' && url.pathname === '/save') {
+          let body: { token?: string; barcode?: string; name?: string; quantity?: number; location?: string; category?: string | null; shelfLifeDays?: number };
+          try {
+            body = JSON.parse(await readBody(req)) as typeof body;
+          } catch {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid JSON' }));
+            return;
+          }
+          if (body.token !== token) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Forbidden' }));
+            return;
+          }
+
+          const location = body.location;
+          if (
+            typeof body.name !== 'string' || !body.name.trim() ||
+            !['fridge', 'freezer', 'pantry'].includes(location ?? '')
+          ) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing required fields' }));
+            return;
+          }
+
+          try {
+            await onSaveItem({
+              barcode: typeof body.barcode === 'string' ? body.barcode.trim() : '',
+              name: body.name.trim(),
+              quantity: Math.max(1, Number(body.quantity) || 1),
+              location: location as 'fridge' | 'freezer' | 'pantry',
+              category: body.category?.trim() || null,
+              shelfLifeDays: Math.max(1, Number(body.shelfLifeDays) || 30),
+            });
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true }));
+          } catch {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Save failed' }));
+          }
           return;
         }
 

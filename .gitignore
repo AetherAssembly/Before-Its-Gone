@@ -19,6 +19,7 @@ packaging/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+ROADMAP.md
 
 # OS
 .DS_Store

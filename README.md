@@ -107,7 +107,7 @@ Coming soon
 ```bash
 sudo dnf install ./before-its-gone-0.5.5.x86_64.rpm
 
-or
+# or
 
 sudo dnf install ./before-its-gone-0.5.5.arm64.rpm
 ```
@@ -125,7 +125,7 @@ sudo dnf remove before-its-gone
 ```bash
 sudo zypper install ./before-its-gone-0.5.5-x86_64.rpm
 
-or 
+# or 
 
 sudo zypper install ./before-its-gone_0.5.5-aarch64.rpm
 ```
@@ -144,7 +144,7 @@ sudo zypper remove before-its-gone
 # All other Debian Distros
 sudo apt install ./before-its-gone_0.5.5_amd64.deb
 
-or
+# or
 
 # Raspberry Pi 4/5 
 sudo apt install ./before-its-gone_0.5.5_arm64.deb
