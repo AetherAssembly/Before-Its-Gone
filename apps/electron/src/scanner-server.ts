@@ -1,0 +1,326 @@
+import https from 'node:https';
+import http from 'node:http';
+import os from 'node:os';
+import crypto from 'node:crypto';
+import { exec } from 'node:child_process';
+import selfsigned from 'selfsigned';
+import { buildScannerHtml } from './scanner-html.js';
+
+// Inline shelf-life prediction (avoids ESM/CJS boundary with @before-its-gone/core)
+type StorageLocation = 'fridge' | 'freezer' | 'pantry';
+
+const CATEGORY_SHELF_LIFE: Record<string, Record<StorageLocation, number>> = {
+  dairy:      { fridge: 10,  freezer: 90,  pantry: 3   },
+  eggs:       { fridge: 35,  freezer: 365, pantry: 7   },
+  meat:       { fridge: 4,   freezer: 120, pantry: 1   },
+  poultry:    { fridge: 3,   freezer: 120, pantry: 1   },
+  fish:       { fridge: 3,   freezer: 120, pantry: 1   },
+  fruits:     { fridge: 14,  freezer: 365, pantry: 7   },
+  vegetables: { fridge: 10,  freezer: 365, pantry: 5   },
+  bread:      { fridge: 14,  freezer: 90,  pantry: 7   },
+  pasta:      { fridge: 730, freezer: 730, pantry: 730 },
+  cereals:    { fridge: 365, freezer: 365, pantry: 365 },
+  canned:     { fridge: 7,   freezer: 1095, pantry: 1095 },
+  frozen:     { fridge: 7,   freezer: 365, pantry: 1   },
+  beverages:  { fridge: 30,  freezer: 365, pantry: 365 },
+  snacks:     { fridge: 180, freezer: 365, pantry: 180 },
+  condiments: { fridge: 365, freezer: 365, pantry: 365 },
+  spices:     { fridge: 730, freezer: 730, pantry: 730 },
+  oils:       { fridge: 365, freezer: 365, pantry: 365 },
+  nuts:       { fridge: 180, freezer: 365, pantry: 90  },
+  sweets:     { fridge: 180, freezer: 365, pantry: 180 },
+};
+
+const DEFAULTS: Record<StorageLocation, number> = { fridge: 14, freezer: 365, pantry: 30 };
+
+const OFB_CATEGORY_MAP: Array<[RegExp, string]> = [
+  [/dairy|milk|cream|fromage|cheese|yogurt|butter/i, 'dairy'],
+  [/egg/i,                                            'eggs'],
+  [/meat|beef|pork|lamb|veal|deli/i,                 'meat'],
+  [/poultry|chicken|turkey|duck/i,                   'poultry'],
+  [/fish|salmon|tuna|cod|seafood|shellfish/i,         'fish'],
+  [/fruit|berr|apple|orange|banana|grape|melon/i,     'fruits'],
+  [/vegetable|veggie|salad|greens|spinach|carrot/i,   'vegetables'],
+  [/bread|bakery|biscuit|cracker|pastry/i,            'bread'],
+  [/pasta|noodle|spaghetti|macaroni/i,                'pasta'],
+  [/rice|grain|quinoa|oat|cereal/i,                   'cereals'],
+  [/canned|tinned|conserv/i,                          'canned'],
+  [/frozen/i,                                         'frozen'],
+  [/beverage|drink|juice|water|soda|coffee|tea/i,     'beverages'],
+  [/snack|chip|crisp|popcorn/i,                       'snacks'],
+  [/sauce|condiment|ketchup|mustard|mayo/i,           'condiments'],
+  [/spice|herb|seasoning/i,                           'spices'],
+  [/oil|vinegar/i,                                    'oils'],
+  [/nut|almond|cashew|peanut|walnut/i,                'nuts'],
+  [/chocolate|candy|sweet|confection/i,               'sweets'],
+];
+
+function predictShelfLifeCategory(ofbCategories: string[]): string | null {
+  const combined = ofbCategories.join(' ').toLowerCase();
+  for (const [pattern, key] of OFB_CATEGORY_MAP) {
+    if (pattern.test(combined)) return key;
+  }
+  return null;
+}
+
+function predictShelfLife(ofbCategories: string[], location: StorageLocation): number {
+  const matched = predictShelfLifeCategory(ofbCategories);
+  const table = matched ? (CATEGORY_SHELF_LIFE[matched] ?? DEFAULTS) : DEFAULTS;
+  return table[location];
+}
+
+export type PhoneSavePayload = {
+  barcode: string;
+  name: string;
+  quantity: number;
+  location: 'fridge' | 'freezer' | 'pantry';
+  category: string | null;
+  shelfLifeDays: number;
+};
+
+type OFBProduct = {
+  name: string;
+  imageUrl: string | null;
+  suggestedShelfLifeDays: number;
+  category: string | null;
+};
+
+let activeServer: https.Server | null = null;
+
+export const LINUX_SCANNER_PORT = 45678;
+
+const VIRTUAL_ADAPTER_PATTERNS = [
+  /vethernet/i, /vmware/i, /virtualbox/i, /docker/i,
+  /hyper-v/i, /bluetooth/i, /teredo/i, /isatap/i, /loopback/i,
+  /pseudo/i, /tunnel/i, /6to4/i,
+];
+
+function isPrivateIp(address: string): boolean {
+  return (
+    address.startsWith('10.') ||
+    address.startsWith('192.168.') ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(address)
+  );
+}
+
+function getLanIp(): string {
+  const interfaces = os.networkInterfaces();
+
+  for (const [name, iface] of Object.entries(interfaces)) {
+    if (!iface) continue;
+    if (VIRTUAL_ADAPTER_PATTERNS.some((p) => p.test(name))) continue;
+    for (const entry of iface) {
+      if (entry.family === 'IPv4' && !entry.internal && isPrivateIp(entry.address)) {
+        return entry.address;
+      }
+    }
+  }
+
+  for (const iface of Object.values(interfaces)) {
+    if (!iface) continue;
+    for (const entry of iface) {
+      if (entry.family === 'IPv4' && !entry.internal && isPrivateIp(entry.address)) {
+        return entry.address;
+      }
+    }
+  }
+
+  return '127.0.0.1';
+}
+
+function tryAddWindowsFirewallRule(port: number): void {
+  if (process.platform !== 'win32') return;
+  const name = 'Before Its Gone Scanner';
+  exec(`netsh advfirewall firewall delete rule name="${name}"`, () => {
+    exec(
+      `netsh advfirewall firewall add rule name="${name}" protocol=TCP dir=in localport=${port} action=allow profile=private,public`,
+      () => {}
+    );
+  });
+}
+
+function tryAddLinuxFirewallRule(port: number): void {
+  if (process.platform !== 'linux') return;
+  exec(`ufw allow ${port}/tcp`, () => {});
+}
+
+async function lookupProduct(barcode: string): Promise<OFBProduct> {
+  const defaultProduct: OFBProduct = {
+    name: '',
+    imageUrl: null,
+    suggestedShelfLifeDays: 30,
+    category: null,
+  };
+
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`
+    );
+    if (!res.ok) return defaultProduct;
+
+    const payload = await res.json() as {
+      product?: {
+        product_name?: string;
+        image_url?: string;
+        image_thumb_url?: string;
+        categories_tags?: string[];
+      };
+    };
+
+    const p = payload.product;
+    if (!p) return defaultProduct;
+
+    const name = p.product_name?.trim() ?? '';
+    const imageUrl = p.image_thumb_url ?? p.image_url ?? null;
+    const categoriesTags = p.categories_tags ?? [];
+    const category = predictShelfLifeCategory(categoriesTags);
+    const suggestedShelfLifeDays = predictShelfLife(categoriesTags, 'fridge');
+
+    return { name, imageUrl, suggestedShelfLifeDays, category };
+  } catch {
+    return defaultProduct;
+  }
+}
+
+function readBody(req: http.IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (chunk: Buffer) => { data += chunk.toString(); });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
+}
+
+export async function startScannerServer(
+  onBarcode: (barcode: string) => void,
+  onSaveItem: (data: PhoneSavePayload) => Promise<void>
+): Promise<{ port: number; token: string; lanIp: string }> {
+  stopScannerServer();
+
+  const token = crypto.randomUUID();
+  const html = buildScannerHtml(token);
+  const lanIp = getLanIp();
+
+  const pems = await selfsigned.generate(
+    [{ name: 'commonName', value: 'Before Its Gone Scanner' }],
+    { days: 1, keySize: 2048 } as never
+  );
+
+  return new Promise((resolve, reject) => {
+    const server = https.createServer(
+      { key: pems.private, cert: pems.cert },
+      async (req, res) => {
+        const url = new URL(req.url ?? '/', `https://localhost`);
+
+        if (req.method === 'GET' && url.pathname === '/') {
+          if (url.searchParams.get('token') !== token) {
+            res.writeHead(403, { 'Content-Type': 'text/plain' });
+            res.end('Forbidden');
+            return;
+          }
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(html);
+          return;
+        }
+
+        if (req.method === 'POST' && url.pathname === '/scan') {
+          let body: { barcode?: string; token?: string };
+          try {
+            body = JSON.parse(await readBody(req)) as { barcode?: string; token?: string };
+          } catch {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid JSON' }));
+            return;
+          }
+          if (body.token !== token) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Forbidden' }));
+            return;
+          }
+          if (typeof body.barcode !== 'string' || !body.barcode.trim()) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing barcode' }));
+            return;
+          }
+
+          const barcode = body.barcode.trim();
+          onBarcode(barcode);
+
+          const product = await lookupProduct(barcode);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, product }));
+          return;
+        }
+
+        if (req.method === 'POST' && url.pathname === '/save') {
+          let body: { token?: string; barcode?: string; name?: string; quantity?: number; location?: string; category?: string | null; shelfLifeDays?: number };
+          try {
+            body = JSON.parse(await readBody(req)) as typeof body;
+          } catch {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid JSON' }));
+            return;
+          }
+          if (body.token !== token) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Forbidden' }));
+            return;
+          }
+
+          const location = body.location;
+          if (
+            typeof body.name !== 'string' || !body.name.trim() ||
+            !['fridge', 'freezer', 'pantry'].includes(location ?? '')
+          ) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing required fields' }));
+            return;
+          }
+
+          try {
+            await onSaveItem({
+              barcode: typeof body.barcode === 'string' ? body.barcode.trim() : '',
+              name: body.name.trim(),
+              quantity: Math.max(1, Number(body.quantity) || 1),
+              location: location as 'fridge' | 'freezer' | 'pantry',
+              category: body.category?.trim() || null,
+              shelfLifeDays: Math.max(1, Number(body.shelfLifeDays) || 30),
+            });
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true }));
+          } catch {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Save failed' }));
+          }
+          return;
+        }
+
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not found');
+      }
+    );
+
+    server.on('error', reject);
+
+    const listenPort = process.platform === 'linux' ? LINUX_SCANNER_PORT : 0;
+    server.listen(listenPort, '0.0.0.0', () => {
+      const addr = server.address();
+      if (!addr || typeof addr === 'string') {
+        reject(new Error('Unexpected server address'));
+        return;
+      }
+      activeServer = server;
+      const port = addr.port;
+      tryAddWindowsFirewallRule(port);
+      tryAddLinuxFirewallRule(port);
+      resolve({ port, token, lanIp });
+    });
+  });
+}
+
+export function stopScannerServer(): void {
+  if (activeServer) {
+    activeServer.close();
+    activeServer = null;
+  }
+}

@@ -8,7 +8,7 @@ Before It's Gone is a local-first desktop application for tracking food items, b
 
 ## Who We Are
 
-Before It's Gone is developed and maintained by AetherAssembly. For privacy-related questions, contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org) or via the [contact form](https://forms.gle/T4i7GGzaT3HUrffm9).
+Before It's Gone is developed and maintained by [AetherAssembly](https://aetherassembly.org/about). For privacy-related questions, contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org) or via the [contact form](https://forms.gle/T4i7GGzaT3HUrffm9).
 
 ## Data We Process
 

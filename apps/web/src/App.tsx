@@ -1,4 +1,5 @@
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ScanModal } from './ScanModal.js';
 import {
   calculateExpiryDateISO,
   calculateExpiryStatus,
@@ -15,6 +16,7 @@ import {
   importInventoryItems,
   parseInventoryJSON,
   saveBarcodeProfile,
+  updateInventoryItem,
   type FilterLocation,
   type InventoryItem,
   type ItemHistory,
@@ -33,6 +35,7 @@ type FormState = {
   expiryDate: string;
   category: string;
   depletionThreshold: string;
+  tags: string;
 };
 
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
@@ -45,7 +48,8 @@ const INITIAL_FORM: FormState = {
   shelfLifeDays: 7,
   expiryDate: new Date(calculateExpiryDateISO(7)).toISOString().slice(0, 10),
   category: '',
-  depletionThreshold: ''
+  depletionThreshold: '',
+  tags: ''
 };
 
 const notificationStorage = createLocalStorageAdapter();
@@ -161,6 +165,19 @@ function App() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
 
+  const [scanModal, setScanModal] = useState<{
+    qrDataUrl: string;
+    serverUrl: string;
+    status: 'waiting' | 'received';
+  } | null>(null);
+  const [scannerActive, setScannerActive] = useState(false);
+  const [platform, setPlatform] = useState<string | undefined>(undefined);
+
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<FormState | null>(null);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const [notificationState, setNotificationState] = useState<NotificationPermission | 'unsupported'>(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
       return 'unsupported';
@@ -183,6 +200,34 @@ function App() {
 
   useEffect(() => {
     void getFrequentItems(5).then(setFrequentItems);
+  }, []);
+
+  useEffect(() => {
+    void window.beforeItsGone?.getPlatform?.().then(setPlatform);
+  }, []);
+
+  useEffect(() => {
+    window.beforeItsGone?.onSaveItemFromPhone?.(async (data) => {
+      await createInventoryItem({
+        name: data.name,
+        quantity: data.quantity,
+        location: data.location,
+        barcode: data.barcode || null,
+        expiresAt: calculateExpiryDateISO(data.shelfLifeDays),
+        category: data.category
+      });
+      if (data.barcode) {
+        await saveBarcodeProfile({
+          barcode: data.barcode,
+          productName: data.name,
+          defaultShelfLifeDays: data.shelfLifeDays,
+          preferredLocation: data.location
+        });
+      }
+      const refreshed = await loadInventory();
+      setItems(refreshed);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [allItems, setAllItems] = useState<InventoryItem[]>([]);
@@ -213,17 +258,17 @@ function App() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const onBarcodeBlur = async () => {
-    const barcode = form.barcode.trim();
-    if (!barcode) return;
+  const doBarcodeLookup = async (barcode: string) => {
+    const trimmed = barcode.trim();
+    if (!trimmed) return;
 
     setLoading(true);
     try {
-      const profile = await findBarcodeProfile(barcode);
+      const profile = await findBarcodeProfile(trimmed);
       if (profile) {
         setForm((prev) => ({
           ...prev,
-          barcode,
+          barcode: trimmed,
           name: prev.name.trim() ? prev.name : profile.productName,
           location: profile.preferredLocation,
           shelfLifeDays: profile.defaultShelfLifeDays,
@@ -239,6 +284,37 @@ function App() {
       setLoading(false);
     }
   };
+
+  const onBarcodeBlur = () => { void doBarcodeLookup(form.barcode); };
+
+  const onStopScanner = () => {
+    setScanModal(null);
+    setScannerActive(false);
+    void window.beforeItsGone?.stopBarcodeServer?.();
+  };
+
+  const onScanWithPhone = async () => {
+    const api = window.beforeItsGone;
+    if (!api?.startBarcodeServer) return;
+    try {
+      const { url, qrDataUrl } = await api.startBarcodeServer();
+      setScannerActive(true);
+      setScanModal({ qrDataUrl, serverUrl: url, status: 'waiting' });
+      api.onBarcodeScanned?.((barcode) => {
+        setField('barcode', barcode);
+        setScanModal((m) => m ? { ...m, status: 'received' } : null);
+        void doBarcodeLookup(barcode);
+        setTimeout(() => {
+          setScanModal(null);
+        }, 1500);
+      });
+    } catch {
+      setScannerActive(false);
+      setStatusMessage('Could not start phone scanner. Check that no other app is using the port.');
+    }
+  };
+
+  const onCloseScanModal = () => { setScanModal(null); };
 
   const onBarcodeLookup = async () => {
     const barcode = form.barcode.trim();
@@ -267,7 +343,8 @@ function App() {
       shelfLifeDays: entry.shelfLifeDays,
       expiryDate: new Date(calculateExpiryDateISO(entry.shelfLifeDays)).toISOString().slice(0, 10),
       category: entry.category ?? '',
-      depletionThreshold: ''
+      depletionThreshold: '',
+      tags: ''
     });
     setStatusMessage(`Pre-filled form from "${entry.name}" history.`);
   };
@@ -305,7 +382,8 @@ function App() {
         barcode: form.barcode.trim() || null,
         expiresAt: new Date(`${form.expiryDate}T23:59:59`).toISOString(),
         category: form.category.trim() || null,
-        depletionThreshold: form.depletionThreshold ? Number(form.depletionThreshold) : null
+        depletionThreshold: form.depletionThreshold ? Number(form.depletionThreshold) : null,
+        tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean)
       });
 
       if (form.barcode.trim()) {
@@ -340,6 +418,88 @@ function App() {
     if (depleted) {
       void notifyDepletion(item);
     }
+  };
+
+  const onEdit = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    setEditingItemId(id);
+    setEditForm({
+      name: item.name,
+      quantity: item.quantity,
+      location: item.location,
+      barcode: item.barcode ?? '',
+      shelfLifeDays: Math.round(
+        (new Date(item.expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
+      ),
+      expiryDate: new Date(item.expiresAt).toISOString().slice(0, 10),
+      category: item.category ?? '',
+      depletionThreshold: item.depletionThreshold != null ? String(item.depletionThreshold) : '',
+      tags: item.tags?.join(', ') ?? ''
+    });
+  };
+
+  const onEditSave = async () => {
+    if (!editingItemId || !editForm) return;
+    const name = editForm.name.trim();
+    if (!name) return;
+    setLoading(true);
+    try {
+      const updated = await updateInventoryItem(editingItemId, {
+        name,
+        quantity: Math.max(1, editForm.quantity),
+        location: editForm.location,
+        barcode: editForm.barcode.trim() || null,
+        expiresAt: new Date(`${editForm.expiryDate}T23:59:59`).toISOString(),
+        category: editForm.category.trim() || null,
+        depletionThreshold: editForm.depletionThreshold ? Number(editForm.depletionThreshold) : null,
+        tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean)
+      });
+      if (updated) {
+        setItems((prev) => prev.map((i) => (i.id === editingItemId ? updated : i)));
+      }
+      setEditingItemId(null);
+      setEditForm(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onEditCancel = () => {
+    setEditingItemId(null);
+    setEditForm(null);
+  };
+
+  const onToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const onDeleteSelected = async () => {
+    for (const id of selectedIds) {
+      await deleteInventoryItem(id);
+    }
+    setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
+    setSelectedIds(new Set());
+    setBulkMode(false);
+  };
+
+  const onMoveSelected = async (location: StorageLocation) => {
+    const next: InventoryItem[] = [];
+    for (const item of items) {
+      if (selectedIds.has(item.id)) {
+        const updated = await updateInventoryItem(item.id, { location });
+        next.push(updated ?? item);
+      } else {
+        next.push(item);
+      }
+    }
+    setItems(next);
+    setSelectedIds(new Set());
+    setBulkMode(false);
   };
 
   const onExportJSON = async () => {
@@ -383,6 +543,7 @@ function App() {
   };
 
   return (
+    <>
     <main className="app-shell">
       <header>
         <h1>Before It&apos;s Gone</h1>
@@ -468,6 +629,18 @@ function App() {
             {loading ? 'Looking up…' : 'Lookup barcode online'}
           </button>
 
+          {window.beforeItsGone?.startBarcodeServer && (
+            scannerActive ? (
+              <button type="button" className="btn-ghost" onClick={onStopScanner}>
+                Scanner active — click to stop
+              </button>
+            ) : (
+              <button type="button" onClick={() => void onScanWithPhone()} disabled={loading}>
+                Scan with phone
+              </button>
+            )
+          )}
+
           <label>
             Name
             <input
@@ -483,6 +656,15 @@ function App() {
               value={form.category}
               placeholder="e.g. dairy, meat, snacks"
               onChange={(e) => setField('category', e.target.value)}
+            />
+          </label>
+
+          <label>
+            Tags (optional, comma-separated)
+            <input
+              value={form.tags}
+              placeholder="e.g. organic, local, bulk"
+              onChange={(e) => setField('tags', e.target.value)}
             />
           </label>
 
@@ -592,11 +774,77 @@ function App() {
           >
             {sortDirection === 'asc' ? '↑ Asc' : '↓ Desc'}
           </button>
+
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => { setBulkMode((m) => !m); setSelectedIds(new Set()); }}
+          >
+            {bulkMode ? 'Cancel bulk' : 'Bulk select'}
+          </button>
         </div>
+
+        {bulkMode && selectedIds.size > 0 && (
+          <div className="bulk-toolbar">
+            <span>{selectedIds.size} selected</span>
+            <button type="button" className="btn-danger" onClick={() => void onDeleteSelected()}>
+              Delete selected
+            </button>
+            <span>Move to:</span>
+            <button type="button" className="btn-sm" onClick={() => void onMoveSelected('fridge')}>Fridge</button>
+            <button type="button" className="btn-sm" onClick={() => void onMoveSelected('freezer')}>Freezer</button>
+            <button type="button" className="btn-sm" onClick={() => void onMoveSelected('pantry')}>Pantry</button>
+          </div>
+        )}
+
+        {editingItemId && editForm && (
+          <div className="panel edit-panel">
+            <h3>Edit item</h3>
+            <div className="inventory-form">
+              <label>Name
+                <input value={editForm.name} required onChange={(e) => setEditForm((f) => f ? { ...f, name: e.target.value } : f)} />
+              </label>
+              <label>Category (optional)
+                <input value={editForm.category} placeholder="e.g. dairy" onChange={(e) => setEditForm((f) => f ? { ...f, category: e.target.value } : f)} />
+              </label>
+              <label>Tags (comma-separated)
+                <input value={editForm.tags} placeholder="e.g. organic, local" onChange={(e) => setEditForm((f) => f ? { ...f, tags: e.target.value } : f)} />
+              </label>
+              <label>Quantity
+                <input type="number" min={1} value={editForm.quantity} onChange={(e) => setEditForm((f) => f ? { ...f, quantity: Number(e.target.value) || 1 } : f)} />
+              </label>
+              <label>Expiry date
+                <input type="date" value={editForm.expiryDate} onChange={(e) => setEditForm((f) => f ? { ...f, expiryDate: e.target.value } : f)} />
+              </label>
+              <label>Location
+                <select value={editForm.location} onChange={(e) => setEditForm((f) => f ? { ...f, location: e.target.value as StorageLocation } : f)}>
+                  <option value="fridge">Fridge</option>
+                  <option value="freezer">Freezer</option>
+                  <option value="pantry">Pantry</option>
+                </select>
+              </label>
+              <label>Low stock alert at (optional)
+                <input type="number" min={1} value={editForm.depletionThreshold} placeholder="e.g. 2" onChange={(e) => setEditForm((f) => f ? { ...f, depletionThreshold: e.target.value } : f)} />
+              </label>
+              <div className="confirm-row">
+                <button type="button" disabled={loading} onClick={() => void onEditSave()}>{loading ? 'Saving…' : 'Save changes'}</button>
+                <button type="button" className="btn-ghost" onClick={onEditCancel}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="inventory-grid">
           {items.map((item) => (
-            <InventoryCard key={item.id} item={item} onDelete={onDelete} onDecrement={onDecrement} />
+            <InventoryCard
+              key={item.id}
+              item={item}
+              onDelete={onDelete}
+              onDecrement={onDecrement}
+              onEdit={onEdit}
+              selected={bulkMode ? selectedIds.has(item.id) : undefined}
+              onToggleSelect={bulkMode ? onToggleSelect : undefined}
+            />
           ))}
           {items.length === 0 ? <p>No items match your filters.</p> : null}
         </div>
@@ -644,6 +892,17 @@ function App() {
         </div>
       </section>
     </main>
+
+    {scanModal && (
+      <ScanModal
+        qrDataUrl={scanModal.qrDataUrl}
+        serverUrl={scanModal.serverUrl}
+        status={scanModal.status}
+        platform={platform}
+        onClose={onCloseScanModal}
+      />
+    )}
+    </>
   );
 }
 

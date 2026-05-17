@@ -1,0 +1,211 @@
+name: VirusTotal Scan
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  virustotal-scan:
+    name: Scan release artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Scan artifacts and report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VT_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+          RELEASE_ID: ${{ github.event.release.id }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          WORK="$(mktemp -d)"
+
+          # VT free tier: 32 MB upload limit, 4 requests/minute
+          MAX_BYTES=33554432
+          RATE_SLEEP=16
+          INITIAL_WAIT=180   # seconds before first poll
+          POLL_INTERVAL=120  # seconds between poll rounds
+          MAX_POLL_ROUNDS=6  # ~15 min total polling window
+
+          # ── 1. List matching release assets ────────────────────────────
+          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" \
+            --jq '.[] | select(.name | test("\\.(exe|dmg|zip|tar\\.gz)$"))
+                      | [.id, .name, (.size | tostring)] | @tsv' \
+            > "$WORK/targets.tsv"
+
+          if [ ! -s "$WORK/targets.tsv" ]; then
+            echo "No matching release assets (.exe .dmg .zip .tar.gz). Nothing to scan." \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "Assets to scan:"
+          cat "$WORK/targets.tsv"
+
+          > "$WORK/analyses.tsv"
+          > "$WORK/skipped.tsv"
+
+          # ── 2. Download each asset and upload to VirusTotal ─────────────
+          is_first=true
+          while IFS=$'\t' read -r asset_id name size; do
+            mb=$(( size / 1024 / 1024 ))
+
+            if (( size > MAX_BYTES )); then
+              echo "SKIP $name — ${mb} MB exceeds 32 MB limit"
+              printf '%s\t%s MB exceeds VT free-tier 32 MB upload limit\n' "$name" "$mb" \
+                >> "$WORK/skipped.tsv"
+              continue
+            fi
+
+            echo "Downloading $name (${mb} MB)…"
+            gh api -H "Accept: application/octet-stream" \
+              "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" > "$WORK/$name"
+
+            if [ "$is_first" = "false" ]; then
+              echo "  Rate-limit sleep ${RATE_SLEEP}s…"
+              sleep "$RATE_SLEEP"
+            fi
+            is_first=false
+
+            echo "Uploading $name to VirusTotal…"
+            vt_resp=$(curl -sf --request POST \
+              "https://www.virustotal.com/api/v3/files" \
+              -H "x-apikey: $VT_API_KEY" \
+              -F "file=@$WORK/$name" 2>&1 || true)
+
+            analysis_id=$(printf '%s' "$vt_resp" | jq -r '.data.id // empty' 2>/dev/null || true)
+
+            if [ -z "$analysis_id" ]; then
+              msg=$(printf '%s' "$vt_resp" | jq -r '.error.message // "upload failed"' 2>/dev/null \
+                || echo "upload failed")
+              echo "  ERROR: $msg"
+              printf '%s\tUpload error: %s\n' "$name" "$msg" >> "$WORK/skipped.tsv"
+              continue
+            fi
+
+            echo "  Analysis ID: $analysis_id"
+            printf '%s\t%s\n' "$name" "$analysis_id" >> "$WORK/analyses.tsv"
+          done < "$WORK/targets.tsv"
+
+          # ── 3. Poll for completed results ───────────────────────────────
+          > "$WORK/results.tsv"
+
+          if [ -s "$WORK/analyses.tsv" ]; then
+            echo "Waiting ${INITIAL_WAIT}s for initial analysis…"
+            sleep "$INITIAL_WAIT"
+
+            cp "$WORK/analyses.tsv" "$WORK/pending.tsv"
+
+            for (( round=0; round<MAX_POLL_ROUNDS; round++ )); do
+              > "$WORK/still_pending.tsv"
+              is_first_poll=true
+
+              while IFS=$'\t' read -r name analysis_id; do
+                if [ "$is_first_poll" = "false" ]; then
+                  sleep "$RATE_SLEEP"
+                fi
+                is_first_poll=false
+
+                poll=$(curl -sf "https://www.virustotal.com/api/v3/analyses/$analysis_id" \
+                  -H "x-apikey: $VT_API_KEY" 2>/dev/null || echo '{}')
+
+                status=$(printf '%s' "$poll" | jq -r '.data.attributes.status // "unknown"')
+
+                if [ "$status" = "completed" ]; then
+                  m=$(printf '%s' "$poll" | jq '.data.attributes.stats.malicious   // 0')
+                  s=$(printf '%s' "$poll" | jq '.data.attributes.stats.suspicious  // 0')
+                  h=$(printf '%s' "$poll" | jq '.data.attributes.stats.harmless    // 0')
+                  u=$(printf '%s' "$poll" | jq '.data.attributes.stats.undetected  // 0')
+                  total=$(( m + s + h + u ))
+                  sha256=$(printf '%s' "$poll" | jq -r '.meta.file_info.sha256 // empty')
+                  if [ -n "$sha256" ]; then
+                    url="https://www.virustotal.com/gui/file/$sha256"
+                  else
+                    url="https://www.virustotal.com/gui/file-analysis/$analysis_id"
+                  fi
+                  printf '%s\tcompleted\t%s\t%s\t%s\t%s\n' \
+                    "$name" "$m" "$s" "$total" "$url" >> "$WORK/results.tsv"
+                  echo "  ✓ $name — $m malicious, $s suspicious / $total engines"
+                else
+                  printf '%s\t%s\n' "$name" "$analysis_id" >> "$WORK/still_pending.tsv"
+                fi
+              done < "$WORK/pending.tsv"
+
+              if [ ! -s "$WORK/still_pending.tsv" ]; then
+                echo "All analyses complete."
+                break
+              fi
+
+              cp "$WORK/still_pending.tsv" "$WORK/pending.tsv"
+
+              if (( round < MAX_POLL_ROUNDS - 1 )); then
+                echo "$(wc -l < "$WORK/still_pending.tsv") still pending — waiting ${POLL_INTERVAL}s…"
+                sleep "$POLL_INTERVAL"
+              fi
+            done
+
+            # Record timed-out entries
+            if [ -s "$WORK/still_pending.tsv" ]; then
+              while IFS=$'\t' read -r name _; do
+                printf '%s\ttimeout\t0\t0\t0\t\n' "$name" >> "$WORK/results.tsv"
+              done < "$WORK/still_pending.tsv"
+            fi
+          fi
+
+          # ── 4. Build markdown report ────────────────────────────────────
+          build_report() {
+            echo "## VirusTotal Scan — $RELEASE_TAG"
+            echo ""
+            echo "| File | Result | Engines | Report |"
+            echo "|------|--------|---------|--------|"
+
+            if [ -s "$WORK/results.tsv" ]; then
+              while IFS=$'\t' read -r name status m s total url; do
+                case "$status" in
+                  completed)
+                    if [ "$m" -gt 0 ]; then
+                      result="🚨 $m detection(s)"
+                    elif [ "$s" -gt 0 ]; then
+                      result="⚠️ $s suspicious"
+                    else
+                      result="✅ Clean"
+                    fi
+                    printf '| `%s` | %s | %s engines | [View](%s) |\n' \
+                      "$name" "$result" "$total" "$url"
+                    ;;
+                  timeout)
+                    printf '| `%s` | ⏳ Timed out | — | — |\n' "$name" ;;
+                  *)
+                    printf '| `%s` | ❓ Unknown | — | — |\n' "$name" ;;
+                esac
+              done < "$WORK/results.tsv"
+            fi
+
+            if [ -s "$WORK/skipped.tsv" ]; then
+              while IFS=$'\t' read -r name reason; do
+                printf '| `%s` | ⏭️ Skipped | — | %s |\n' "$name" "$reason"
+              done < "$WORK/skipped.tsv"
+            fi
+          }
+
+          build_report | tee -a "$GITHUB_STEP_SUMMARY" > "$WORK/report.md"
+
+          # ── 5. Append report to release notes ───────────────────────────
+          current_body=$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" \
+            --jq '.body // ""')
+
+          jq -n --arg body "$current_body" --rawfile report "$WORK/report.md" \
+            '{"body": ($body + "\n\n---\n\n" + $report)}' \
+            | gh api --method PATCH \
+                "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --input -
+
+          # ── 6. Fail on malicious detections ─────────────────────────────
+          if [ -s "$WORK/results.tsv" ] && \
+             awk -F'\t' '($2=="completed") && ($3+0>0) {exit 0} END {exit 1}' "$WORK/results.tsv"; then
+            echo "::error::VirusTotal flagged malicious detections — review results before promoting this release."
+            exit 1
+          fi

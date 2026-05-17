@@ -17,6 +17,7 @@ export interface InventoryItem {
   updatedAt: string;
   category: string | null;
   depletionThreshold: number | null;
+  tags: string[];
 }
 
 export interface NewInventoryItem {
@@ -27,6 +28,7 @@ export interface NewInventoryItem {
   expiresAt: string;
   category?: string | null;
   depletionThreshold?: number | null;
+  tags?: string[];
 }
 
 export interface BarcodeProfile {

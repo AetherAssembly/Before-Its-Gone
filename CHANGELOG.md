@@ -4,9 +4,80 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## Current Release
+
+### [0.6.0] - 2026-05-16
+
+### Added:
+
+- **Phone-as-primary scanner** — after scanning the QR code, the phone's camera auto-detects barcodes, looks up the product on Open Food Facts, and shows a full product card with image, predicted shelf life, location picker, and quantity stepper. Tapping "Save & scan next" saves the item directly to the desktop inventory and resets the camera. "Cancel" discards and returns to scanning.
+- **Expiry prediction** — rule-based shelf life algorithm maps Open Food Facts category tags to per-location shelf life estimates (fridge / freezer / pantry) for dairy, meat, fish, produce, bread, canned, pasta/rice, beverages, snacks, frozen, eggs, condiments, and more.
+- **In-place item editing** — inventory cards now have an Edit button that opens an inline edit form pre-filled with all existing fields. Changes are saved without removing and re-adding the item.
+- **Multiple tags per item** — the Add and Edit forms accept a comma-separated tags field. Tags are stored as `string[]` on each inventory item and displayed as chips alongside the category on each card.
+- **Bulk actions** — a "Bulk select" toggle enables checkboxes on every card. Selecting one or more items reveals a toolbar with "Delete selected" and "Move to: Fridge / Freezer / Pantry" buttons.
+- **Silent phone-save refresh** — when the phone saves an item the desktop inventory list refreshes automatically without any toast or modal interruption.
+
+### Changed:
+
+- `InventoryItem` model gains a `tags: string[]` field (default `[]`, backwards-compatible).
+- `startScannerServer` now accepts an `onSaveItem` callback; `POST /scan` returns full product data including `suggestedShelfLifeDays` and `imageUrl`; new `POST /save` endpoint handles phone-initiated saves.
+- Scanner HTML page rewritten as a state machine: `scanning → looking-up → review → saving → saved → scanning`.
+- ROADMAP updated: v0.6.0 marked current; expiry prediction removed from "Possible Future Directions" (shipped).
+
+### Fixed:
+
+- `updateInventoryItem` correctly patches any subset of fields and preserves all others including `tags` and `depletionThreshold`.
+
+### Packaging:
+
+- AppImage artifact (amd64): `before-its-gone-0.6.0.AppImage`
+- Debian artifact (amd64): `before-its-gone_0.6.0_amd64.deb`
+- RPM artifact (x86_64): `before-its-gone-0.6.0-x86_64.rpm`
+- AppImage artifact (arm64): `before-its-gone-0.6.0-arm64.AppImage`
+- Debian artifact (arm64): `before-its-gone_0.6.0_arm64.deb`
+- RPM artifact (arm64): `before-its-gone-0.6.0-aarch64.rpm`
+- macOS artifact: `Before Its Gone-0.6.0.dmg`
+- Windows (portable) artifact: `before-its-gone-portable-0.6.0.exe`
+- Windows (NSIS) artifact: `before-its-gone-setup-0.6.0.exe`
+
+---
+
+## Previous Releases:
+
+### [0.5.5] - Private Beta
+
+### Added:
+
+- **Phone barcode scanner** — "Scan with phone" button next to the barcode field opens a modal with a QR code. Scanning it on any phone browser (iOS Safari, Android Chrome, Firefox, Edge, Opera) opens a camera view that decodes barcodes and sends the result directly to the desktop form field.
+- The scanner page is served over **HTTPS with a self-signed certificate** so `getUserMedia` (camera access) works across all browsers, not just Chrome on Android.
+- **BarcodeDetector API** is used natively on browsers that support it (Chromium); falls back to the **ZXing library** (loaded from CDN) for Safari and all other browsers.
+
+### Changed:
+
+- `package:windows` and `package:macos` scripts now use a cross-platform Node.js `mkdirSync` call instead of `mkdir -p`, which failed on Windows CMD.
+
+### Fixed:
+
+- LAN IP detection now filters out virtual network adapters (Docker, Hyper-V, VMware, VirtualBox, Bluetooth, VPN tunnels) and rejects any non-RFC-1918 address, preventing the QR code from containing a public or virtual IP.
+- Windows Defender Firewall rule is automatically created for the scanner's port on each session start (requires the app to be run as Administrator once to stop dialog).
+
+### Packaging:
+
+- AppImage artifact (amd64): `before-its-gone-0.5.5.AppImage`
+- Debian artifact (amd64): `before-its-gone_0.5.5_amd64.deb`
+- RPM artifact (x86_64): `before-its-gone-0.5.5-x86_64.rpm`
+- AppImage artifact (arm64): `before-its-gone-0.5.5-arm64.AppImage`
+- Debian artifact (arm64): `before-its-gone_0.5.5_arm64.deb`
+- RPM artifact (arm64): `before-its-gone-0.5.5-aarch64.rpm`
+- macOS artifact: `Before Its Gone-0.5.5.dmg`
+- Windows (portable) artifact: `before-its-gone-portable-0.5.5.exe`
+- Windows (NSIS) artifact: `before-its-gone-setup-0.5.5.exe`
+
+---
+
 ## [0.5.0] - 2026-05-14
 
-### Added
+### Added:
 
 - **Categories** — Inventory items now support an optional category field (e.g. "dairy", "meat", "snacks") displayed as a pill on each card and searchable via the search bar.
 - **Item history & quick-add buttons** — Every saved item is recorded in a local history store. The top 5 most-used items appear as one-click quick-add buttons that pre-fill the form, eliminating repeat entry.
@@ -24,22 +95,26 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 - **Stats dashboard** — Summary cards show total products, total units, items expiring this week, expiring soon, and expired.
 - **Consolidated monorepo** — Linux, macOS, and Windows now live in one repo with shared `packages/core` and `packages/ui`, separate `electron-builder` configs per platform, and dedicated release workflows.
 
-### Platform
+### Packaging:
 
-- Linux: AppImage + `.deb` via `npm run package:linux`
-- macOS: DMG + ZIP via `npm run package:macos` (see `packaging/macos/` for notarization notes)
-- Windows: NSIS installer + portable `.exe` via `npm run package:windows` (see `packaging/windows/` for signing notes)
+- AppImage artifact: `Before Its Gone-0.5.0.AppImage`
+- Debian artifact: `before-its-gone_0.5.0_amd64.deb`
+- CentOS artifact: `before-its-gone-0.5.0-x86_64.rpm`
+- AppImage (arm64) artifact: `Before Its Gone-0.5.0-arm64.AppImage`
+- Debian (arm64) artifact: `before-its-gone_0.5.0_arm64.deb`
+- RPM (arm64) artifact: `before-its-gone-0.5.0-aarch64.rpm`
+- macOS artifact: `Before Its Gone-0.5.0.dmg`
 
 ---
 
 ## [0.3.0] - 2026-05-10
 
-### Added
+### Added:
 
 - Color-coded expiry status on inventory cards: amber left-border for expiring soon, rose left-border for expired. Allows scanning the inventory at a glance without reading status text.
 - Loading state on the "Lookup barcode online" and "Save" buttons — they disable and show contextual text while async operations are in flight, preventing duplicate submissions.
 
-### Fixed
+### Fixed:
 
 - Dead if/else branch in Electron `main.ts` where both arms called `loadURL` identically — collapsed to a single call.
 - `JSON.parse` in the localStorage notification adapter now catches malformed data and returns `null` instead of throwing.
@@ -48,7 +123,7 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 - Startup `notifyExpiringItems` was being called twice on load (once directly after `setItems`, once via the `[items]` effect). Removed the redundant call.
 - `Notification.requestPermission()` in `onNotificationEnable` is now wrapped in a try-catch — failures set the notification state to `denied` and surface a status message instead of failing silently.
 
-### Packaging
+### Packaging:
 
 - AppImage artifact: `Before Its Gone-0.3.0.AppImage`
 - Debian artifact: `before-its-gone_0.3.0_amd64.deb`
@@ -59,7 +134,7 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 This release is the major rework of Before It's Gone from a basic restarted scaffold into a desktop-first Linux application with practical food tracking features, packaging, and release infrastructure.
 
-### Added
+### Added:
 
 - Native Linux desktop app workflow using Electron as the primary runtime.
 - Barcode-aware inventory entry with local barcode profile storage for repeat item autofill.
@@ -74,7 +149,7 @@ This release is the major rework of Before It's Gone from a basic restarted scaf
 - Release workflow that creates a draft GitHub release from a version tag.
 - Release template with download/checksum placeholders.
 
-### Packaging
+### Packaging:
 
 - AppImage artifact: `Before Its Gone-0.2.0.AppImage`
 - Debian artifact: `electron_0.2.0_amd64.deb`

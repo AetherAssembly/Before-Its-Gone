@@ -41,37 +41,75 @@ Get the latest release from the [Releases](https://github.com/AetherAssembly/Bef
 
 | Platform | Formats |
 | --- | --- |
-| Linux (x86_64) | AppImage · `.deb` (Debian/Ubuntu/Raspbian) · `.rpm` (Fedora/RHEL/openSUSE) |
+| Linux (x86_64) | AppImage · `.deb` (Debian/Ubuntu/Raspbian) · `.rpm` (Fedora/RHEL/openSUSE) · `PKGBUILD` (Arch Based Distros) |
 | Linux (arm64) | AppImage · `.deb` (Raspberry Pi 4/5) |
 | macOS | DMG |
 | Windows | NSIS installer · Portable `.exe` |
 
-## Arch Linux (AUR)
+## Windows
+
+> the portable version may be buggy, and isnt exactly recommended but it does work and is supported. If you find any issues please submit an [Issue](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=bug_report.yml) or Fork the `main` branch and submit a [Pull Request](https://github.com/AetherAssembly/Before-Its-Gone/compare) with fixes.
+
+### Install
+
+Run the NSIS installer (`before-its-gone-0.5.5-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+
+### Uninstall
+
+Go to **Settings > Apps** and uninstall `Before Its Gone` from there. The portable version can just be deleted.
+
+## macOS
+
+### Install
+
+Open the `.dmg`, drag `Before Its Gone` into your Applications folder, and launch it from there.
+
+### Uninstall
+
+Drag `Before Its Gone` out of your Applications folder and into the Trash.
+
+> If macOS blocks the app on first launch, go to **System Settings > Privacy & Security** and click **Open Anyway**.
+
+## Linux
+
+> If you would like to use the AppImage easily, you can use [Shelly](https://shellyalpm.com/) (CachyOS), or [GearLever](https://github.com/mijorus/gearlever)
+
+## Arch Based Distros
 
 ### Install
 
 ```bash
-yay -S before-its-gone      # build from source
-yay -S before-its-gone-bin  # pre-built AppImage
+
+Download the `PKGBUILD` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then run 
+
+makepkg -si
+
+sudo pacman -Syu
+
 ```
 
 ### Uninstall
 
 ```bash
-yay -R before-its-gone
-yay -R before-its-gone-bin
+sudo pacman -R before-its-gone-bin
+
+sudo pacman -Syu
 ```
 
 ### Flatpak / Snap
 
 Coming soon
 
-## (Fedora / RHEL 9+ / Rocky / Alma)
+## Fedora / RHEL 9+ / Rocky / Alma
 
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.5.0.x86_64.rpm
+sudo dnf install ./before-its-gone-0.5.5.x86_64.rpm
+
+# or
+
+sudo dnf install ./before-its-gone-0.5.5.arm64.rpm
 ```
 
 ### Uninstall
@@ -85,7 +123,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.5.0.x86_64.rpm
+sudo zypper install ./before-its-gone-0.5.5-x86_64.rpm
+
+# or 
+
+sudo zypper install ./before-its-gone_0.5.5-aarch64.rpm
 ```
 
 ### Uninstall
@@ -94,12 +136,18 @@ sudo zypper install ./before-its-gone-0.5.0.x86_64.rpm
 sudo zypper remove before-its-gone
 ```
 
-## Debian / Ubuntu
+## Debian / Ubuntu / Raspberry Pi 4/5
 
 ### Install
 
 ```bash
-sudo apt install ./before-its-gone_0.5.0_amd64.deb
+# All other Debian Distros
+sudo apt install ./before-its-gone_0.5.5_amd64.deb
+
+# or
+
+# Raspberry Pi 4/5 
+sudo apt install ./before-its-gone_0.5.5_arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -110,23 +158,9 @@ sudo apt install ./before-its-gone_0.5.0_amd64.deb
 sudo apt remove before-its-gone
 ```
 
-## Raspberry Pi 4/5
-
-### Install
-
-```bash
-sudo apt install ./before-its-gone_0.5.0_amd64.deb
-```
-
-### Uninstall
-
-```bash
-sudo apt remove before-its-gone
-```
-
 ---
 
-## Development
+## Development / Install from Source
 
 ### Prerequisites
 

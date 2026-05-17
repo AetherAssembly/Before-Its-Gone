@@ -1,7 +1,12 @@
 import path from 'node:path';
 import { app, BrowserWindow, ipcMain } from 'electron';
+import QRCode from 'qrcode';
+import { startScannerServer, stopScannerServer } from './scanner-server.js';
 
 const isDevelopment = !app.isPackaged;
+
+let pendingSaveResolve: (() => void) | null = null;
+let pendingSaveReject: ((err: Error) => void) | null = null;
 
 function configureLinuxDisplayBackend(): void {
   if (process.platform !== 'linux') {
@@ -49,7 +54,7 @@ function createWindow(): void {
   const window = new BrowserWindow({
     width: 1200,
     height: 780,
-    minWidth: 900,
+    minWidth: 600,
     minHeight: 600,
     autoHideMenuBar: true,
     ...(process.platform === 'darwin' && {
@@ -70,6 +75,47 @@ app.whenReady().then(() => {
   ipcMain.handle('app:version', () => app.getVersion());
   ipcMain.handle('app:ping', () => 'pong');
   ipcMain.handle('app:platform', () => process.platform);
+
+  ipcMain.handle('scanner:save-done', () => {
+    pendingSaveResolve?.();
+    pendingSaveResolve = null;
+    pendingSaveReject = null;
+  });
+
+  ipcMain.handle('scanner:save-error', (_, message: string) => {
+    pendingSaveReject?.(new Error(message));
+    pendingSaveResolve = null;
+    pendingSaveReject = null;
+  });
+
+  ipcMain.handle('scanner:start', async () => {
+    const { port, token, lanIp } = await startScannerServer(
+      (barcode) => {
+        BrowserWindow.getFocusedWindow()?.webContents.send('scanner:barcode-received', barcode);
+      },
+      async (data) => {
+        const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+        if (!win) throw new Error('No window available to save item');
+
+        await new Promise<void>((resolve, reject) => {
+          pendingSaveResolve = resolve;
+          pendingSaveReject = reject;
+          win.webContents.send('scanner:do-save', data);
+          setTimeout(() => {
+            pendingSaveReject?.(new Error('Save timeout'));
+            pendingSaveResolve = null;
+            pendingSaveReject = null;
+          }, 10_000);
+        });
+      }
+    );
+
+    const url = `https://${lanIp}:${port}/?token=${token}`;
+    const qrDataUrl = await QRCode.toDataURL(url, { width: 256, margin: 1 });
+    return { url, qrDataUrl };
+  });
+
+  ipcMain.handle('scanner:stop', () => { stopScannerServer(); });
 
   createWindow();
 
