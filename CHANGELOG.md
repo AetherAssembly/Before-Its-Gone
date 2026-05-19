@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
-## [0.7.0] - 2026-05-19
+## [0.7.0] - [Private Beta]
 
 ### Added:
 
@@ -17,6 +17,9 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 - **Search is debounced** — the inventory filter no longer re-runs on every keystroke. `useDeferredValue` defers the query to idle time, eliminating synchronous re-renders during fast typing.
 - `InventoryItem` model gains an optional `shelfLifeDays?: number` field. The value is derived from the expiry date on create (or accepted as explicit input) and stored on the item. The edit form now shows the original shelf life instead of recalculating days remaining from today.
 - The "Import JSON" label and file picker now read "Import JSON / CSV" and accept `.json` and `.csv`.
+- **Service layer** — all database interactions are now routed through two dedicated service classes in `packages/core/src/services/`: `InventoryService` (CRUD, increment/decrement, import, barcode profiles, frequent items) and `ImportExportService` (JSON/CSV serialisation and parsing). `App.tsx` imports singleton instances instead of calling storage functions directly.
+- **Scanner middleware chain** — the phone scanner's per-request auth, body parsing, and method enforcement are now composed from discrete middleware functions (`withMethod`, `withBodyJson`, `withAuth`, `withQueryToken`, `compose`) defined in `apps/electron/src/scanner-middleware.ts`. The previous inline `readBody` helper and repeated token-check blocks have been removed.
+- **TypeScript project references** — `packages/core` and `packages/ui` are now `composite` projects. `packages/ui` references `packages/core`; `apps/electron` references both packages. A root `tsconfig.json` anchors the reference graph. `build:packages` now runs `tsc --build` instead of two sequential `npm --workspace` invocations, giving incremental compilation and enforced dependency ordering.
 
 ### Fixed:
 

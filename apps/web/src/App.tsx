@@ -3,22 +3,9 @@ import { ScanModal } from './ScanModal.js';
 import {
   calculateExpiryDateISO,
   calculateExpiryStatus,
-  clearInventory,
-  createInventoryItem,
   createLocalStorageAdapter,
-  decrementItemQuantity,
-  deleteInventoryItem,
-  exportInventoryAsCSV,
-  exportInventoryAsJSON,
-  findBarcodeProfile,
-  getFilteredInventory,
-  getFrequentItems,
-  importInventoryItems,
-  importInventoryItemsFromCSV,
-  incrementItemQuantity,
-  parseInventoryJSON,
-  saveBarcodeProfile,
-  updateInventoryItem,
+  importExportService,
+  inventoryService,
   type FilterLocation,
   type InventoryItem,
   type ItemHistory,
@@ -198,7 +185,7 @@ function App() {
   });
 
   const loadInventory = useCallback(
-    () => getFilteredInventory({ search, location: filterLocation, sortField, sortDirection }),
+    () => inventoryService.list({ search, location: filterLocation, sortField, sortDirection }),
     [search, filterLocation, sortField, sortDirection]
   );
 
@@ -211,7 +198,7 @@ function App() {
   }, [items]);
 
   useEffect(() => {
-    void getFrequentItems(5).then(setFrequentItems);
+    void inventoryService.frequentItems(5).then(setFrequentItems);
   }, []);
 
   useEffect(() => {
@@ -220,7 +207,7 @@ function App() {
 
   useEffect(() => {
     window.beforeItsGone?.onSaveItemFromPhone?.(async (data) => {
-      await createInventoryItem({
+      await inventoryService.create({
         name: data.name,
         quantity: data.quantity,
         location: data.location,
@@ -229,7 +216,7 @@ function App() {
         category: data.category
       });
       if (data.barcode) {
-        await saveBarcodeProfile({
+        await inventoryService.saveProfile({
           barcode: data.barcode,
           productName: data.name,
           defaultShelfLifeDays: data.shelfLifeDays,
@@ -245,7 +232,7 @@ function App() {
   const [allItems, setAllItems] = useState<InventoryItem[]>([]);
 
   useEffect(() => {
-    void getFilteredInventory({}).then(setAllItems);
+    void inventoryService.list({}).then(setAllItems);
   }, [statsVersion]);
 
   const totalCount = allItems.length;
@@ -276,7 +263,7 @@ function App() {
 
     setLoading(true);
     try {
-      const profile = await findBarcodeProfile(trimmed);
+      const profile = await inventoryService.findProfile(trimmed);
       if (profile) {
         setForm((prev) => ({
           ...prev,
@@ -387,7 +374,7 @@ function App() {
 
     setLoading(true);
     try {
-      const newItem = await createInventoryItem({
+      const newItem = await inventoryService.create({
         name,
         quantity: Math.max(1, form.quantity),
         location: form.location,
@@ -400,7 +387,7 @@ function App() {
       });
 
       if (form.barcode.trim()) {
-        await saveBarcodeProfile({
+        await inventoryService.saveProfile({
           barcode: form.barcode.trim(),
           productName: name,
           defaultShelfLifeDays: Math.max(1, form.shelfLifeDays),
@@ -412,14 +399,14 @@ function App() {
       setForm(INITIAL_FORM);
       setStatusMessage('Item saved.');
       bumpStats();
-      void getFrequentItems(5).then(setFrequentItems);
+      void inventoryService.frequentItems(5).then(setFrequentItems);
     } finally {
       setLoading(false);
     }
   };
 
   const onDelete = async (id: string) => {
-    await deleteInventoryItem(id);
+    await inventoryService.remove(id);
     setItems((prev) => prev.filter((item) => item.id !== id));
     bumpStats();
   };
@@ -428,7 +415,7 @@ function App() {
     const existing = items.find((i) => i.id === id);
     if (!existing) return;
 
-    const { item, depleted } = await decrementItemQuantity(id);
+    const { item, depleted } = await inventoryService.decrement(id);
     if (!item) return;
 
     setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
@@ -448,7 +435,7 @@ function App() {
     clearTimeout(undoPending.timer);
     const { id, prevQty } = undoPending;
     setUndoPending(null);
-    const restored = await updateInventoryItem(id, { quantity: prevQty });
+    const restored = await inventoryService.update(id, { quantity: prevQty });
     if (restored) {
       setItems((prev) => prev.map((i) => (i.id === id ? restored : i)));
       bumpStats();
@@ -456,7 +443,7 @@ function App() {
   };
 
   const onIncrement = async (id: string) => {
-    const item = await incrementItemQuantity(id);
+    const item = await inventoryService.increment(id);
     if (!item) return;
     setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
     bumpStats();
@@ -487,7 +474,7 @@ function App() {
     if (!name) return;
     setLoading(true);
     try {
-      const updated = await updateInventoryItem(editingItemId, {
+      const updated = await inventoryService.update(editingItemId, {
         name,
         quantity: Math.max(1, editForm.quantity),
         location: editForm.location,
@@ -524,7 +511,7 @@ function App() {
 
   const onDeleteSelected = async () => {
     for (const id of selectedIds) {
-      await deleteInventoryItem(id);
+      await inventoryService.remove(id);
     }
     setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
     setSelectedIds(new Set());
@@ -536,7 +523,7 @@ function App() {
     const next: InventoryItem[] = [];
     for (const item of items) {
       if (selectedIds.has(item.id)) {
-        const updated = await updateInventoryItem(item.id, { location });
+        const updated = await inventoryService.update(item.id, { location });
         next.push(updated ?? item);
       } else {
         next.push(item);
@@ -549,14 +536,14 @@ function App() {
   };
 
   const onExportJSON = async () => {
-    const all = await getFilteredInventory({});
-    const content = exportInventoryAsJSON(all);
+    const all = await inventoryService.list({});
+    const content = importExportService.toJSON(all);
     triggerDownload(content, `before-its-gone-${TODAY_ISO}.json`, 'application/json');
   };
 
   const onExportCSV = async () => {
-    const all = await getFilteredInventory({});
-    const content = exportInventoryAsCSV(all);
+    const all = await inventoryService.list({});
+    const content = importExportService.toCSV(all);
     triggerDownload(content, `before-its-gone-${TODAY_ISO}.csv`, 'text/csv');
   };
 
@@ -571,12 +558,12 @@ function App() {
       let extra = '';
 
       if (file.name.endsWith('.csv')) {
-        const { imported, skipped } = await importInventoryItemsFromCSV(text);
+        const { imported, skipped } = await inventoryService.importCSV(text);
         count = imported;
         if (skipped > 0) extra = ` (${skipped} row${skipped > 1 ? 's' : ''} skipped — missing name/expires_at or invalid location)`;
       } else {
-        const parsed = parseInventoryJSON(text);
-        count = await importInventoryItems(parsed);
+        const parsed = importExportService.parseJSON(text);
+        count = await inventoryService.importJSON(parsed);
       }
 
       setItems(await loadInventory());
@@ -591,7 +578,7 @@ function App() {
   };
 
   const onClearAll = async () => {
-    await clearInventory();
+    await inventoryService.clear();
     setItems([]);
     setShowClearConfirm(false);
     setStatusMessage('All inventory cleared.');

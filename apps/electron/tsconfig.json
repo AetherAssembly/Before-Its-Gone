@@ -10,5 +10,9 @@
     "sourceMap": true,
     "types": ["node", "electron"]
   },
+  "references": [
+    { "path": "../../packages/core" },
+    { "path": "../../packages/ui" }
+  ],
   "include": ["src/**/*.ts"]
 }
