@@ -1,22 +1,11 @@
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ScanModal } from './ScanModal.js';
 import {
   calculateExpiryDateISO,
   calculateExpiryStatus,
-  clearInventory,
-  createInventoryItem,
   createLocalStorageAdapter,
-  decrementItemQuantity,
-  deleteInventoryItem,
-  exportInventoryAsCSV,
-  exportInventoryAsJSON,
-  findBarcodeProfile,
-  getFilteredInventory,
-  getFrequentItems,
-  importInventoryItems,
-  parseInventoryJSON,
-  saveBarcodeProfile,
-  updateInventoryItem,
+  importExportService,
+  inventoryService,
   type FilterLocation,
   type InventoryItem,
   type ItemHistory,
@@ -157,7 +146,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [frequentItems, setFrequentItems] = useState<ItemHistory[]>([]);
 
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDeferredValue(searchInput);
   const [filterLocation, setFilterLocation] = useState<FilterLocation>('all');
   const [sortField, setSortField] = useState<SortField>('expiresAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -178,6 +168,15 @@ function App() {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  const [statsVersion, setStatsVersion] = useState(0);
+  const bumpStats = () => setStatsVersion((v) => v + 1);
+
+  const [undoPending, setUndoPending] = useState<{
+    id: string;
+    prevQty: number;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
+
   const [notificationState, setNotificationState] = useState<NotificationPermission | 'unsupported'>(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
       return 'unsupported';
@@ -186,7 +185,7 @@ function App() {
   });
 
   const loadInventory = useCallback(
-    () => getFilteredInventory({ search, location: filterLocation, sortField, sortDirection }),
+    () => inventoryService.list({ search, location: filterLocation, sortField, sortDirection }),
     [search, filterLocation, sortField, sortDirection]
   );
 
@@ -199,7 +198,7 @@ function App() {
   }, [items]);
 
   useEffect(() => {
-    void getFrequentItems(5).then(setFrequentItems);
+    void inventoryService.frequentItems(5).then(setFrequentItems);
   }, []);
 
   useEffect(() => {
@@ -208,7 +207,7 @@ function App() {
 
   useEffect(() => {
     window.beforeItsGone?.onSaveItemFromPhone?.(async (data) => {
-      await createInventoryItem({
+      await inventoryService.create({
         name: data.name,
         quantity: data.quantity,
         location: data.location,
@@ -217,7 +216,7 @@ function App() {
         category: data.category
       });
       if (data.barcode) {
-        await saveBarcodeProfile({
+        await inventoryService.saveProfile({
           barcode: data.barcode,
           productName: data.name,
           defaultShelfLifeDays: data.shelfLifeDays,
@@ -233,8 +232,8 @@ function App() {
   const [allItems, setAllItems] = useState<InventoryItem[]>([]);
 
   useEffect(() => {
-    void getFilteredInventory({}).then(setAllItems);
-  }, [items]);
+    void inventoryService.list({}).then(setAllItems);
+  }, [statsVersion]);
 
   const totalCount = allItems.length;
   const totalUnits = useMemo(
@@ -264,7 +263,7 @@ function App() {
 
     setLoading(true);
     try {
-      const profile = await findBarcodeProfile(trimmed);
+      const profile = await inventoryService.findProfile(trimmed);
       if (profile) {
         setForm((prev) => ({
           ...prev,
@@ -375,19 +374,20 @@ function App() {
 
     setLoading(true);
     try {
-      const newItem = await createInventoryItem({
+      const newItem = await inventoryService.create({
         name,
         quantity: Math.max(1, form.quantity),
         location: form.location,
         barcode: form.barcode.trim() || null,
         expiresAt: new Date(`${form.expiryDate}T23:59:59`).toISOString(),
+        shelfLifeDays: Math.max(1, form.shelfLifeDays),
         category: form.category.trim() || null,
         depletionThreshold: form.depletionThreshold ? Number(form.depletionThreshold) : null,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean)
       });
 
       if (form.barcode.trim()) {
-        await saveBarcodeProfile({
+        await inventoryService.saveProfile({
           barcode: form.barcode.trim(),
           productName: name,
           defaultShelfLifeDays: Math.max(1, form.shelfLifeDays),
@@ -398,26 +398,55 @@ function App() {
       setItems((prev) => [newItem, ...prev]);
       setForm(INITIAL_FORM);
       setStatusMessage('Item saved.');
-      void getFrequentItems(5).then(setFrequentItems);
+      bumpStats();
+      void inventoryService.frequentItems(5).then(setFrequentItems);
     } finally {
       setLoading(false);
     }
   };
 
   const onDelete = async (id: string) => {
-    await deleteInventoryItem(id);
+    await inventoryService.remove(id);
     setItems((prev) => prev.filter((item) => item.id !== id));
+    bumpStats();
   };
 
   const onDecrement = async (id: string) => {
-    const { item, depleted } = await decrementItemQuantity(id);
+    const existing = items.find((i) => i.id === id);
+    if (!existing) return;
+
+    const { item, depleted } = await inventoryService.decrement(id);
     if (!item) return;
 
     setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
+    bumpStats();
 
-    if (depleted) {
-      void notifyDepletion(item);
+    if (depleted) void notifyDepletion(item);
+
+    setUndoPending((prev) => {
+      if (prev) clearTimeout(prev.timer);
+      const timer = setTimeout(() => setUndoPending(null), 5000);
+      return { id, prevQty: existing.quantity, timer };
+    });
+  };
+
+  const onUndoDecrement = async () => {
+    if (!undoPending) return;
+    clearTimeout(undoPending.timer);
+    const { id, prevQty } = undoPending;
+    setUndoPending(null);
+    const restored = await inventoryService.update(id, { quantity: prevQty });
+    if (restored) {
+      setItems((prev) => prev.map((i) => (i.id === id ? restored : i)));
+      bumpStats();
     }
+  };
+
+  const onIncrement = async (id: string) => {
+    const item = await inventoryService.increment(id);
+    if (!item) return;
+    setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
+    bumpStats();
   };
 
   const onEdit = (id: string) => {
@@ -429,9 +458,9 @@ function App() {
       quantity: item.quantity,
       location: item.location,
       barcode: item.barcode ?? '',
-      shelfLifeDays: Math.round(
+      shelfLifeDays: item.shelfLifeDays ?? Math.max(1, Math.round(
         (new Date(item.expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
-      ),
+      )),
       expiryDate: new Date(item.expiresAt).toISOString().slice(0, 10),
       category: item.category ?? '',
       depletionThreshold: item.depletionThreshold != null ? String(item.depletionThreshold) : '',
@@ -445,18 +474,20 @@ function App() {
     if (!name) return;
     setLoading(true);
     try {
-      const updated = await updateInventoryItem(editingItemId, {
+      const updated = await inventoryService.update(editingItemId, {
         name,
         quantity: Math.max(1, editForm.quantity),
         location: editForm.location,
         barcode: editForm.barcode.trim() || null,
         expiresAt: new Date(`${editForm.expiryDate}T23:59:59`).toISOString(),
+        shelfLifeDays: Math.max(1, editForm.shelfLifeDays),
         category: editForm.category.trim() || null,
         depletionThreshold: editForm.depletionThreshold ? Number(editForm.depletionThreshold) : null,
         tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean)
       });
       if (updated) {
         setItems((prev) => prev.map((i) => (i.id === editingItemId ? updated : i)));
+        bumpStats();
       }
       setEditingItemId(null);
       setEditForm(null);
@@ -480,18 +511,19 @@ function App() {
 
   const onDeleteSelected = async () => {
     for (const id of selectedIds) {
-      await deleteInventoryItem(id);
+      await inventoryService.remove(id);
     }
     setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
     setSelectedIds(new Set());
     setBulkMode(false);
+    bumpStats();
   };
 
   const onMoveSelected = async (location: StorageLocation) => {
     const next: InventoryItem[] = [];
     for (const item of items) {
       if (selectedIds.has(item.id)) {
-        const updated = await updateInventoryItem(item.id, { location });
+        const updated = await inventoryService.update(item.id, { location });
         next.push(updated ?? item);
       } else {
         next.push(item);
@@ -500,17 +532,18 @@ function App() {
     setItems(next);
     setSelectedIds(new Set());
     setBulkMode(false);
+    bumpStats();
   };
 
   const onExportJSON = async () => {
-    const all = await getFilteredInventory({});
-    const content = exportInventoryAsJSON(all);
+    const all = await inventoryService.list({});
+    const content = importExportService.toJSON(all);
     triggerDownload(content, `before-its-gone-${TODAY_ISO}.json`, 'application/json');
   };
 
   const onExportCSV = async () => {
-    const all = await getFilteredInventory({});
-    const content = exportInventoryAsCSV(all);
+    const all = await inventoryService.list({});
+    const content = importExportService.toCSV(all);
     triggerDownload(content, `before-its-gone-${TODAY_ISO}.csv`, 'text/csv');
   };
 
@@ -521,25 +554,35 @@ function App() {
     setLoading(true);
     try {
       const text = await file.text();
-      const parsed = parseInventoryJSON(text);
-      const count = await importInventoryItems(parsed);
+      let count = 0;
+      let extra = '';
+
+      if (file.name.endsWith('.csv')) {
+        const { imported, skipped } = await inventoryService.importCSV(text);
+        count = imported;
+        if (skipped > 0) extra = ` (${skipped} row${skipped > 1 ? 's' : ''} skipped — missing name/expires_at or invalid location)`;
+      } else {
+        const parsed = importExportService.parseJSON(text);
+        count = await inventoryService.importJSON(parsed);
+      }
+
       setItems(await loadInventory());
-      setStatusMessage(`Imported ${count} items.`);
+      bumpStats();
+      setStatusMessage(`Imported ${count} items.${extra}`);
     } catch {
-      setStatusMessage('Import failed — make sure the file is a valid export.');
+      setStatusMessage('Import failed — check the file format (JSON or CSV).');
     } finally {
       setLoading(false);
-      if (importRef.current) {
-        importRef.current.value = '';
-      }
+      if (importRef.current) importRef.current.value = '';
     }
   };
 
   const onClearAll = async () => {
-    await clearInventory();
+    await inventoryService.clear();
     setItems([]);
     setShowClearConfirm(false);
     setStatusMessage('All inventory cleared.');
+    bumpStats();
   };
 
   return (
@@ -743,8 +786,8 @@ function App() {
           <input
             className="search-input"
             placeholder="Search name, barcode, category…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
 
           <select
@@ -841,6 +884,7 @@ function App() {
               item={item}
               onDelete={onDelete}
               onDecrement={onDecrement}
+              onIncrement={onIncrement}
               onEdit={onEdit}
               selected={bulkMode ? selectedIds.has(item.id) : undefined}
               onToggleSelect={bulkMode ? onToggleSelect : undefined}
@@ -860,11 +904,11 @@ function App() {
             Export CSV
           </button>
           <label className="file-label">
-            Import JSON
+            Import JSON / CSV
             <input
               ref={importRef}
               type="file"
-              accept=".json"
+              accept=".json,.csv"
               className="sr-only"
               onChange={(e) => { void onImport(e); }}
             />
@@ -892,6 +936,13 @@ function App() {
         </div>
       </section>
     </main>
+
+    {undoPending && (
+      <div className="undo-toast" role="status" aria-live="polite">
+        <span>Used one.</span>
+        <button type="button" onClick={() => { void onUndoDecrement(); }}>Undo</button>
+      </div>
+    )}
 
     {scanModal && (
       <ScanModal

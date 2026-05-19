@@ -91,7 +91,8 @@ app.whenReady().then(() => {
   ipcMain.handle('scanner:start', async () => {
     const { port, token, lanIp } = await startScannerServer(
       (barcode) => {
-        BrowserWindow.getFocusedWindow()?.webContents.send('scanner:barcode-received', barcode);
+        const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+        win?.webContents.send('scanner:barcode-received', barcode);
       },
       async (data) => {
         const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
@@ -107,7 +108,8 @@ app.whenReady().then(() => {
             pendingSaveReject = null;
           }, 10_000);
         });
-      }
+      },
+      app.getPath('userData')
     );
 
     const url = `https://${lanIp}:${port}/?token=${token}`;

@@ -18,7 +18,7 @@ Thanks for wanting to help! Here's everything you need to know to get started.
 - Be respectful and constructive in all discussion.
 - Keep changes focused — one logical change per PR.
 - Update `CHANGELOG.md` for any user-visible fix or feature (under the current unreleased version).
-- Bump the version in `apps/electron/package.json` if your change warrants a release.
+- Bump the version in all five `package.json` files (root, `apps/electron`, `apps/web`, `packages/core`, `packages/ui`) if your change warrants a release — they must stay in sync.
 - Don't introduce new dependencies without a clear reason — explain the choice in your PR.
 
 ---
@@ -34,29 +34,41 @@ cd Before-Its-Gone
 npm ci
 ```
 
-The repo is an npm workspaces monorepo with three packages:
+The repo is an npm workspaces monorepo with four packages:
 
 | Package | Path | Purpose |
 |---------|------|---------|
 | `before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
 | `before-its-gone-web` | `apps/web` | React renderer (Vite) |
-| `packages/core` | `packages/core` | Shared logic (inventory, barcode profiles, notifications) |
+| `@before-its-gone/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/` — avoid calling storage functions directly. |
+| `@before-its-gone/ui` | `packages/ui` | Shared React components (InventoryCard) |
 
-**Run in development:**
+**Run in development (from repo root):**
 
 ```bash
-# In one terminal — start the Vite dev server
-cd apps/web && npm run dev
+npm run dev
+```
 
-# In another terminal — build and launch Electron
-cd apps/electron && npm run dev
+This starts the Vite dev server and Electron concurrently. On Linux the app auto-detects Wayland; to override:
+
+```bash
+BIG_LINUX_DISPLAY_BACKEND=x11 npm run dev
+BIG_LINUX_DISPLAY_BACKEND=wayland npm run dev
+```
+
+**Build packages only (needed before web/electron builds):**
+
+```bash
+npm run build:packages   # tsc --build for packages/core and packages/ui (incremental, dependency-ordered)
+npm run build:web        # build:packages + Vite production build
+npm run build            # full build including Electron main process
 ```
 
 **Lint and type-check:**
 
 ```bash
 npm run lint    # ESLint across all packages
-npm run build   # TypeScript compilation (electron)
+npm run build   # TypeScript compilation for all targets
 ```
 
 Both must pass before opening a PR.
@@ -91,7 +103,13 @@ npm run package:linux     # AppImage, .deb, .rpm (all architectures)
 npm run package:appimage  # AppImage only
 ```
 
-Artifacts are written to `release/`.
+Artifacts are written to `release/` (gitignored — local output only, not committed to the repo).
+
+---
+
+## Import & export formats
+
+Full documentation for the JSON and CSV import/export formats — including field reference tables, date format rules, and examples — is in [`docs/import-export-format.md`](../docs/import-export-format.md).
 
 ---
 
@@ -100,7 +118,7 @@ Artifacts are written to `release/`.
 - TypeScript everywhere — no plain `.js` source files.
 - ESLint enforces style; don't disable rules without a comment explaining why.
 - No comments that describe *what* the code does — only *why*, when the reason isn't obvious from the code itself.
-- React components live in `apps/web/src`; shared business logic lives in `packages/core`.
+- React components live in `apps/web/src` or `packages/ui/src`; shared business logic lives in `packages/core/src`.
 
 ---
 

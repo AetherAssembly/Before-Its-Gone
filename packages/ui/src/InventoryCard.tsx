@@ -7,12 +7,13 @@ type InventoryCardProps = {
   item: InventoryItem;
   onDelete: (id: string) => void;
   onDecrement: (id: string) => void;
+  onIncrement?: (id: string) => void;
   onEdit?: (id: string) => void;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
 };
 
-export function InventoryCard({ item, onDelete, onDecrement, onEdit, selected, onToggleSelect }: InventoryCardProps) {
+export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect }: InventoryCardProps) {
   const status = calculateExpiryStatus(item.expiresAt);
 
   return (
@@ -52,6 +53,16 @@ export function InventoryCard({ item, onDelete, onDecrement, onEdit, selected, o
           − Use one
         </button>
         <span className="qty-display">{item.quantity} left</span>
+        {onIncrement && (
+          <button
+            type="button"
+            className="btn-sm"
+            onClick={() => onIncrement(item.id)}
+            title="Add one"
+          >
+            + Add one
+          </button>
+        )}
         {onEdit && (
           <button
             type="button"

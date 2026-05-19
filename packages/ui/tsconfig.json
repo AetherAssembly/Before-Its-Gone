@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": true,
     "module": "ESNext",
     "jsx": "react-jsx",
     "rootDir": "src",
@@ -9,5 +10,8 @@
     "declarationMap": true,
     "sourceMap": true
   },
+  "references": [
+    { "path": "../core" }
+  ],
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

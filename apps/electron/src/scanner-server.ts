@@ -1,10 +1,20 @@
 import https from 'node:https';
 import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import { exec } from 'node:child_process';
 import selfsigned from 'selfsigned';
 import { buildScannerHtml } from './scanner-html.js';
+import {
+  compose,
+  withMethod,
+  withQueryToken,
+  withBodyJson,
+  withAuth,
+  type RequestWithBody,
+} from './scanner-middleware.js';
 
 // Inline shelf-life prediction (avoids ESM/CJS boundary with @before-its-gone/core)
 type StorageLocation = 'fridge' | 'freezer' | 'pantry';
@@ -141,7 +151,51 @@ function tryAddWindowsFirewallRule(port: number): void {
 
 function tryAddLinuxFirewallRule(port: number): void {
   if (process.platform !== 'linux') return;
-  exec(`ufw allow ${port}/tcp`, () => {});
+  exec('which ufw', (ufwErr) => {
+    if (!ufwErr) {
+      exec(`ufw allow ${port}/tcp`, () => {});
+      return;
+    }
+    exec('which firewall-cmd', (fwErr) => {
+      if (!fwErr) {
+        exec(`firewall-cmd --add-port=${port}/tcp --temporary`, () => {});
+        return;
+      }
+      console.warn(`[scanner] No firewall tool found. Open port ${port}/tcp manually if the phone cannot connect.`);
+    });
+  });
+}
+
+interface PersistedCert { private: string; cert: string; expiresAt: string }
+
+async function loadOrGenerateCert(userDataPath: string): Promise<{ private: string; cert: string }> {
+  const certPath = path.join(userDataPath, 'scanner-cert.json');
+  try {
+    const raw = fs.readFileSync(certPath, 'utf-8');
+    const stored = JSON.parse(raw) as PersistedCert;
+    if (new Date(stored.expiresAt) > new Date()) {
+      return { private: stored.private, cert: stored.cert };
+    }
+  } catch {
+    // File missing or malformed — fall through to generate
+  }
+
+  const pems = await selfsigned.generate(
+    [{ name: 'commonName', value: 'Before Its Gone Scanner' }],
+    { days: 365, keySize: 2048 } as never
+  );
+
+  const expiresAt = new Date();
+  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+  const stored: PersistedCert = { private: pems.private, cert: pems.cert, expiresAt: expiresAt.toISOString() };
+
+  try {
+    fs.writeFileSync(certPath, JSON.stringify(stored), 'utf-8');
+  } catch {
+    // Non-fatal — cert will just regenerate next session
+  }
+
+  return { private: pems.private, cert: pems.cert };
 }
 
 async function lookupProduct(barcode: string): Promise<OFBProduct> {
@@ -182,18 +236,10 @@ async function lookupProduct(barcode: string): Promise<OFBProduct> {
   }
 }
 
-function readBody(req: http.IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (chunk: Buffer) => { data += chunk.toString(); });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
-
 export async function startScannerServer(
   onBarcode: (barcode: string) => void,
-  onSaveItem: (data: PhoneSavePayload) => Promise<void>
+  onSaveItem: (data: PhoneSavePayload) => Promise<void>,
+  userDataPath: string
 ): Promise<{ port: number; token: string; lanIp: string }> {
   stopScannerServer();
 
@@ -201,97 +247,70 @@ export async function startScannerServer(
   const html = buildScannerHtml(token);
   const lanIp = getLanIp();
 
-  const pems = await selfsigned.generate(
-    [{ name: 'commonName', value: 'Before Its Gone Scanner' }],
-    { days: 1, keySize: 2048 } as never
-  );
+  const pems = await loadOrGenerateCert(userDataPath);
+
+  const scanRoute = compose(withMethod('POST'), withBodyJson(), withAuth(token));
+  const saveRoute = compose(withMethod('POST'), withBodyJson(), withAuth(token));
 
   return new Promise((resolve, reject) => {
     const server = https.createServer(
       { key: pems.private, cert: pems.cert },
-      async (req, res) => {
-        const url = new URL(req.url ?? '/', `https://localhost`);
+      async (req: http.IncomingMessage, res: http.ServerResponse) => {
+        const url = new URL(req.url ?? '/', 'https://localhost');
 
-        if (req.method === 'GET' && url.pathname === '/') {
-          if (url.searchParams.get('token') !== token) {
-            res.writeHead(403, { 'Content-Type': 'text/plain' });
-            res.end('Forbidden');
-            return;
-          }
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          res.end(html);
+        if (url.pathname === '/') {
+          await compose(withMethod('GET'), withQueryToken(token))(req, res, async () => {
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(html);
+          });
           return;
         }
 
-        if (req.method === 'POST' && url.pathname === '/scan') {
-          let body: { barcode?: string; token?: string };
-          try {
-            body = JSON.parse(await readBody(req)) as { barcode?: string; token?: string };
-          } catch {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Invalid JSON' }));
-            return;
-          }
-          if (body.token !== token) {
-            res.writeHead(403, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Forbidden' }));
-            return;
-          }
-          if (typeof body.barcode !== 'string' || !body.barcode.trim()) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Missing barcode' }));
-            return;
-          }
-
-          const barcode = body.barcode.trim();
-          onBarcode(barcode);
-
-          const product = await lookupProduct(barcode);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true, product }));
-          return;
-        }
-
-        if (req.method === 'POST' && url.pathname === '/save') {
-          let body: { token?: string; barcode?: string; name?: string; quantity?: number; location?: string; category?: string | null; shelfLifeDays?: number };
-          try {
-            body = JSON.parse(await readBody(req)) as typeof body;
-          } catch {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Invalid JSON' }));
-            return;
-          }
-          if (body.token !== token) {
-            res.writeHead(403, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Forbidden' }));
-            return;
-          }
-
-          const location = body.location;
-          if (
-            typeof body.name !== 'string' || !body.name.trim() ||
-            !['fridge', 'freezer', 'pantry'].includes(location ?? '')
-          ) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Missing required fields' }));
-            return;
-          }
-
-          try {
-            await onSaveItem({
-              barcode: typeof body.barcode === 'string' ? body.barcode.trim() : '',
-              name: body.name.trim(),
-              quantity: Math.max(1, Number(body.quantity) || 1),
-              location: location as 'fridge' | 'freezer' | 'pantry',
-              category: body.category?.trim() || null,
-              shelfLifeDays: Math.max(1, Number(body.shelfLifeDays) || 30),
-            });
+        if (url.pathname === '/scan') {
+          await scanRoute(req, res, async () => {
+            const body = (req as RequestWithBody).body;
+            if (typeof body.barcode !== 'string' || !body.barcode.trim()) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Missing barcode' }));
+              return;
+            }
+            const barcode = body.barcode.trim();
+            onBarcode(barcode);
+            const product = await lookupProduct(barcode);
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ ok: true }));
-          } catch {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Save failed' }));
-          }
+            res.end(JSON.stringify({ ok: true, product }));
+          });
+          return;
+        }
+
+        if (url.pathname === '/save') {
+          await saveRoute(req, res, async () => {
+            const body = (req as RequestWithBody).body;
+            const location = body.location as string | undefined;
+            if (
+              typeof body.name !== 'string' || !body.name.trim() ||
+              !['fridge', 'freezer', 'pantry'].includes(location ?? '')
+            ) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Missing required fields' }));
+              return;
+            }
+            try {
+              await onSaveItem({
+                barcode: typeof body.barcode === 'string' ? body.barcode.trim() : '',
+                name: (body.name as string).trim(),
+                quantity: Math.max(1, Number(body.quantity) || 1),
+                location: location as 'fridge' | 'freezer' | 'pantry',
+                category: typeof body.category === 'string' ? body.category.trim() || null : null,
+                shelfLifeDays: Math.max(1, Number(body.shelfLifeDays) || 30),
+              });
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ ok: true }));
+            } catch {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Save failed' }));
+            }
+          });
           return;
         }
 

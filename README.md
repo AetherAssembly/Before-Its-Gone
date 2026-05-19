@@ -20,17 +20,19 @@ Offline-first desktop app — no account required, all data stays on your machin
 ## Features
 
 - Barcode scanning with local profile storage and Open Food Facts lookup
-- Expiry date tracking with shelf-life presets
+- Expiry date tracking with shelf-life presets (stored accurately, not recalculated)
 - Color-coded cards: amber (expiring soon) · rose (expired)
 - Desktop notifications for expiring and low-stock items
-- **Search** across name, barcode, and category
+- **Search** across name, barcode, and category — debounced, no keystroke lag
 - **Filter** by location (fridge / freezer / pantry)
 - **Sort** by expiry date, date added, or name
 - **Stats dashboard** — items expiring this week, expired count, total units
 - **Quick-add buttons** from your item history — one click to pre-fill the form
-- **Categories** — tag items with e.g. "dairy", "meat", "snacks"
-- **Quantity depletion** — "Use one" button with low-stock alerts
-- **Export** to JSON or CSV · **Import** from JSON backup
+- **Categories & tags** — tag items with e.g. "dairy", "meat", "snacks"
+- **Quantity management** — `− Use one` with low-stock alerts · `+ Add one` to restock in one tap
+- **Undo "Use one"** — 5-second slide-in toast lets you reverse accidental taps
+- **Export** to JSON or CSV · **Import** from JSON or CSV
+- **Bulk select** — delete or move multiple items at once
 - **Clear all** with confirmation guard
 
 ---
@@ -52,7 +54,7 @@ Get the latest release from the [Releases](https://github.com/AetherAssembly/Bef
 
 ### Install
 
-Run the NSIS installer (`before-its-gone-0.5.5-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+Run the NSIS installer (`before-its-gone-0.7.0-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
 
 ### Uninstall
 
@@ -105,11 +107,11 @@ Coming soon
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.5.5.x86_64.rpm
+sudo dnf install ./before-its-gone-0.7.0.x86_64.rpm
 
 # or
 
-sudo dnf install ./before-its-gone-0.5.5.arm64.rpm
+sudo dnf install ./before-its-gone-0.7.0.arm64.rpm
 ```
 
 ### Uninstall
@@ -123,11 +125,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.5.5-x86_64.rpm
+sudo zypper install ./before-its-gone-0.7.0-x86_64.rpm
 
 # or 
 
-sudo zypper install ./before-its-gone_0.5.5-aarch64.rpm
+sudo zypper install ./before-its-gone_0.7.0-aarch64.rpm
 ```
 
 ### Uninstall
@@ -142,12 +144,12 @@ sudo zypper remove before-its-gone
 
 ```bash
 # All other Debian Distros
-sudo apt install ./before-its-gone_0.5.5_amd64.deb
+sudo apt install ./before-its-gone_0.7.0_amd64.deb
 
 # or
 
 # Raspberry Pi 4/5 
-sudo apt install ./before-its-gone_0.5.5_arm64.deb
+sudo apt install ./before-its-gone_0.7.0_arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -201,6 +203,12 @@ npm run package:linux    # → release/*.AppImage + release/*.deb + release/*.rp
 npm run package:macos    # → release/*.dmg  (run on macOS)
 npm run package:windows  # → release/*.exe  (run on Windows)
 ```
+
+---
+
+## Docs
+
+- [Import & Export Format](docs/import-export-format.md) — JSON and CSV field reference, examples, and validation rules
 
 ---
 
