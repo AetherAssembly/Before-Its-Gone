@@ -206,6 +206,12 @@ npm run package:windows  # → release/*.exe  (run on Windows)
 
 ---
 
+## Docs
+
+- [Import & Export Format](docs/import-export-format.md) — JSON and CSV field reference, examples, and validation rules
+
+---
+
 ## Privacy
 
 All data is stored locally in IndexedDB. Nothing is sent to any server except optional barcode lookups to [Open Food Facts](https://world.openfoodfacts.org/), which you trigger explicitly. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
