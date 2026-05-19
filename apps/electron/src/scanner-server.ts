@@ -1,5 +1,7 @@
 import https from 'node:https';
 import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import { exec } from 'node:child_process';
@@ -141,7 +143,52 @@ function tryAddWindowsFirewallRule(port: number): void {
 
 function tryAddLinuxFirewallRule(port: number): void {
   if (process.platform !== 'linux') return;
-  exec(`ufw allow ${port}/tcp`, () => {});
+  exec('which ufw', (ufwErr) => {
+    if (!ufwErr) {
+      exec(`ufw allow ${port}/tcp`, () => {});
+      return;
+    }
+    exec('which firewall-cmd', (fwErr) => {
+      if (!fwErr) {
+        exec(`firewall-cmd --add-port=${port}/tcp --temporary`, () => {});
+        return;
+      }
+      // Neither ufw nor firewall-cmd found — user must open port manually
+      console.warn(`[scanner] No firewall tool found. Open port ${port}/tcp manually if the phone cannot connect.`);
+    });
+  });
+}
+
+interface PersistedCert { private: string; cert: string; expiresAt: string }
+
+async function loadOrGenerateCert(userDataPath: string): Promise<{ private: string; cert: string }> {
+  const certPath = path.join(userDataPath, 'scanner-cert.json');
+  try {
+    const raw = fs.readFileSync(certPath, 'utf-8');
+    const stored = JSON.parse(raw) as PersistedCert;
+    if (new Date(stored.expiresAt) > new Date()) {
+      return { private: stored.private, cert: stored.cert };
+    }
+  } catch {
+    // File missing or malformed — fall through to generate
+  }
+
+  const pems = await selfsigned.generate(
+    [{ name: 'commonName', value: 'Before Its Gone Scanner' }],
+    { days: 365, keySize: 2048 } as never
+  );
+
+  const expiresAt = new Date();
+  expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+  const stored: PersistedCert = { private: pems.private, cert: pems.cert, expiresAt: expiresAt.toISOString() };
+
+  try {
+    fs.writeFileSync(certPath, JSON.stringify(stored), 'utf-8');
+  } catch {
+    // Non-fatal — cert will just regenerate next session
+  }
+
+  return { private: pems.private, cert: pems.cert };
 }
 
 async function lookupProduct(barcode: string): Promise<OFBProduct> {
@@ -193,7 +240,8 @@ function readBody(req: http.IncomingMessage): Promise<string> {
 
 export async function startScannerServer(
   onBarcode: (barcode: string) => void,
-  onSaveItem: (data: PhoneSavePayload) => Promise<void>
+  onSaveItem: (data: PhoneSavePayload) => Promise<void>,
+  userDataPath: string
 ): Promise<{ port: number; token: string; lanIp: string }> {
   stopScannerServer();
 
@@ -201,10 +249,7 @@ export async function startScannerServer(
   const html = buildScannerHtml(token);
   const lanIp = getLanIp();
 
-  const pems = await selfsigned.generate(
-    [{ name: 'commonName', value: 'Before Its Gone Scanner' }],
-    { days: 1, keySize: 2048 } as never
-  );
+  const pems = await loadOrGenerateCert(userDataPath);
 
   return new Promise((resolve, reject) => {
     const server = https.createServer(

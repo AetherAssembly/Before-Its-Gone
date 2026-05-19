@@ -1,4 +1,4 @@
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ScanModal } from './ScanModal.js';
 import {
   calculateExpiryDateISO,
@@ -14,6 +14,8 @@ import {
   getFilteredInventory,
   getFrequentItems,
   importInventoryItems,
+  importInventoryItemsFromCSV,
+  incrementItemQuantity,
   parseInventoryJSON,
   saveBarcodeProfile,
   updateInventoryItem,
@@ -157,7 +159,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [frequentItems, setFrequentItems] = useState<ItemHistory[]>([]);
 
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDeferredValue(searchInput);
   const [filterLocation, setFilterLocation] = useState<FilterLocation>('all');
   const [sortField, setSortField] = useState<SortField>('expiresAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -177,6 +180,15 @@ function App() {
   const [editForm, setEditForm] = useState<FormState | null>(null);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const [statsVersion, setStatsVersion] = useState(0);
+  const bumpStats = () => setStatsVersion((v) => v + 1);
+
+  const [undoPending, setUndoPending] = useState<{
+    id: string;
+    prevQty: number;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
 
   const [notificationState, setNotificationState] = useState<NotificationPermission | 'unsupported'>(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -234,7 +246,7 @@ function App() {
 
   useEffect(() => {
     void getFilteredInventory({}).then(setAllItems);
-  }, [items]);
+  }, [statsVersion]);
 
   const totalCount = allItems.length;
   const totalUnits = useMemo(
@@ -381,6 +393,7 @@ function App() {
         location: form.location,
         barcode: form.barcode.trim() || null,
         expiresAt: new Date(`${form.expiryDate}T23:59:59`).toISOString(),
+        shelfLifeDays: Math.max(1, form.shelfLifeDays),
         category: form.category.trim() || null,
         depletionThreshold: form.depletionThreshold ? Number(form.depletionThreshold) : null,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean)
@@ -398,6 +411,7 @@ function App() {
       setItems((prev) => [newItem, ...prev]);
       setForm(INITIAL_FORM);
       setStatusMessage('Item saved.');
+      bumpStats();
       void getFrequentItems(5).then(setFrequentItems);
     } finally {
       setLoading(false);
@@ -407,17 +421,45 @@ function App() {
   const onDelete = async (id: string) => {
     await deleteInventoryItem(id);
     setItems((prev) => prev.filter((item) => item.id !== id));
+    bumpStats();
   };
 
   const onDecrement = async (id: string) => {
+    const existing = items.find((i) => i.id === id);
+    if (!existing) return;
+
     const { item, depleted } = await decrementItemQuantity(id);
     if (!item) return;
 
     setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
+    bumpStats();
 
-    if (depleted) {
-      void notifyDepletion(item);
+    if (depleted) void notifyDepletion(item);
+
+    setUndoPending((prev) => {
+      if (prev) clearTimeout(prev.timer);
+      const timer = setTimeout(() => setUndoPending(null), 5000);
+      return { id, prevQty: existing.quantity, timer };
+    });
+  };
+
+  const onUndoDecrement = async () => {
+    if (!undoPending) return;
+    clearTimeout(undoPending.timer);
+    const { id, prevQty } = undoPending;
+    setUndoPending(null);
+    const restored = await updateInventoryItem(id, { quantity: prevQty });
+    if (restored) {
+      setItems((prev) => prev.map((i) => (i.id === id ? restored : i)));
+      bumpStats();
     }
+  };
+
+  const onIncrement = async (id: string) => {
+    const item = await incrementItemQuantity(id);
+    if (!item) return;
+    setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
+    bumpStats();
   };
 
   const onEdit = (id: string) => {
@@ -429,9 +471,9 @@ function App() {
       quantity: item.quantity,
       location: item.location,
       barcode: item.barcode ?? '',
-      shelfLifeDays: Math.round(
+      shelfLifeDays: item.shelfLifeDays ?? Math.max(1, Math.round(
         (new Date(item.expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
-      ),
+      )),
       expiryDate: new Date(item.expiresAt).toISOString().slice(0, 10),
       category: item.category ?? '',
       depletionThreshold: item.depletionThreshold != null ? String(item.depletionThreshold) : '',
@@ -451,12 +493,14 @@ function App() {
         location: editForm.location,
         barcode: editForm.barcode.trim() || null,
         expiresAt: new Date(`${editForm.expiryDate}T23:59:59`).toISOString(),
+        shelfLifeDays: Math.max(1, editForm.shelfLifeDays),
         category: editForm.category.trim() || null,
         depletionThreshold: editForm.depletionThreshold ? Number(editForm.depletionThreshold) : null,
         tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean)
       });
       if (updated) {
         setItems((prev) => prev.map((i) => (i.id === editingItemId ? updated : i)));
+        bumpStats();
       }
       setEditingItemId(null);
       setEditForm(null);
@@ -485,6 +529,7 @@ function App() {
     setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));
     setSelectedIds(new Set());
     setBulkMode(false);
+    bumpStats();
   };
 
   const onMoveSelected = async (location: StorageLocation) => {
@@ -500,6 +545,7 @@ function App() {
     setItems(next);
     setSelectedIds(new Set());
     setBulkMode(false);
+    bumpStats();
   };
 
   const onExportJSON = async () => {
@@ -521,17 +567,26 @@ function App() {
     setLoading(true);
     try {
       const text = await file.text();
-      const parsed = parseInventoryJSON(text);
-      const count = await importInventoryItems(parsed);
+      let count = 0;
+      let extra = '';
+
+      if (file.name.endsWith('.csv')) {
+        const { imported, skipped } = await importInventoryItemsFromCSV(text);
+        count = imported;
+        if (skipped > 0) extra = ` (${skipped} row${skipped > 1 ? 's' : ''} skipped — missing name/expires_at or invalid location)`;
+      } else {
+        const parsed = parseInventoryJSON(text);
+        count = await importInventoryItems(parsed);
+      }
+
       setItems(await loadInventory());
-      setStatusMessage(`Imported ${count} items.`);
+      bumpStats();
+      setStatusMessage(`Imported ${count} items.${extra}`);
     } catch {
-      setStatusMessage('Import failed — make sure the file is a valid export.');
+      setStatusMessage('Import failed — check the file format (JSON or CSV).');
     } finally {
       setLoading(false);
-      if (importRef.current) {
-        importRef.current.value = '';
-      }
+      if (importRef.current) importRef.current.value = '';
     }
   };
 
@@ -540,6 +595,7 @@ function App() {
     setItems([]);
     setShowClearConfirm(false);
     setStatusMessage('All inventory cleared.');
+    bumpStats();
   };
 
   return (
@@ -743,8 +799,8 @@ function App() {
           <input
             className="search-input"
             placeholder="Search name, barcode, category…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
           />
 
           <select
@@ -841,6 +897,7 @@ function App() {
               item={item}
               onDelete={onDelete}
               onDecrement={onDecrement}
+              onIncrement={onIncrement}
               onEdit={onEdit}
               selected={bulkMode ? selectedIds.has(item.id) : undefined}
               onToggleSelect={bulkMode ? onToggleSelect : undefined}
@@ -860,11 +917,11 @@ function App() {
             Export CSV
           </button>
           <label className="file-label">
-            Import JSON
+            Import JSON / CSV
             <input
               ref={importRef}
               type="file"
-              accept=".json"
+              accept=".json,.csv"
               className="sr-only"
               onChange={(e) => { void onImport(e); }}
             />
@@ -892,6 +949,13 @@ function App() {
         </div>
       </section>
     </main>
+
+    {undoPending && (
+      <div className="undo-toast" role="status" aria-live="polite">
+        <span>Used one.</span>
+        <button type="button" onClick={() => { void onUndoDecrement(); }}>Undo</button>
+      </div>
+    )}
 
     {scanModal && (
       <ScanModal

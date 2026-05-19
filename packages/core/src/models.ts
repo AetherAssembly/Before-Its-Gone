@@ -13,6 +13,7 @@ export interface InventoryItem {
   location: StorageLocation;
   barcode: string | null;
   expiresAt: string;
+  shelfLifeDays?: number;
   createdAt: string;
   updatedAt: string;
   category: string | null;
@@ -26,6 +27,7 @@ export interface NewInventoryItem {
   location: StorageLocation;
   barcode?: string | null;
   expiresAt: string;
+  shelfLifeDays?: number;
   category?: string | null;
   depletionThreshold?: number | null;
   tags?: string[];

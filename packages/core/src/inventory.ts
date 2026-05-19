@@ -69,6 +69,9 @@ export async function createInventoryItem(
   item: NewInventoryItem
 ): Promise<InventoryItem> {
   const timestamp = new Date().toISOString();
+  const shelfLifeDays =
+    item.shelfLifeDays ??
+    Math.max(1, Math.round((new Date(item.expiresAt).getTime() - Date.now()) / 86_400_000));
   const nextItem: InventoryItem = {
     id: crypto.randomUUID(),
     name: item.name,
@@ -76,6 +79,7 @@ export async function createInventoryItem(
     location: item.location,
     barcode: item.barcode ?? null,
     expiresAt: item.expiresAt,
+    shelfLifeDays,
     createdAt: timestamp,
     updatedAt: timestamp,
     category: item.category ?? null,
@@ -91,7 +95,7 @@ export async function createInventoryItem(
 export async function updateInventoryItem(
   id: string,
   patch: Partial<
-    Pick<InventoryItem, 'name' | 'quantity' | 'location' | 'barcode' | 'expiresAt' | 'category' | 'depletionThreshold' | 'tags'>
+    Pick<InventoryItem, 'name' | 'quantity' | 'location' | 'barcode' | 'expiresAt' | 'shelfLifeDays' | 'category' | 'depletionThreshold' | 'tags'>
   >
 ): Promise<InventoryItem | null> {
   const items = await listInventoryItems();
@@ -142,6 +146,24 @@ export async function decrementItemQuantity(
   const depleted = nextQty <= threshold && existing.quantity > threshold;
 
   return { item: nextItem, depleted };
+}
+
+export async function incrementItemQuantity(
+  id: string,
+  by = 1
+): Promise<InventoryItem | null> {
+  const items = await listInventoryItems();
+  const existing = items.find((item) => item.id === id);
+  if (!existing) return null;
+
+  const nextItem: InventoryItem = {
+    ...existing,
+    quantity: existing.quantity + Math.max(1, Math.floor(by)),
+    updatedAt: new Date().toISOString()
+  };
+
+  await upsertInventoryItem(nextItem);
+  return nextItem;
 }
 
 export function calculateExpiryStatus(
@@ -269,6 +291,86 @@ export function parseInventoryJSON(json: string): InventoryItem[] {
       typeof (item as Record<string, unknown>).id === 'string' &&
       typeof (item as Record<string, unknown>).name === 'string'
   );
+}
+
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+export function parseInventoryCSV(csv: string): { items: NewInventoryItem[]; skipped: number } {
+  const lines = csv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) return { items: [], skipped: 0 };
+
+  const header = parseCSVLine(lines[0]).map((h) => h.replace(/^"|"$/g, '').trim().toLowerCase());
+  const items: NewInventoryItem[] = [];
+  let skipped = 0;
+
+  for (let i = 1; i < lines.length; i++) {
+    try {
+      const cols = parseCSVLine(lines[i]);
+      const get = (col: string): string => {
+        const idx = header.indexOf(col);
+        return idx >= 0 ? (cols[idx] ?? '').replace(/^"|"$/g, '').trim() : '';
+      };
+
+      const name = get('name');
+      const rawExpiry = get('expires_at') || get('expiresat');
+      if (!name || !rawExpiry) { skipped++; continue; }
+
+      const location = get('location');
+      if (!['fridge', 'freezer', 'pantry'].includes(location)) { skipped++; continue; }
+
+      const expiresAt = new Date(`${rawExpiry}T23:59:59`).toISOString();
+      if (isNaN(new Date(expiresAt).getTime())) { skipped++; continue; }
+
+      const rawThreshold = get('depletion_threshold');
+      const rawShelf = get('shelf_life_days');
+
+      items.push({
+        name,
+        quantity: Math.max(1, Number(get('quantity')) || 1),
+        location: location as StorageLocation,
+        barcode: get('barcode') || null,
+        expiresAt,
+        shelfLifeDays: rawShelf ? Math.max(1, Number(rawShelf) || 1) : undefined,
+        category: get('category') || null,
+        depletionThreshold: rawThreshold ? Number(rawThreshold) || null : null,
+        tags: get('tags') ? get('tags').split(';').map((t) => t.trim()).filter(Boolean) : []
+      });
+    } catch {
+      skipped++;
+    }
+  }
+
+  return { items, skipped };
+}
+
+export async function importInventoryItemsFromCSV(
+  csv: string
+): Promise<{ imported: number; skipped: number }> {
+  const { items, skipped } = parseInventoryCSV(csv);
+  let imported = 0;
+  for (const item of items) {
+    await createInventoryItem(item);
+    imported++;
+  }
+  return { imported, skipped };
 }
 
 export async function importInventoryItems(items: InventoryItem[]): Promise<number> {

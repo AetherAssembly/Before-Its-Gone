@@ -4,7 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
-## Current Release
+## [0.7.0] - 2026-05-19
+
+### Added:
+
+- **+ Add one button** — every inventory card now has a `+ Add one` button alongside `− Use one`, letting you increment stock without opening the edit form. Previously adding more of an existing item required editing it manually.
+- **Undo "Use one"** — after tapping `− Use one`, a slide-in toast appears at the bottom of the screen for 5 seconds with an **Undo** button that restores the previous quantity.
+- **CSV import** — the Data section now accepts `.csv` files alongside `.json`. Supported columns: `name`, `quantity`, `location`, `expires_at`, `barcode`, `category`, `shelf_life_days`, `tags` (semicolon-separated), `depletion_threshold`. Rows missing a required field or with an invalid location are skipped; the status message reports how many were skipped.
+
+### Changed:
+
+- **Search is debounced** — the inventory filter no longer re-runs on every keystroke. `useDeferredValue` defers the query to idle time, eliminating synchronous re-renders during fast typing.
+- `InventoryItem` model gains an optional `shelfLifeDays?: number` field. The value is derived from the expiry date on create (or accepted as explicit input) and stored on the item. The edit form now shows the original shelf life instead of recalculating days remaining from today.
+- The "Import JSON" label and file picker now read "Import JSON / CSV" and accept `.json` and `.csv`.
+
+### Fixed:
+
+- `allItems` re-fetch on every filter change: the useEffect watching the filtered `items` array caused a full `getFilteredInventory({})` call on every search keystroke, sort toggle, and location filter change. It now watches a `statsVersion` counter that only increments after writes (add, edit, delete, decrement, import, clear).
+- Edit form showed days remaining instead of original shelf life: the "Shelf life (days)" field computed `(expiresAt − now) / dayMs`, giving days-remaining-from-today rather than the item's shelf life. The value is now stored as `shelfLifeDays` on create and read back in the edit form, with a fallback for items created before this fix.
+- Scanner TLS cert regenerated every session: the phone scanner's self-signed certificate was recreated on every `startScannerServer` call, forcing phones to re-accept the browser security warning each session. The cert is now persisted to `userData/scanner-cert.json` with a 365-day TTL and regenerated only when missing or expired.
+- Linux firewall rule failed silently on non-ufw systems: `tryAddLinuxFirewallRule` unconditionally ran `ufw allow`, which failed silently on Arch, Fedora, and openSUSE. It now probes `which ufw` first, falls back to `firewall-cmd --add-port --temporary`, and emits a `console.warn` with the port number if neither tool is found.
+- Barcode dropped when the app window lost focus: the `scanner:barcode-received` IPC handler used `BrowserWindow.getFocusedWindow()?.webContents.send(...)` with optional chaining, silently dropping the event when the window was unfocused. Fixed to use `getFocusedWindow() ?? getAllWindows()[0]`, matching the existing pattern in the save handler.
+
+---
+
+## Previous Releases
 
 ### [0.6.0] - 2026-05-16
 

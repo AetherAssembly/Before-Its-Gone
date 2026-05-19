@@ -34,29 +34,41 @@ cd Before-Its-Gone
 npm ci
 ```
 
-The repo is an npm workspaces monorepo with three packages:
+The repo is an npm workspaces monorepo with four packages:
 
 | Package | Path | Purpose |
 |---------|------|---------|
 | `before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
 | `before-its-gone-web` | `apps/web` | React renderer (Vite) |
-| `packages/core` | `packages/core` | Shared logic (inventory, barcode profiles, notifications) |
+| `@before-its-gone/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export |
+| `@before-its-gone/ui` | `packages/ui` | Shared React components (InventoryCard) |
 
-**Run in development:**
+**Run in development (from repo root):**
 
 ```bash
-# In one terminal — start the Vite dev server
-cd apps/web && npm run dev
+npm run dev
+```
 
-# In another terminal — build and launch Electron
-cd apps/electron && npm run dev
+This starts the Vite dev server and Electron concurrently. On Linux the app auto-detects Wayland; to override:
+
+```bash
+BIG_LINUX_DISPLAY_BACKEND=x11 npm run dev
+BIG_LINUX_DISPLAY_BACKEND=wayland npm run dev
+```
+
+**Build packages only (needed before web/electron builds):**
+
+```bash
+npm run build:packages   # compiles packages/core and packages/ui
+npm run build:web        # build:packages + Vite production build
+npm run build            # full build including Electron main process
 ```
 
 **Lint and type-check:**
 
 ```bash
 npm run lint    # ESLint across all packages
-npm run build   # TypeScript compilation (electron)
+npm run build   # TypeScript compilation for all targets
 ```
 
 Both must pass before opening a PR.
@@ -95,12 +107,32 @@ Artifacts are written to `release/`.
 
 ---
 
+## CSV import format
+
+The CSV importer (`parseInventoryCSV` in `packages/core/src/inventory.ts`) expects a header row with any of the following columns (case-insensitive, order-independent):
+
+| Column | Required | Notes |
+|--------|----------|-------|
+| `name` | ✅ | Item name |
+| `expires_at` | ✅ | ISO date `YYYY-MM-DD` |
+| `location` | ✅ | `fridge`, `freezer`, or `pantry` |
+| `quantity` | — | Integer ≥ 1, defaults to 1 |
+| `barcode` | — | Any string |
+| `category` | — | Free text, e.g. `dairy` |
+| `shelf_life_days` | — | Integer ≥ 1 |
+| `tags` | — | Semicolon-separated, e.g. `organic;local` |
+| `depletion_threshold` | — | Integer — low-stock alert level |
+
+Rows missing `name`, `expires_at`, or `location` (or with an unrecognised location) are skipped. The import result reports how many rows were skipped.
+
+---
+
 ## Code style
 
 - TypeScript everywhere — no plain `.js` source files.
 - ESLint enforces style; don't disable rules without a comment explaining why.
 - No comments that describe *what* the code does — only *why*, when the reason isn't obvious from the code itself.
-- React components live in `apps/web/src`; shared business logic lives in `packages/core`.
+- React components live in `apps/web/src` or `packages/ui/src`; shared business logic lives in `packages/core/src`.
 
 ---
 
