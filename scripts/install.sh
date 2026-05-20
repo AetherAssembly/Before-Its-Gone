@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Before It's Gone — installer / updater
-# Usage: bash <(curl -fsSL https://astersworld.xyz/install.sh)
+# Usage: bash <(curl -fsSL https://aetherassembly.org/install.sh)
 set -euo pipefail
 
 REPO="AetherAssembly/Before-Its-Gone"

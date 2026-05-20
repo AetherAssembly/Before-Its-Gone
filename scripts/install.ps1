@@ -1,5 +1,5 @@
 # Before It's Gone — Windows installer / updater
-# Usage: irm https://astersworld.xyz/install.ps1 | iex
+# Usage: irm https://aetherassembly.org/install.ps1 | iex
 #Requires -Version 5.1
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'

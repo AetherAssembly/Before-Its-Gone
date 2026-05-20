@@ -13,7 +13,7 @@
 [![macOS](https://img.shields.io/badge/macOS-DMG-000000?logo=apple&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![Windows](https://img.shields.io/badge/Windows-Installer%20%C2%B7%20Portable-0078D4?logo=windows&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 
-Offline-first desktop app — no account required, all data stays on your machine.
+Offline-first desktop app no account required, all data stays on your machine.
 
 ---
 
@@ -26,14 +26,14 @@ Offline-first desktop app — no account required, all data stays on your machin
 - **Search** across name, barcode, and category — debounced, no keystroke lag
 - **Filter** by location (fridge / freezer / pantry)
 - **Sort** by expiry date, date added, or name
-- **Stats dashboard** — items expiring this week, expired count, total units
-- **Quick-add buttons** from your item history — one click to pre-fill the form
-- **Categories & tags** — tag items with e.g. "dairy", "meat", "snacks"
-- **Quantity management** — `− Use one` with low-stock alerts · `+ Add one` to restock in one tap
-- **Undo "Use one"** — 5-second slide-in toast lets you reverse accidental taps
+- **Stats dashboard:** items expiring this week, expired count, total units
+- **Quick-add buttons** from your item history, one click to pre-fill the form
+- **Categories & tags:** tag items with e.g. "dairy", "meat", "snacks"
+- **Quantity management:** `− Use one` with low-stock alerts · `+ Add one` to restock in one tap
+- **Undo "Use one":** 5-second slide-in toast lets you reverse accidental taps
 - **Export** to JSON or CSV · **Import** from JSON or CSV
-- **Bulk select** — delete or move multiple items at once
-- **Clear all** with confirmation guard
+- **Bulk select:** delete or move multiple items at once
+- **Clear all:** with confirmation guard
 
 ---
 
@@ -42,15 +42,19 @@ Offline-first desktop app — no account required, all data stays on your machin
 ### One-line install
 
 **Linux & macOS:**
+
 ```bash
-bash <(curl -fsSL https://astersworld.xyz/install.sh)
+bash <(curl -fsSL https://aetherassembly.org/install.sh)
 ```
-Auto-detects your distro and architecture — installs via `apt`, `dnf`, `zypper`, `rpm`, or AppImage fallback.
+
+Auto-detects your distro and architecture, then installs via `apt`, `dnf`, `zypper`, `rpm`, `dmg`, or AppImage fallback.
 
 **Windows** (PowerShell):
+
 ```powershell
-irm https://astersworld.xyz/install.ps1 | iex
+irm https://aetherassembly.org/install.ps1 | iex
 ```
+
 Downloads and launches the NSIS installer.
 
 Run the same command again to update.
@@ -151,6 +155,22 @@ sudo apt install ./before-its-gone-0.7.1-arm64.deb
 ```bash
 sudo apt remove before-its-gone
 ```
+
+### Raspberry Pi — sandbox warning
+
+On Raspberry Pi OS, Electron may log a warning about the SUID sandbox on first launch. The app still runs. To fix it permanently, choose one of:
+
+**Option 1 — Enable user namespaces system-wide:**
+```bash
+echo 'kernel.unprivileged_userns_clone = 1' | sudo tee /etc/sysctl.d/00-userns.conf
+sudo sysctl -p /etc/sysctl.d/00-userns.conf
+```
+
+**Option 2 — Set the SUID bit on the sandbox binary only:**
+```bash
+sudo chmod 4755 /opt/before-its-gone/chrome-sandbox
+```
+> The path may vary — find it with `dpkg -L before-its-gone | grep sandbox`.
 
 ---
 
