@@ -1,0 +1,31 @@
+directories:
+  output: ../../release
+  buildResources: build
+appId: com.beforeitsgone.app
+productName: Before-Its-Gone
+icon: assets/app-icon.png
+artifactName: before-its-gone-${version}-${arch}.${ext}
+files:
+  - filter:
+      - dist/**/*
+extraResources:
+  - from: ../web/dist
+    to: web-dist
+    filter:
+      - '**/*'
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+  category: Utility
+  executableName: before-its-gone
+  desktop:
+    entry:
+      Name: Before It's Gone
+publish:
+  provider: github
+  owner: AetherAssembly
+  repo: Before-Its-Gone
+generateUpdatesFilesForAllChannels: true
+electronVersion: 42.0.1

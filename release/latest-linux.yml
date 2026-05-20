@@ -1,0 +1,15 @@
+version: 0.7.1
+files:
+  - url: before-its-gone-0.7.1-x86_64.AppImage
+    sha512: ewhqkS2PM5yuaKpWDjsDxKlzIaLCwV7G0oLE4r5JwuVkU0sUtnA335Em8lvxZeBqJTwSPpGCyRkSUakQM07auw==
+    size: 122420019
+    blockMapSize: 129863
+  - url: before-its-gone-0.7.1-amd64.deb
+    sha512: 8xTzVrA32CUmwCDmJvLAkmoCmU+b1U40PFFvrV2D6BJ1/RFTOW7gGwn/mICMjajMFNfrPMv80eqDZpYZfnn5WA==
+    size: 95807908
+  - url: before-its-gone-0.7.1-x86_64.rpm
+    sha512: UUaLOtnegYjU1eUxLV8IEDR3CVzTpCvtiuoPw6GT2Q2REKhN7rnTXjzoyQ6YW/CiT8SnIG2k2DyP60FE7GbnQg==
+    size: 84258248
+path: before-its-gone-0.7.1-x86_64.AppImage
+sha512: ewhqkS2PM5yuaKpWDjsDxKlzIaLCwV7G0oLE4r5JwuVkU0sUtnA335Em8lvxZeBqJTwSPpGCyRkSUakQM07auw==
+releaseDate: '2026-05-20T01:28:10.944Z'
