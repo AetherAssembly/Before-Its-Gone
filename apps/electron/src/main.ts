@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { app, BrowserWindow, ipcMain } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import QRCode from 'qrcode';
 import { startScannerServer, stopScannerServer } from './scanner-server.js';
 
@@ -38,6 +39,11 @@ function configureLinuxDisplayBackend(): void {
 
 configureLinuxDisplayBackend();
 
+app.setAppUserModelId('com.beforeitsgone.app');
+
+autoUpdater.autoDownload = true;
+autoUpdater.allowDowngrade = false;
+
 function getRendererEntryPoint(): string {
   if (process.env.VITE_DEV_SERVER_URL) {
     return process.env.VITE_DEV_SERVER_URL;
@@ -56,6 +62,8 @@ function createWindow(): void {
     height: 780,
     minWidth: 600,
     minHeight: 600,
+    title: "Before It's Gone",
+    icon: path.resolve(__dirname, '../assets/app-icon.png'),
     autoHideMenuBar: true,
     ...(process.platform === 'darwin' && {
       titleBarStyle: 'hiddenInset'
@@ -120,6 +128,28 @@ app.whenReady().then(() => {
   ipcMain.handle('scanner:stop', () => { stopScannerServer(); });
 
   createWindow();
+
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+
+  const isLinuxPackage = process.platform === 'linux' && !process.env.APPIMAGE;
+  if (isLinuxPackage) autoUpdater.autoDownload = false;
+
+  autoUpdater.on('update-available', (info) => {
+    mainWindow?.webContents.send('updater:available', { version: info.version, isLinuxPackage });
+  });
+  autoUpdater.on('update-downloaded', (info) => {
+    mainWindow?.webContents.send('updater:downloaded', { version: info.version });
+  });
+  autoUpdater.on('error', (err) => {
+    mainWindow?.webContents.send('updater:error', err.message);
+  });
+
+  ipcMain.handle('updater:install', () => { autoUpdater.quitAndInstall(); });
+  ipcMain.handle('updater:download', () => autoUpdater.downloadUpdate());
+
+  if (app.isPackaged) {
+    autoUpdater.checkForUpdates().catch(() => {});
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

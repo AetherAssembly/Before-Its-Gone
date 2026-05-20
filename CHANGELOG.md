@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [0.7.1] - 2026-05-19
+
+### Added
+
+- **Splash screen** — fridge icon and app name shown on the native background colour while the renderer loads, with a smooth fade-out once React mounts.
+- **Branding in header** — app icon (40×40) displayed alongside the title in the main header.
+- **About dialog** — ⓘ button in the header opens a modal with the app icon, version number, description, GitHub link, and license.
+- **Auto-update** — `electron-updater` checks GitHub Releases on startup and shows an in-app banner. AppImage, NSIS, and DMG installs get a one-click "Restart to install" flow; deb/rpm installs get a direct link to the releases page instead (package manager installs can't be replaced without `sudo`).
+- **arm64 cross-compilation** — `npm run package:linux:arm64` builds arm64 AppImage/deb/rpm locally from any x86_64 machine using electron-builder's built-in cross-compilation (no VM required).
+- **arm64 CI** — `ubuntu-24.04-arm` added to the CI matrix so every PR is lint- and build-checked on native arm64.
+
+### Changed
+
+- **Window title** set explicitly to `"Before It's Gone"` in the `BrowserWindow` config, ensuring consistent taskbar and title-bar text across platforms.
+- **Windows taskbar grouping** — `app.setAppUserModelId('com.beforeitsgone.app')` called before `app.whenReady()`, improving icon and grouping behaviour in the Windows taskbar.
+- **Window icon** wired for dev mode (`icon: path.resolve(__dirname, '../assets/app-icon.png')`); production builds already receive the icon from electron-builder.
+- **electron-builder publish config** set to `provider: github` on all three platform configs, enabling `latest*.yml` update manifest generation.
+- **CI matrix** expanded from 3 runners to 4 (added `ubuntu-24.04-arm`).
+- **README** — Arch/PKGBUILD installation section removed; arm64 cross-compilation script documented; version references updated to 0.7.1.
+
+### Removed
+
+- GitHub Actions release workflows for Linux, macOS, and Windows — builds are now produced locally and uploaded manually.
+- VirusTotal scan workflow.
+- AUR/PKGBUILD distribution — no longer maintained.
+
+---
+
 ## [0.7.0] - 2026-05-19
 
 ### Added:

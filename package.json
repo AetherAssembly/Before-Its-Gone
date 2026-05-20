@@ -1,7 +1,7 @@
 {
   "name": "before-its-gone",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Before It's Gone — cross-platform food expiry tracker for Linux, macOS, and Windows",
   "workspaces": [
     "apps/*",
@@ -20,6 +20,7 @@
     "build:electron": "npm run build:packages && npm run build:web && npm --workspace apps/electron run build",
     "build": "npm run build:electron",
     "package:linux": "npm run build:electron && npm --workspace apps/electron run package:linux",
+    "package:linux:arm64": "npm run build:electron && npm --workspace apps/electron run package:linux:arm64",
     "package:macos": "npm run build:electron && npm --workspace apps/electron run package:macos",
     "package:windows": "npm run build:electron && npm --workspace apps/electron run package:windows",
     "package:appimage": "npm run build:electron && npm --workspace apps/electron run package:appimage",

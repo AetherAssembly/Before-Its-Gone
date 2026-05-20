@@ -22,5 +22,8 @@ nsis:
   artifactName: 'before-its-gone-setup-${version}.exe'
 portable:
   artifactName: 'before-its-gone-portable-${version}.exe'
-publish: []
-generateUpdatesFilesForAllChannels: false
+publish:
+  provider: github
+  owner: AetherAssembly
+  repo: Before-Its-Gone
+generateUpdatesFilesForAllChannels: true

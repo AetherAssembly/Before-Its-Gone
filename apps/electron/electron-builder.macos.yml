@@ -22,5 +22,8 @@ dmg:
   window:
     width: 540
     height: 380
-publish: []
-generateUpdatesFilesForAllChannels: false
+publish:
+  provider: github
+  owner: AetherAssembly
+  repo: Before-Its-Gone
+generateUpdatesFilesForAllChannels: true

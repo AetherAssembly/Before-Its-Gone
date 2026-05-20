@@ -13,7 +13,7 @@
 [![macOS](https://img.shields.io/badge/macOS-DMG-000000?logo=apple&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![Windows](https://img.shields.io/badge/Windows-Installer%20%C2%B7%20Portable-0078D4?logo=windows&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 
-Offline-first desktop app — no account required, all data stays on your machine.
+Offline-first desktop app no account required, all data stays on your machine.
 
 ---
 
@@ -26,24 +26,46 @@ Offline-first desktop app — no account required, all data stays on your machin
 - **Search** across name, barcode, and category — debounced, no keystroke lag
 - **Filter** by location (fridge / freezer / pantry)
 - **Sort** by expiry date, date added, or name
-- **Stats dashboard** — items expiring this week, expired count, total units
-- **Quick-add buttons** from your item history — one click to pre-fill the form
-- **Categories & tags** — tag items with e.g. "dairy", "meat", "snacks"
-- **Quantity management** — `− Use one` with low-stock alerts · `+ Add one` to restock in one tap
-- **Undo "Use one"** — 5-second slide-in toast lets you reverse accidental taps
+- **Stats dashboard:** items expiring this week, expired count, total units
+- **Quick-add buttons** from your item history, one click to pre-fill the form
+- **Categories & tags:** tag items with e.g. "dairy", "meat", "snacks"
+- **Quantity management:** `− Use one` with low-stock alerts · `+ Add one` to restock in one tap
+- **Undo "Use one":** 5-second slide-in toast lets you reverse accidental taps
 - **Export** to JSON or CSV · **Import** from JSON or CSV
-- **Bulk select** — delete or move multiple items at once
-- **Clear all** with confirmation guard
+- **Bulk select:** delete or move multiple items at once
+- **Clear all:** with confirmation guard
 
 ---
 
 ## Download
 
-Get the latest release from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page.
+### One-line install
+
+**Linux & macOS:**
+
+```bash
+bash <(curl -fsSL https://aetherassembly.org/install.sh)
+```
+
+Auto-detects your distro and architecture, then installs via `apt`, `dnf`, `zypper`, `rpm`, `dmg`, or AppImage fallback.
+
+**Windows** (PowerShell):
+
+```powershell
+irm https://aetherassembly.org/install.ps1 | iex
+```
+
+Downloads and launches the NSIS installer.
+
+Run the same command again to update.
+
+---
+
+Or grab a specific build from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page.
 
 | Platform | Formats |
 | --- | --- |
-| Linux (x86_64) | AppImage · `.deb` (Debian/Ubuntu/Raspbian) · `.rpm` (Fedora/RHEL/openSUSE) · `PKGBUILD` (Arch Based Distros) |
+| Linux (x86_64) | AppImage · `.deb` (Debian/Ubuntu/Raspbian) · `.rpm` (Fedora/RHEL/openSUSE) |
 | Linux (arm64) | AppImage · `.deb` (Raspberry Pi 4/5) |
 | macOS | DMG |
 | Windows | NSIS installer · Portable `.exe` |
@@ -54,7 +76,7 @@ Get the latest release from the [Releases](https://github.com/AetherAssembly/Bef
 
 ### Install
 
-Run the NSIS installer (`before-its-gone-0.7.0-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+Run the NSIS installer (`before-its-gone-0.7.1-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
 
 ### Uninstall
 
@@ -76,42 +98,16 @@ Drag `Before Its Gone` out of your Applications folder and into the Trash.
 
 > If you would like to use the AppImage easily, you can use [Shelly](https://shellyalpm.com/) (CachyOS), or [GearLever](https://github.com/mijorus/gearlever)
 
-## Arch Based Distros
-
-### Install
-
-```bash
-
-Download the `PKGBUILD` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then run 
-
-makepkg -si
-
-sudo pacman -Syu
-
-```
-
-### Uninstall
-
-```bash
-sudo pacman -R before-its-gone-bin
-
-sudo pacman -Syu
-```
-
-### Flatpak / Snap
-
-Coming soon
-
 ## Fedora / RHEL 9+ / Rocky / Alma
 
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.7.0.x86_64.rpm
+sudo dnf install ./before-its-gone-0.7.1.x86_64.rpm
 
 # or
 
-sudo dnf install ./before-its-gone-0.7.0.arm64.rpm
+sudo dnf install ./before-its-gone-0.7.1.arm64.rpm
 ```
 
 ### Uninstall
@@ -125,11 +121,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.7.0-x86_64.rpm
+sudo zypper install ./before-its-gone-0.7.1-x86_64.rpm
 
 # or 
 
-sudo zypper install ./before-its-gone_0.7.0-aarch64.rpm
+sudo zypper install ./before-its-gone_0.7.1-aarch64.rpm
 ```
 
 ### Uninstall
@@ -144,12 +140,12 @@ sudo zypper remove before-its-gone
 
 ```bash
 # All other Debian Distros
-sudo apt install ./before-its-gone_0.7.0_amd64.deb
+sudo apt install ./before-its-gone-0.7.1-amd64.deb
 
 # or
 
 # Raspberry Pi 4/5 
-sudo apt install ./before-its-gone_0.7.0_arm64.deb
+sudo apt install ./before-its-gone-0.7.1-arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -159,6 +155,22 @@ sudo apt install ./before-its-gone_0.7.0_arm64.deb
 ```bash
 sudo apt remove before-its-gone
 ```
+
+### Raspberry Pi — sandbox warning
+
+On Raspberry Pi OS, Electron may log a warning about the SUID sandbox on first launch. The app still runs. To fix it permanently, choose one of:
+
+**Option 1 — Enable user namespaces system-wide:**
+```bash
+echo 'kernel.unprivileged_userns_clone = 1' | sudo tee /etc/sysctl.d/00-userns.conf
+sudo sysctl -p /etc/sysctl.d/00-userns.conf
+```
+
+**Option 2 — Set the SUID bit on the sandbox binary only:**
+```bash
+sudo chmod 4755 /opt/before-its-gone/chrome-sandbox
+```
+> The path may vary — find it with `dpkg -L before-its-gone | grep sandbox`.
 
 ---
 
@@ -199,9 +211,10 @@ npm run build
 ### Package for distribution
 
 ```bash
-npm run package:linux    # → release/*.AppImage + release/*.deb + release/*.rpm
-npm run package:macos    # → release/*.dmg  (run on macOS)
-npm run package:windows  # → release/*.exe  (run on Windows)
+npm run package:linux        # → release/*.AppImage + release/*.deb + release/*.rpm (x86_64)
+npm run package:linux:arm64  # → release/*.AppImage + release/*.deb + release/*.rpm (arm64, cross-compiled)
+npm run package:macos        # → release/*.dmg  (run on macOS)
+npm run package:windows      # → release/*.exe  (run on Windows)
 ```
 
 ---

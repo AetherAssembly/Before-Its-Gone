@@ -1,5 +1,6 @@
 import { type ChangeEvent, type FormEvent, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ScanModal } from './ScanModal.js';
+import { AboutDialog } from './AboutDialog.js';
 import {
   calculateExpiryDateISO,
   calculateExpiryStatus,
@@ -184,6 +185,13 @@ function App() {
     return Notification.permission;
   });
 
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState(() => import.meta.env.VITE_APP_VERSION ?? '');
+  const [updateBanner, setUpdateBanner] = useState<{
+    version: string;
+    state: 'downloading' | 'ready' | 'linux-link';
+  } | null>(null);
+
   const loadInventory = useCallback(
     () => inventoryService.list({ search, location: filterLocation, sortField, sortDirection }),
     [search, filterLocation, sortField, sortDirection]
@@ -203,6 +211,19 @@ function App() {
 
   useEffect(() => {
     void window.beforeItsGone?.getPlatform?.().then(setPlatform);
+  }, []);
+
+  useEffect(() => {
+    void window.beforeItsGone?.getAppVersion?.().then((v) => { if (v) setAppVersion(v); });
+  }, []);
+
+  useEffect(() => {
+    window.beforeItsGone?.onUpdateAvailable?.((info) => {
+      setUpdateBanner({ version: info.version, state: info.isLinuxPackage ? 'linux-link' : 'downloading' });
+    });
+    window.beforeItsGone?.onUpdateDownloaded?.((info) => {
+      setUpdateBanner({ version: info.version, state: 'ready' });
+    });
   }, []);
 
   useEffect(() => {
@@ -587,11 +608,32 @@ function App() {
 
   return (
     <>
+    {updateBanner && (
+      <div className="update-banner" data-state={updateBanner.state}>
+        <span>
+          {updateBanner.state === 'downloading' && `Downloading update v${updateBanner.version}…`}
+          {updateBanner.state === 'ready' && (
+            <>Update v{updateBanner.version} ready &mdash; <button onClick={() => { void window.beforeItsGone?.installUpdate?.(); }}>Restart to install</button></>
+          )}
+          {updateBanner.state === 'linux-link' && (
+            <>Update v{updateBanner.version} available &mdash; <a href="https://github.com/AetherAssembly/Before-Its-Gone/releases/latest" target="_blank" rel="noopener noreferrer">Download</a></>
+          )}
+        </span>
+        <button className="update-banner-dismiss" onClick={() => setUpdateBanner(null)} aria-label="Dismiss">&times;</button>
+      </div>
+    )}
     <main className="app-shell">
-      <header>
-        <h1>Before It&apos;s Gone</h1>
-        <p>Offline inventory tracking that works on web and desktop.</p>
+      <header className="app-header">
+        <div className="app-brand">
+          <img src={`${import.meta.env.BASE_URL}icons/icon-192.svg`} className="brand-logo" width="40" height="40" alt="" aria-hidden="true" />
+          <div className="brand-text">
+            <h1>Before It&apos;s Gone</h1>
+            <p>Offline inventory tracking that works on web and desktop.</p>
+          </div>
+        </div>
+        <button className="about-trigger" onClick={() => setAboutOpen(true)} title="About" aria-label="About">&#9432;</button>
       </header>
+      <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} version={appVersion} />
 
       <section className="summary">
         <div className="summary-grid">
