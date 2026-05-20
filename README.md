@@ -39,11 +39,29 @@ Offline-first desktop app — no account required, all data stays on your machin
 
 ## Download
 
-Get the latest release from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page.
+### One-line install
+
+**Linux & macOS:**
+```bash
+bash <(curl -fsSL https://astersworld.xyz/install.sh)
+```
+Auto-detects your distro and architecture — installs via `apt`, `dnf`, `zypper`, `rpm`, or AppImage fallback.
+
+**Windows** (PowerShell):
+```powershell
+irm https://astersworld.xyz/install.ps1 | iex
+```
+Downloads and launches the NSIS installer.
+
+Run the same command again to update.
+
+---
+
+Or grab a specific build from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page.
 
 | Platform | Formats |
 | --- | --- |
-| Linux (x86_64) | AppImage · `.deb` (Debian/Ubuntu/Raspbian) · `.rpm` (Fedora/RHEL/openSUSE) · `PKGBUILD` (Arch Based Distros) |
+| Linux (x86_64) | AppImage · `.deb` (Debian/Ubuntu/Raspbian) · `.rpm` (Fedora/RHEL/openSUSE) |
 | Linux (arm64) | AppImage · `.deb` (Raspberry Pi 4/5) |
 | macOS | DMG |
 | Windows | NSIS installer · Portable `.exe` |
@@ -54,7 +72,7 @@ Get the latest release from the [Releases](https://github.com/AetherAssembly/Bef
 
 ### Install
 
-Run the NSIS installer (`before-its-gone-0.7.0-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+Run the NSIS installer (`before-its-gone-0.7.1-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
 
 ### Uninstall
 
@@ -76,42 +94,16 @@ Drag `Before Its Gone` out of your Applications folder and into the Trash.
 
 > If you would like to use the AppImage easily, you can use [Shelly](https://shellyalpm.com/) (CachyOS), or [GearLever](https://github.com/mijorus/gearlever)
 
-## Arch Based Distros
-
-### Install
-
-```bash
-
-Download the `PKGBUILD` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then run 
-
-makepkg -si
-
-sudo pacman -Syu
-
-```
-
-### Uninstall
-
-```bash
-sudo pacman -R before-its-gone-bin
-
-sudo pacman -Syu
-```
-
-### Flatpak / Snap
-
-Coming soon
-
 ## Fedora / RHEL 9+ / Rocky / Alma
 
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.7.0.x86_64.rpm
+sudo dnf install ./before-its-gone-0.7.1.x86_64.rpm
 
 # or
 
-sudo dnf install ./before-its-gone-0.7.0.arm64.rpm
+sudo dnf install ./before-its-gone-0.7.1.arm64.rpm
 ```
 
 ### Uninstall
@@ -125,11 +117,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.7.0-x86_64.rpm
+sudo zypper install ./before-its-gone-0.7.1-x86_64.rpm
 
 # or 
 
-sudo zypper install ./before-its-gone_0.7.0-aarch64.rpm
+sudo zypper install ./before-its-gone_0.7.1-aarch64.rpm
 ```
 
 ### Uninstall
@@ -144,12 +136,12 @@ sudo zypper remove before-its-gone
 
 ```bash
 # All other Debian Distros
-sudo apt install ./before-its-gone_0.7.0_amd64.deb
+sudo apt install ./before-its-gone-0.7.1-amd64.deb
 
 # or
 
 # Raspberry Pi 4/5 
-sudo apt install ./before-its-gone_0.7.0_arm64.deb
+sudo apt install ./before-its-gone-0.7.1-arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -199,9 +191,10 @@ npm run build
 ### Package for distribution
 
 ```bash
-npm run package:linux    # → release/*.AppImage + release/*.deb + release/*.rpm
-npm run package:macos    # → release/*.dmg  (run on macOS)
-npm run package:windows  # → release/*.exe  (run on Windows)
+npm run package:linux        # → release/*.AppImage + release/*.deb + release/*.rpm (x86_64)
+npm run package:linux:arm64  # → release/*.AppImage + release/*.deb + release/*.rpm (arm64, cross-compiled)
+npm run package:macos        # → release/*.dmg  (run on macOS)
+npm run package:windows      # → release/*.exe  (run on Windows)
 ```
 
 ---

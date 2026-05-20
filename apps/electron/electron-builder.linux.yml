@@ -21,5 +21,8 @@ linux:
   desktop:
     entry:
       Name: "Before It's Gone"
-publish: []
-generateUpdatesFilesForAllChannels: false
+publish:
+  provider: github
+  owner: AetherAssembly
+  repo: Before-Its-Gone
+generateUpdatesFilesForAllChannels: true

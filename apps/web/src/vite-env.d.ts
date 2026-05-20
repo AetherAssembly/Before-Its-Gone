@@ -18,5 +18,16 @@ interface Window {
     stopBarcodeServer?(): Promise<void>;
     onBarcodeScanned?(cb: (barcode: string) => void): void;
     onSaveItemFromPhone?(cb: (data: PhoneSavePayload) => Promise<void>): void;
+    onUpdateAvailable?(cb: (info: { version: string; isLinuxPackage: boolean }) => void): void;
+    onUpdateDownloaded?(cb: (info: { version: string }) => void): void;
+    onUpdateError?(cb: (msg: string) => void): void;
+    installUpdate?(): Promise<void>;
+    downloadUpdate?(): Promise<void>;
   };
+}
+
+interface ImportMeta {
+  readonly env: {
+    readonly VITE_APP_VERSION: string;
+  } & Record<string, string | boolean | undefined>;
 }

@@ -1,7 +1,7 @@
 {
   "name": "before-its-gone-electron",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Electron desktop shell for Before It's Gone",
   "author": {
     "name": "Before-Its-Gone",
@@ -18,10 +18,12 @@
     "build": "tsc -p tsconfig.json",
     "package:appimage": "electron-builder --config electron-builder.linux.yml --linux AppImage --publish never -c.electronVersion=42.0.1",
     "package:linux": "electron-builder --config electron-builder.linux.yml --linux --publish never -c.electronVersion=42.0.1",
+    "package:linux:arm64": "electron-builder --config electron-builder.linux.yml --linux --arm64 --publish never -c.electronVersion=42.0.1",
     "package:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish never -c.electronVersion=42.0.1",
     "package:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=42.0.1"
   },
   "dependencies": {
+    "electron-updater": "^6.3.9",
     "qrcode": "^1.5.4",
     "selfsigned": "^5.5.0"
   },
