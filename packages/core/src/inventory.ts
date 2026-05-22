@@ -32,12 +32,17 @@ export async function getFilteredInventory(options: {
   location?: FilterLocation;
   sortField?: SortField;
   sortDirection?: SortDirection;
+  tags?: string[];
 }): Promise<InventoryItem[]> {
-  const { search = '', location = 'all', sortField = 'expiresAt', sortDirection = 'asc' } = options;
+  const { search = '', location = 'all', sortField = 'expiresAt', sortDirection = 'asc', tags = [] } = options;
   let items = await listInventoryItems();
 
   if (location !== 'all') {
     items = items.filter((item) => item.location === location);
+  }
+
+  if (tags.length > 0) {
+    items = items.filter((item) => tags.every((t) => item.tags.includes(t)));
   }
 
   if (search.trim()) {

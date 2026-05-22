@@ -1,4 +1,28 @@
+import { useState } from 'react';
 import { type AppSettings, DEFAULT_APP_SETTINGS } from '@before-its-gone/core';
+
+const BUILT_IN_LOCATIONS = ['fridge', 'freezer', 'pantry'];
+
+function AddLocationForm({ onAdd }: { onAdd: (name: string) => void }) {
+  const [value, setValue] = useState('');
+
+  const commit = () => {
+    const name = value.trim();
+    if (name) { onAdd(name); setValue(''); }
+  };
+
+  return (
+    <div className="add-location-form">
+      <input
+        placeholder="New location name…"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && commit()}
+      />
+      <button type="button" disabled={!value.trim()} onClick={commit}>Add</button>
+    </div>
+  );
+}
 
 type SettingsPanelProps = {
   settings: AppSettings;
@@ -89,6 +113,39 @@ export function SettingsPanel({ settings, onChange, notificationState, onEnableN
               </label>
             </div>
           )}
+        </fieldset>
+
+        <fieldset className="settings-fieldset">
+          <legend>Custom storage locations</legend>
+          {settings.customLocations.length === 0 ? (
+            <p className="settings-hint">No custom locations yet.</p>
+          ) : (
+            <div className="custom-locations-list">
+              {settings.customLocations.map((loc) => (
+                <div key={loc} className="custom-location-row">
+                  <span>{loc}</span>
+                  <button
+                    type="button"
+                    className="btn-sm btn-ghost"
+                    onClick={() => onChange({
+                      ...settings,
+                      customLocations: settings.customLocations.filter((l) => l !== loc),
+                      defaultLocation: settings.defaultLocation === loc ? 'fridge' : settings.defaultLocation
+                    })}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <AddLocationForm
+            onAdd={(name) => {
+              if (!BUILT_IN_LOCATIONS.includes(name.toLowerCase()) && !settings.customLocations.includes(name)) {
+                onChange({ ...settings, customLocations: [...settings.customLocations, name] });
+              }
+            }}
+          />
         </fieldset>
 
         <button type="button" className="btn-ghost" onClick={() => onChange({ ...DEFAULT_APP_SETTINGS })}>

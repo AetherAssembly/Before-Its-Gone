@@ -12,9 +12,10 @@ type InventoryCardProps = {
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   warningWindowDays?: number;
+  onTagClick?: (tag: string) => void;
 };
 
-export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect, warningWindowDays }: InventoryCardProps) {
+export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect, warningWindowDays, onTagClick }: InventoryCardProps) {
   const status = calculateExpiryStatus(item.expiresAt, warningWindowDays);
 
   return (
@@ -34,7 +35,16 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
           <span>{item.location}</span>
           {item.category ? <span className="tag">{item.category}</span> : null}
           {item.tags?.map((tag) => (
-            <span key={tag} className="tag">{tag}</span>
+            <span
+              key={tag}
+              className={onTagClick ? 'tag tag--clickable' : 'tag'}
+              role={onTagClick ? 'button' : undefined}
+              tabIndex={onTagClick ? 0 : undefined}
+              onClick={onTagClick ? () => onTagClick(tag) : undefined}
+              onKeyDown={onTagClick ? (e) => e.key === 'Enter' && onTagClick(tag) : undefined}
+            >
+              {tag}
+            </span>
           ))}
         </div>
       </header>

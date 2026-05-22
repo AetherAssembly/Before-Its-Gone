@@ -1,4 +1,4 @@
-export type StorageLocation = 'fridge' | 'freezer' | 'pantry';
+export type StorageLocation = 'fridge' | 'freezer' | 'pantry' | (string & {});
 
 export type ExpiryStatus = 'fresh' | 'expiring-soon' | 'expired';
 
@@ -56,6 +56,7 @@ export interface AppSettings {
   defaultLocation: StorageLocation;
   defaultShelfLifeDays: number;
   expiryWarningDays: number;
+  customLocations: string[];
   notifications: {
     expiring: boolean;
     expired: boolean;
@@ -67,6 +68,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   defaultLocation: 'fridge',
   defaultShelfLifeDays: 7,
   expiryWarningDays: 2,
+  customLocations: [],
   notifications: {
     expiring: true,
     expired: true,

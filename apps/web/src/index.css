@@ -709,3 +709,63 @@ button:disabled {
   cursor: pointer;
   accent-color: #22d3ee;
 }
+
+/* Tag filters */
+
+.tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.tag--filter {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.tag--filter:hover,
+.tag--clickable:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
+}
+
+.tag--active {
+  background: #0c2a33;
+  border-color: #22d3ee;
+  color: #22d3ee;
+}
+
+.tag--clickable {
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+/* Custom locations in settings */
+
+.custom-locations-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.custom-location-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #cbd5e1;
+}
+
+.add-location-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-location-form input {
+  flex: 1;
+}
+
+.add-location-form button {
+  flex-shrink: 0;
+}

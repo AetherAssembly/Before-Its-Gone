@@ -180,6 +180,7 @@ function App() {
   const [filterLocation, setFilterLocation] = useState<FilterLocation>('all');
   const [sortField, setSortField] = useState<SortField>('expiresAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [activeTags, setActiveTags] = useState<string[]>([]);
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
@@ -221,8 +222,8 @@ function App() {
   } | null>(null);
 
   const loadInventory = useCallback(
-    () => inventoryService.list({ search, location: filterLocation, sortField, sortDirection }),
-    [search, filterLocation, sortField, sortDirection]
+    () => inventoryService.list({ search, location: filterLocation, sortField, sortDirection, tags: activeTags }),
+    [search, filterLocation, sortField, sortDirection, activeTags]
   );
 
   useEffect(() => {
@@ -301,6 +302,15 @@ function App() {
   );
 
   const expiringThisWeek = useMemo(() => getExpiringThisWeek(items), [items]);
+
+  const availableTags = useMemo(
+    () => [...new Set(allItems.flatMap((item) => item.tags))].sort(),
+    [allItems]
+  );
+
+  const onToggleTag = (tag: string) => {
+    setActiveTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
+  };
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -851,6 +861,9 @@ function App() {
               <option value="fridge">Fridge</option>
               <option value="freezer">Freezer</option>
               <option value="pantry">Pantry</option>
+              {settings.customLocations.map((loc) => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
             </select>
           </label>
 
@@ -880,6 +893,9 @@ function App() {
             <option value="fridge">Fridge</option>
             <option value="freezer">Freezer</option>
             <option value="pantry">Pantry</option>
+            {settings.customLocations.map((loc) => (
+              <option key={loc} value={loc}>{loc}</option>
+            ))}
           </select>
 
           <select
@@ -946,6 +962,9 @@ function App() {
                   <option value="fridge">Fridge</option>
                   <option value="freezer">Freezer</option>
                   <option value="pantry">Pantry</option>
+                  {settings.customLocations.map((loc) => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
                 </select>
               </label>
               <label>Low stock alert at (optional)
@@ -956,6 +975,28 @@ function App() {
                 <button type="button" className="btn-ghost" onClick={onEditCancel}>Cancel</button>
               </div>
             </div>
+          </div>
+        )}
+
+        {availableTags.length > 0 && (
+          <div className="tag-filters">
+            {availableTags.map((tag) => (
+              <span
+                key={tag}
+                className={`tag tag--filter${activeTags.includes(tag) ? ' tag--active' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => onToggleTag(tag)}
+                onKeyDown={(e) => e.key === 'Enter' && onToggleTag(tag)}
+              >
+                {tag}
+              </span>
+            ))}
+            {activeTags.length > 0 && (
+              <button type="button" className="btn-ghost btn-sm" onClick={() => setActiveTags([])}>
+                Clear
+              </button>
+            )}
           </div>
         )}
 
@@ -971,6 +1012,7 @@ function App() {
               selected={bulkMode ? selectedIds.has(item.id) : undefined}
               onToggleSelect={bulkMode ? onToggleSelect : undefined}
               warningWindowDays={settings.expiryWarningDays}
+              onTagClick={onToggleTag}
             />
           ))}
           {items.length === 0 ? <p>No items match your filters.</p> : null}

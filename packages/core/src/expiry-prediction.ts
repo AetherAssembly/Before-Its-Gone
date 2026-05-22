@@ -78,7 +78,7 @@ export function predictShelfLife(
 ): number {
   const matched = matchCategory(ofbCategories);
   const table = matched ? (CATEGORY_SHELF_LIFE[matched] ?? DEFAULTS) : DEFAULTS;
-  return table[location];
+  return (table as unknown as Record<string, number>)[location] ?? table.pantry;
 }
 
 export function predictShelfLifeCategory(ofbCategories: string[]): string | null {

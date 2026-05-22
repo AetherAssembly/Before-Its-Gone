@@ -29,6 +29,7 @@ export class InventoryService {
     location?: FilterLocation;
     sortField?: SortField;
     sortDirection?: SortDirection;
+    tags?: string[];
   } = {}): Promise<InventoryItem[]> {
     return getFilteredInventory(options);
   }
