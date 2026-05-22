@@ -11,10 +11,11 @@ type InventoryCardProps = {
   onEdit?: (id: string) => void;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
+  warningWindowDays?: number;
 };
 
-export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect }: InventoryCardProps) {
-  const status = calculateExpiryStatus(item.expiresAt);
+export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect, warningWindowDays }: InventoryCardProps) {
+  const status = calculateExpiryStatus(item.expiresAt, warningWindowDays);
 
   return (
     <article className="inventory-card" data-status={status} data-selected={selected ? 'true' : undefined}>

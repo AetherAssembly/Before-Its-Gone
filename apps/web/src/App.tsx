@@ -1,12 +1,16 @@
 import { type ChangeEvent, type FormEvent, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ScanModal } from './ScanModal.js';
 import { AboutDialog } from './AboutDialog.js';
+import { SettingsPanel } from './SettingsPanel.js';
 import {
   calculateExpiryDateISO,
   calculateExpiryStatus,
   createLocalStorageAdapter,
   importExportService,
   inventoryService,
+  type AppSettings,
+  DEFAULT_APP_SETTINGS,
+  SETTINGS_STORAGE_KEY,
   type FilterLocation,
   type InventoryItem,
   type ItemHistory,
@@ -30,22 +34,45 @@ type FormState = {
 
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
-const INITIAL_FORM: FormState = {
-  name: '',
-  quantity: 1,
-  location: 'fridge',
-  barcode: '',
-  shelfLifeDays: 7,
-  expiryDate: new Date(calculateExpiryDateISO(7)).toISOString().slice(0, 10),
-  category: '',
-  depletionThreshold: '',
-  tags: ''
-};
-
-const notificationStorage = createLocalStorageAdapter();
+const appStorage = createLocalStorageAdapter();
 const NOTIFICATION_LOG_KEY = 'before-its-gone.notification-log';
 
-async function notifyExpiringItems(items: InventoryItem[]): Promise<void> {
+function getInitialSettings(): AppSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<AppSettings>;
+      return {
+        ...DEFAULT_APP_SETTINGS,
+        ...parsed,
+        notifications: { ...DEFAULT_APP_SETTINGS.notifications, ...(parsed.notifications ?? {}) }
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return { ...DEFAULT_APP_SETTINGS };
+}
+
+function makeInitialForm(s: AppSettings): FormState {
+  return {
+    name: '',
+    quantity: 1,
+    location: s.defaultLocation,
+    barcode: '',
+    shelfLifeDays: s.defaultShelfLifeDays,
+    expiryDate: new Date(calculateExpiryDateISO(s.defaultShelfLifeDays)).toISOString().slice(0, 10),
+    category: '',
+    depletionThreshold: '',
+    tags: ''
+  };
+}
+
+async function notifyExpiringItems(
+  items: InventoryItem[],
+  warningWindowDays: number,
+  prefs: { expiring: boolean; expired: boolean }
+): Promise<void> {
   if (typeof window === 'undefined' || !('Notification' in window)) {
     return;
   }
@@ -55,32 +82,25 @@ async function notifyExpiringItems(items: InventoryItem[]): Promise<void> {
   }
 
   const logged =
-    (await notificationStorage.get<Record<string, true>>(NOTIFICATION_LOG_KEY)) ?? {};
+    (await appStorage.get<Record<string, true>>(NOTIFICATION_LOG_KEY)) ?? {};
   const dayStamp = new Date().toISOString().slice(0, 10);
 
   for (const item of items) {
-    const status = calculateExpiryStatus(item.expiresAt);
-    if (status === 'fresh') {
-      continue;
-    }
+    const status = calculateExpiryStatus(item.expiresAt, warningWindowDays);
+    if (status === 'fresh') continue;
+    if (status === 'expiring-soon' && !prefs.expiring) continue;
+    if (status === 'expired' && !prefs.expired) continue;
 
     const id = `${item.id}:${status}:${dayStamp}`;
-    if (logged[id]) {
-      continue;
-    }
+    if (logged[id]) continue;
 
-    const title =
-      status === 'expired'
-        ? `${item.name} has expired`
-        : `${item.name} expires soon`;
-    const body = `${item.quantity} unit(s) in ${item.location}. Expires ${new Date(
-      item.expiresAt
-    ).toLocaleDateString()}.`;
+    const title = status === 'expired' ? `${item.name} has expired` : `${item.name} expires soon`;
+    const body = `${item.quantity} unit(s) in ${item.location}. Expires ${new Date(item.expiresAt).toLocaleDateString()}.`;
     new Notification(title, { body, tag: id });
     logged[id] = true;
   }
 
-  await notificationStorage.set(NOTIFICATION_LOG_KEY, logged);
+  await appStorage.set(NOTIFICATION_LOG_KEY, logged);
 }
 
 async function notifyDepletion(item: InventoryItem): Promise<void> {
@@ -141,8 +161,16 @@ function getExpiringThisWeek(items: InventoryItem[]): number {
 }
 
 function App() {
+  const [settings, setSettings] = useState<AppSettings>(getInitialSettings);
+  const [activeTab, setActiveTab] = useState<'inventory' | 'settings'>('inventory');
+
+  const onChangeSettings = useCallback((next: AppSettings) => {
+    setSettings(next);
+    void appStorage.set(SETTINGS_STORAGE_KEY, next);
+  }, []);
+
   const [items, setItems] = useState<InventoryItem[]>([]);
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [form, setForm] = useState<FormState>(() => makeInitialForm(getInitialSettings()));
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [frequentItems, setFrequentItems] = useState<ItemHistory[]>([]);
@@ -202,8 +230,8 @@ function App() {
   }, [loadInventory]);
 
   useEffect(() => {
-    void notifyExpiringItems(items);
-  }, [items]);
+    void notifyExpiringItems(items, settings.expiryWarningDays, settings.notifications);
+  }, [items, settings.expiryWarningDays, settings.notifications]);
 
   useEffect(() => {
     void inventoryService.frequentItems(5).then(setFrequentItems);
@@ -263,13 +291,13 @@ function App() {
   );
 
   const expiredItems = useMemo(
-    () => items.filter((item) => calculateExpiryStatus(item.expiresAt) === 'expired').length,
-    [items]
+    () => items.filter((item) => calculateExpiryStatus(item.expiresAt, settings.expiryWarningDays) === 'expired').length,
+    [items, settings.expiryWarningDays]
   );
 
   const expiringSoonItems = useMemo(
-    () => items.filter((item) => calculateExpiryStatus(item.expiresAt) === 'expiring-soon').length,
-    [items]
+    () => items.filter((item) => calculateExpiryStatus(item.expiresAt, settings.expiryWarningDays) === 'expiring-soon').length,
+    [items, settings.expiryWarningDays]
   );
 
   const expiringThisWeek = useMemo(() => getExpiringThisWeek(items), [items]);
@@ -380,7 +408,7 @@ function App() {
       setNotificationState(permission);
       if (permission === 'granted') {
         setStatusMessage('Notifications enabled for expiring items.');
-        void notifyExpiringItems(items);
+        void notifyExpiringItems(items, settings.expiryWarningDays, settings.notifications);
       }
     } catch {
       setNotificationState('denied');
@@ -417,7 +445,7 @@ function App() {
       }
 
       setItems((prev) => [newItem, ...prev]);
-      setForm(INITIAL_FORM);
+      setForm(makeInitialForm(settings));
       setStatusMessage('Item saved.');
       bumpStats();
       void inventoryService.frequentItems(5).then(setFrequentItems);
@@ -442,7 +470,7 @@ function App() {
     setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
     bumpStats();
 
-    if (depleted) void notifyDepletion(item);
+    if (depleted && settings.notifications.lowStock) void notifyDepletion(item);
 
     setUndoPending((prev) => {
       if (prev) clearTimeout(prev.timer);
@@ -635,6 +663,35 @@ function App() {
       </header>
       <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} version={appVersion} />
 
+      <nav className="tab-nav">
+        <button
+          type="button"
+          className="tab-btn"
+          data-active={activeTab === 'inventory' ? 'true' : undefined}
+          onClick={() => setActiveTab('inventory')}
+        >
+          Inventory
+        </button>
+        <button
+          type="button"
+          className="tab-btn"
+          data-active={activeTab === 'settings' ? 'true' : undefined}
+          onClick={() => setActiveTab('settings')}
+        >
+          Settings
+        </button>
+      </nav>
+
+      {activeTab === 'settings' && (
+        <SettingsPanel
+          settings={settings}
+          onChange={onChangeSettings}
+          notificationState={notificationState}
+          onEnableNotifications={() => { void onNotificationEnable(); }}
+        />
+      )}
+
+      {activeTab === 'inventory' && <>
       <section className="summary">
         <div className="summary-grid">
           <div className="stat-card">
@@ -679,23 +736,6 @@ function App() {
           </div>
         </section>
       )}
-
-      <section className="panel">
-        <h2>Notifications</h2>
-        <p>
-          Status:{' '}
-          <strong>
-            {notificationState === 'unsupported'
-              ? 'not supported on this browser'
-              : notificationState}
-          </strong>
-        </p>
-        {notificationState !== 'granted' && notificationState !== 'unsupported' ? (
-          <button type="button" onClick={onNotificationEnable}>
-            Enable expiry notifications
-          </button>
-        ) : null}
-      </section>
 
       <section className="panel">
         <h2>Add item</h2>
@@ -930,6 +970,7 @@ function App() {
               onEdit={onEdit}
               selected={bulkMode ? selectedIds.has(item.id) : undefined}
               onToggleSelect={bulkMode ? onToggleSelect : undefined}
+              warningWindowDays={settings.expiryWarningDays}
             />
           ))}
           {items.length === 0 ? <p>No items match your filters.</p> : null}
@@ -977,6 +1018,7 @@ function App() {
           )}
         </div>
       </section>
+      </>}
     </main>
 
     {undoPending && (

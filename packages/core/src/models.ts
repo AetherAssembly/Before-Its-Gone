@@ -51,3 +51,27 @@ export interface ItemHistory {
   lastUsedAt: string;
   useCount: number;
 }
+
+export interface AppSettings {
+  defaultLocation: StorageLocation;
+  defaultShelfLifeDays: number;
+  expiryWarningDays: number;
+  notifications: {
+    expiring: boolean;
+    expired: boolean;
+    lowStock: boolean;
+  };
+}
+
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  defaultLocation: 'fridge',
+  defaultShelfLifeDays: 7,
+  expiryWarningDays: 2,
+  notifications: {
+    expiring: true,
+    expired: true,
+    lowStock: true,
+  },
+};
+
+export const SETTINGS_STORAGE_KEY = 'before-its-gone.settings';
