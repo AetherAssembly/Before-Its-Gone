@@ -20,7 +20,11 @@
     "package:linux": "electron-builder --config electron-builder.linux.yml --linux --publish never -c.electronVersion=42.0.1",
     "package:linux:arm64": "electron-builder --config electron-builder.linux.yml --linux --arm64 --publish never -c.electronVersion=42.0.1",
     "package:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish never -c.electronVersion=42.0.1",
-    "package:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=42.0.1"
+    "package:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=42.0.1",
+    "publish:linux": "electron-builder --config electron-builder.linux.yml --linux --publish always -c.electronVersion=42.0.1",
+    "publish:linux:arm64": "electron-builder --config electron-builder.linux.yml --linux --arm64 --publish always -c.electronVersion=42.0.1",
+    "publish:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish always -c.electronVersion=42.0.1",
+    "publish:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish always -c.electronVersion=42.0.1"
   },
   "dependencies": {
     "electron-updater": "^6.3.9",
