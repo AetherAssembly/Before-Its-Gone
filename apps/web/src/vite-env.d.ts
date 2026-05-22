@@ -7,6 +7,7 @@ type PhoneSavePayload = {
   location: 'fridge' | 'freezer' | 'pantry';
   category: string | null;
   shelfLifeDays: number;
+  expiresAt: string | null;
 };
 
 interface Window {

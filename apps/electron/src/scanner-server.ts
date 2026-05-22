@@ -86,6 +86,7 @@ export type PhoneSavePayload = {
   location: 'fridge' | 'freezer' | 'pantry';
   category: string | null;
   shelfLifeDays: number;
+  expiresAt: string | null;
 };
 
 type OFBProduct = {
@@ -296,6 +297,7 @@ export async function startScannerServer(
               return;
             }
             try {
+              const rawExpiresAt = typeof body.expiresAt === 'string' && body.expiresAt.trim() ? body.expiresAt.trim() : null;
               await onSaveItem({
                 barcode: typeof body.barcode === 'string' ? body.barcode.trim() : '',
                 name: (body.name as string).trim(),
@@ -303,6 +305,7 @@ export async function startScannerServer(
                 location: location as 'fridge' | 'freezer' | 'pantry',
                 category: typeof body.category === 'string' ? body.category.trim() || null : null,
                 shelfLifeDays: Math.max(1, Number(body.shelfLifeDays) || 30),
+                expiresAt: rawExpiresAt && !isNaN(new Date(rawExpiresAt).getTime()) ? rawExpiresAt : null,
               });
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ ok: true }));

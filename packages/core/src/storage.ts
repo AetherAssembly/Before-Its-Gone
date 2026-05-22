@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 import type { DBSchema } from 'idb';
-import type { BarcodeProfile, InventoryItem, ItemHistory } from './models';
+import type { BarcodeProfile, InventoryItem, ItemHistory, WasteLogEntry } from './models';
 
 interface BeforeItsGoneDB extends DBSchema {
   inventory: {
@@ -15,9 +15,13 @@ interface BeforeItsGoneDB extends DBSchema {
     key: string;
     value: ItemHistory;
   };
+  wasteLog: {
+    key: string;
+    value: WasteLogEntry;
+  };
 }
 
-const dbPromise = openDB<BeforeItsGoneDB>('before-its-gone', 3, {
+const dbPromise = openDB<BeforeItsGoneDB>('before-its-gone', 4, {
   upgrade(database, oldVersion) {
     if (oldVersion < 2) {
       if (!database.objectStoreNames.contains('inventory')) {
@@ -30,6 +34,11 @@ const dbPromise = openDB<BeforeItsGoneDB>('before-its-gone', 3, {
     if (oldVersion < 3) {
       if (!database.objectStoreNames.contains('itemHistory')) {
         database.createObjectStore('itemHistory', { keyPath: 'id' });
+      }
+    }
+    if (oldVersion < 4) {
+      if (!database.objectStoreNames.contains('wasteLog')) {
+        database.createObjectStore('wasteLog', { keyPath: 'id' });
       }
     }
   }
@@ -87,6 +96,21 @@ export async function listItemHistory(): Promise<ItemHistory[]> {
 export async function upsertItemHistory(entry: ItemHistory): Promise<void> {
   const database = await dbPromise;
   await database.put('itemHistory', entry);
+}
+
+export async function addWasteLogEntry(entry: WasteLogEntry): Promise<void> {
+  const database = await dbPromise;
+  await database.put('wasteLog', entry);
+}
+
+export async function listWasteLogEntries(): Promise<WasteLogEntry[]> {
+  const database = await dbPromise;
+  return database.getAll('wasteLog');
+}
+
+export async function clearWasteLogEntries(): Promise<void> {
+  const database = await dbPromise;
+  await database.clear('wasteLog');
 }
 
 export interface KeyValueStorage {

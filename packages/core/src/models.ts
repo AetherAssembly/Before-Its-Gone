@@ -19,6 +19,8 @@ export interface InventoryItem {
   category: string | null;
   depletionThreshold: number | null;
   tags: string[];
+  recurring?: boolean;
+  restockQuantity?: number;
 }
 
 export interface NewInventoryItem {
@@ -31,6 +33,18 @@ export interface NewInventoryItem {
   category?: string | null;
   depletionThreshold?: number | null;
   tags?: string[];
+  recurring?: boolean;
+  restockQuantity?: number;
+}
+
+export interface WasteLogEntry {
+  id: string;
+  itemName: string;
+  quantity: number;
+  location: StorageLocation;
+  category: string | null;
+  expiresAt: string;
+  wastedAt: string;
 }
 
 export interface BarcodeProfile {
