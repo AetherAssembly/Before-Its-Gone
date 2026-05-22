@@ -877,6 +877,44 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
+/* Email settings */
+
+.email-pause-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #f59e0b;
+}
+
+.email-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.snooze-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
 /* Recurring / checkbox fields */
 
 .checkbox-label {

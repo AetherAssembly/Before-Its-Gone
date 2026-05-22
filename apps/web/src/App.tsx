@@ -10,6 +10,7 @@ import {
   getWasteLog,
   logWastedItem,
   clearWasteLog,
+  renderDigest,
   importExportService,
   inventoryService,
   type AppSettings,
@@ -225,6 +226,7 @@ function App() {
   });
 
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [emailPaused, setEmailPaused] = useState(false);
   const [appVersion, setAppVersion] = useState(() => import.meta.env.VITE_APP_VERSION ?? '');
   const [updateBanner, setUpdateBanner] = useState<{
     version: string;
@@ -267,6 +269,30 @@ function App() {
     window.beforeItsGone?.onUpdateDownloaded?.((info) => {
       setUpdateBanner({ version: info.version, state: 'ready' });
     });
+  }, []);
+
+  useEffect(() => {
+    void window.beforeItsGone?.getEmailSettings?.().then((s) => { if (s?.paused) setEmailPaused(true); });
+  }, []);
+
+  useEffect(() => {
+    window.beforeItsGone?.onDigestFire?.(async () => {
+      const api = window.beforeItsGone;
+      if (!api?.sendEmail) return;
+      const emailSettings = await api.getEmailSettings?.();
+      if (!emailSettings || emailSettings.paused || emailSettings.provider === 'none') return;
+
+      const all = await inventoryService.list({});
+      const expired = all.filter((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) === 'expired');
+      const expiringSoon = all.filter((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) === 'expiring-soon');
+      const depleted = getShoppingList(all);
+
+      if (expired.length === 0 && expiringSoon.length === 0 && depleted.length === 0) return;
+
+      const html = renderDigest({ expired, expiringSoon, depleted, digestType: emailSettings.digest === 'weekly' ? 'weekly' : 'daily' });
+      await api.sendEmail({ subject: `Before It's Gone — ${emailSettings.digest} digest`, html });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -728,6 +754,18 @@ function App() {
           )}
         </span>
         <button className="update-banner-dismiss" onClick={() => setUpdateBanner(null)} aria-label="Dismiss">&times;</button>
+      </div>
+    )}
+    {emailPaused && (
+      <div className="update-banner" data-state="downloading">
+        <span>Email notifications are paused. <button className="btn-link" onClick={() => {
+          void window.beforeItsGone?.getEmailSettings?.().then(async (s) => {
+            if (!s) return;
+            await window.beforeItsGone?.saveEmailSettings?.({ ...s, paused: false, resumeAt: null });
+            setEmailPaused(false);
+          });
+        }}>Resume</button></span>
+        <button className="update-banner-dismiss" onClick={() => setEmailPaused(false)} aria-label="Dismiss">&times;</button>
       </div>
     )}
     <main className="app-shell">
