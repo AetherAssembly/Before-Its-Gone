@@ -57,6 +57,10 @@ if [[ "$OS" == "Darwin" ]]; then
   cp -R "$MOUNT_POINT/$APP" /Applications/
   hdiutil detach "$MOUNT_POINT" -quiet
 
+  # Strip the quarantine attribute — without this, macOS blocks launch with
+  # "app is damaged" because the DMG was downloaded from the internet.
+  xattr -cr "/Applications/$APP" 2>/dev/null || true
+
   success "Before It's Gone $VERSION installed → /Applications/$APP"
   exit 0
 fi
@@ -135,7 +139,7 @@ EOF
 
   success "AppImage installed → $DEST"
 
-  if ! printf ':%s:' "$PATH" | grep -q ":${INSTALL_DIR}:"; then
+  if [[ ":$PATH:" != *":${INSTALL_DIR}:"* ]]; then
     printf "\n  To run from the terminal, add this to your shell profile (~/.bashrc, ~/.zshrc, etc.):\n"
     printf '  export PATH="$HOME/.local/bin:$PATH"\n\n'
   fi

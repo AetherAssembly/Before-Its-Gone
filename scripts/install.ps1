@@ -4,6 +4,10 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Ensure TLS 1.2 — older Windows 10 builds default to TLS 1.0/1.1, which
+# GitHub rejects. Must be set before any web calls.
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 $Repo       = "AetherAssembly/Before-Its-Gone"
 $ApiUrl     = "https://api.github.com/repos/$Repo/releases/latest"
 $ReleasesUrl = "https://github.com/$Repo/releases"
@@ -33,7 +37,7 @@ $TempFile = Join-Path $env:TEMP $Asset.name
 
 Info "Downloading $($Asset.name)..."
 try {
-  Invoke-WebRequest -Uri $Asset.browser_download_url -OutFile $TempFile -UseBasicParsing
+  Invoke-WebRequest -Uri $Asset.browser_download_url -OutFile $TempFile -UseBasicParsing -UserAgent "before-its-gone-installer"
 } catch {
   Die "Download failed: $_"
 }
