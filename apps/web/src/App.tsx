@@ -8,6 +8,8 @@ import {
   createLocalStorageAdapter,
   getShoppingList,
   getWasteLog,
+  listInventoryItems,
+  upsertInventoryItem,
   logWastedItem,
   clearWasteLog,
   renderDigest,
@@ -16,6 +18,7 @@ import {
   type AppSettings,
   DEFAULT_APP_SETTINGS,
   SETTINGS_STORAGE_KEY,
+  SYNC_SETTINGS_STORAGE_KEY,
   type FilterLocation,
   type InventoryItem,
   type ItemHistory,
@@ -24,6 +27,7 @@ import {
   type StorageLocation,
   type WasteLogEntry
 } from '@before-its-gone/core';
+import { syncService } from './SyncService.js';
 import { InventoryCard } from '@before-its-gone/ui';
 
 type FormState = {
@@ -322,6 +326,31 @@ function App() {
       const refreshed = await loadInventory();
       setItems(refreshed);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onSyncComplete = useCallback(() => {
+    void loadInventory().then(setItems);
+    bumpStats();
+  }, [loadInventory]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SYNC_SETTINGS_STORAGE_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw) as { enabled?: boolean; supabaseUrl?: string; supabaseAnonKey?: string };
+      if (!s.enabled || !s.supabaseUrl || !s.supabaseAnonKey) return;
+      syncService.connect(s.supabaseUrl, s.supabaseAnonKey);
+      void syncService.restoreSession().then(async (user) => {
+        if (!user || !syncService.isReady()) return;
+        const local = await listInventoryItems();
+        const { merged } = await syncService.sync(local);
+        for (const item of merged) await upsertInventoryItem(item);
+        onSyncComplete();
+      });
+    } catch {
+      // sync is best-effort
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1027,6 +1056,7 @@ function App() {
           onChange={onChangeSettings}
           notificationState={notificationState}
           onEnableNotifications={() => { void onNotificationEnable(); }}
+          onSyncComplete={onSyncComplete}
         />
       )}
 

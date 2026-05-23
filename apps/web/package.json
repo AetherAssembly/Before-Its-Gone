@@ -1,7 +1,7 @@
 {
   "name": "@before-its-gone/web",
   "private": true,
-  "version": "0.7.1",
+  "version": "0.8.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
   "dependencies": {
     "@before-its-gone/core": "file:../../packages/core",
     "@before-its-gone/ui": "file:../../packages/ui",
+    "@supabase/supabase-js": "^2.106.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

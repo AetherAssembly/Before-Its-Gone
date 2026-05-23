@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { type AppSettings, DEFAULT_APP_SETTINGS } from '@before-its-gone/core';
+import {
+  type AppSettings,
+  DEFAULT_APP_SETTINGS,
+  type SyncSettings,
+  SYNC_SETTINGS_STORAGE_KEY,
+  listInventoryItems,
+  upsertInventoryItem,
+} from '@before-its-gone/core';
+import { syncService, SETUP_SQL } from './SyncService.js';
 
 const BUILT_IN_LOCATIONS = ['fridge', 'freezer', 'pantry'];
 
@@ -194,14 +202,162 @@ function AddLocationForm({ onAdd }: { onAdd: (name: string) => void }) {
   );
 }
 
+const DEFAULT_SYNC: SyncSettings = { enabled: false, supabaseUrl: '', supabaseAnonKey: '', lastSyncedAt: null };
+
+function readSyncSettings(): SyncSettings {
+  try {
+    const raw = localStorage.getItem(SYNC_SETTINGS_STORAGE_KEY);
+    return raw ? { ...DEFAULT_SYNC, ...(JSON.parse(raw) as Partial<SyncSettings>) } : { ...DEFAULT_SYNC };
+  } catch { return { ...DEFAULT_SYNC }; }
+}
+
+function writeSyncSettings(s: SyncSettings): void {
+  localStorage.setItem(SYNC_SETTINGS_STORAGE_KEY, JSON.stringify(s));
+}
+
+type SyncPanelProps = { onSyncComplete: () => void };
+
+function SyncPanel({ onSyncComplete }: SyncPanelProps) {
+  const [sync, setSync] = useState<SyncSettings>(readSyncSettings);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [user, setUser] = useState<string | null>(null);
+  const [status, setStatus] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [showSql, setShowSql] = useState(false);
+
+  const save = (patch: Partial<SyncSettings>) => {
+    const next = { ...sync, ...patch };
+    setSync(next);
+    writeSyncSettings(next);
+    if (next.supabaseUrl && next.supabaseAnonKey) {
+      syncService.connect(next.supabaseUrl, next.supabaseAnonKey);
+    }
+  };
+
+  useEffect(() => {
+    const s = readSyncSettings();
+    if (s.supabaseUrl && s.supabaseAnonKey) {
+      syncService.connect(s.supabaseUrl, s.supabaseAnonKey);
+      void syncService.restoreSession().then((u) => setUser(u?.email ?? null));
+    }
+  }, []);
+
+  const signIn = async () => {
+    setBusy(true); setStatus('');
+    try {
+      const u = await syncService.signIn(email, password);
+      setUser(u.email ?? u.id);
+      setStatus('Signed in successfully.');
+      save({ enabled: true });
+    } catch (e) { setStatus(`Error: ${e instanceof Error ? e.message : String(e)}`); }
+    finally { setBusy(false); }
+  };
+
+  const signUp = async () => {
+    setBusy(true); setStatus('');
+    try {
+      const u = await syncService.signUp(email, password);
+      setUser(u.email ?? u.id);
+      setStatus('Account created! Check your email to confirm, then sign in.');
+    } catch (e) { setStatus(`Error: ${e instanceof Error ? e.message : String(e)}`); }
+    finally { setBusy(false); }
+  };
+
+  const signOut = async () => {
+    await syncService.signOut();
+    setUser(null);
+    save({ enabled: false, lastSyncedAt: null });
+    setStatus('Signed out.');
+  };
+
+  const doSync = async () => {
+    setBusy(true); setStatus('Syncing…');
+    try {
+      const local = await listInventoryItems();
+      const { merged, pushed, pulled } = await syncService.sync(local);
+      for (const item of merged) await upsertInventoryItem(item);
+      const now = new Date().toISOString();
+      save({ lastSyncedAt: now });
+      setStatus(`Synced — ${pushed} pushed, ${pulled} pulled.`);
+      onSyncComplete();
+    } catch (e) { setStatus(`Sync failed: ${e instanceof Error ? e.message : String(e)}`); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <fieldset className="settings-fieldset">
+      <legend>Cloud sync (Supabase)</legend>
+
+      <label>
+        Supabase URL
+        <input
+          value={sync.supabaseUrl}
+          placeholder="https://xxxx.supabase.co"
+          onChange={(e) => save({ supabaseUrl: e.target.value })}
+        />
+      </label>
+      <label>
+        Supabase anon key
+        <input
+          type="password"
+          value={sync.supabaseAnonKey}
+          placeholder="eyJ…"
+          onChange={(e) => save({ supabaseAnonKey: e.target.value })}
+        />
+      </label>
+
+      <button type="button" className="btn-ghost btn-sm" onClick={() => setShowSql((s) => !s)}>
+        {showSql ? 'Hide' : 'Show'} required SQL migration
+      </button>
+      {showSql && (
+        <pre className="setup-sql">{SETUP_SQL}</pre>
+      )}
+
+      {user ? (
+        <div className="sync-signed-in">
+          <span className="settings-hint">Signed in as <strong>{user}</strong></span>
+          {sync.lastSyncedAt && (
+            <span className="settings-hint">Last synced: {new Date(sync.lastSyncedAt).toLocaleString()}</span>
+          )}
+          <div className="email-actions">
+            <button type="button" disabled={busy} onClick={() => { void doSync(); }}>
+              {busy ? 'Syncing…' : 'Sync now'}
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => { void signOut(); }}>
+              Sign out
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="sync-sign-in">
+          <label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          <label>Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+          <div className="email-actions">
+            <button type="button" disabled={busy || !email || !password} onClick={() => { void signIn(); }}>
+              {busy ? '…' : 'Sign in'}
+            </button>
+            <button type="button" className="btn-ghost" disabled={busy || !email || !password} onClick={() => { void signUp(); }}>
+              Create account
+            </button>
+          </div>
+        </div>
+      )}
+
+      {status && <p className="settings-hint">{status}</p>}
+    </fieldset>
+  );
+}
+
 type SettingsPanelProps = {
   settings: AppSettings;
   onChange: (next: AppSettings) => void;
   notificationState: NotificationPermission | 'unsupported';
   onEnableNotifications: () => void;
+  onSyncComplete: () => void;
 };
 
-export function SettingsPanel({ settings, onChange, notificationState, onEnableNotifications }: SettingsPanelProps) {
+export function SettingsPanel({ settings, onChange, notificationState, onEnableNotifications, onSyncComplete }: SettingsPanelProps) {
   const set = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     onChange({ ...settings, [key]: value });
 
@@ -319,6 +475,8 @@ export function SettingsPanel({ settings, onChange, notificationState, onEnableN
         </fieldset>
 
         <EmailSettingsForm />
+
+        <SyncPanel onSyncComplete={onSyncComplete} />
 
         <button type="button" className="btn-ghost" onClick={() => onChange({ ...DEFAULT_APP_SETTINGS })}>
           Reset to defaults

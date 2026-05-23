@@ -93,3 +93,11 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
 };
 
 export const SETTINGS_STORAGE_KEY = 'before-its-gone.settings';
+export const SYNC_SETTINGS_STORAGE_KEY = 'before-its-gone.sync';
+
+export interface SyncSettings {
+  enabled: boolean;
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  lastSyncedAt: string | null;
+}

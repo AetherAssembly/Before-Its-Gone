@@ -1021,6 +1021,27 @@ button:disabled {
   font-size: inherit;
 }
 
+/* Cloud sync */
+
+.setup-sql {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  overflow-x: auto;
+  white-space: pre;
+  font-family: ui-monospace, monospace;
+  line-height: 1.5;
+}
+
+.sync-signed-in,
+.sync-sign-in {
+  display: grid;
+  gap: 0.6rem;
+}
+
 /* Recurring / checkbox fields */
 
 .checkbox-label {
