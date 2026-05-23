@@ -86,6 +86,7 @@ export type PhoneSavePayload = {
   location: 'fridge' | 'freezer' | 'pantry';
   category: string | null;
   shelfLifeDays: number;
+  expiresAt: string | null;
 };
 
 type OFBProduct = {
@@ -93,6 +94,8 @@ type OFBProduct = {
   imageUrl: string | null;
   suggestedShelfLifeDays: number;
   category: string | null;
+  caloriesPer100g: number | null;
+  allergens: string[];
 };
 
 let activeServer: https.Server | null = null;
@@ -204,6 +207,8 @@ async function lookupProduct(barcode: string): Promise<OFBProduct> {
     imageUrl: null,
     suggestedShelfLifeDays: 30,
     category: null,
+    caloriesPer100g: null,
+    allergens: [],
   };
 
   try {
@@ -218,6 +223,8 @@ async function lookupProduct(barcode: string): Promise<OFBProduct> {
         image_url?: string;
         image_thumb_url?: string;
         categories_tags?: string[];
+        nutriments?: Record<string, unknown>;
+        allergens_tags?: string[];
       };
     };
 
@@ -230,7 +237,14 @@ async function lookupProduct(barcode: string): Promise<OFBProduct> {
     const category = predictShelfLifeCategory(categoriesTags);
     const suggestedShelfLifeDays = predictShelfLife(categoriesTags, 'fridge');
 
-    return { name, imageUrl, suggestedShelfLifeDays, category };
+    const rawCal = p.nutriments?.['energy-kcal_100g'];
+    const caloriesPer100g = typeof rawCal === 'number' ? Math.round(rawCal) : null;
+
+    const allergens = (p.allergens_tags ?? [])
+      .map((t) => t.replace(/^en:/, ''))
+      .filter(Boolean);
+
+    return { name, imageUrl, suggestedShelfLifeDays, category, caloriesPer100g, allergens };
   } catch {
     return defaultProduct;
   }
@@ -296,6 +310,7 @@ export async function startScannerServer(
               return;
             }
             try {
+              const rawExpiresAt = typeof body.expiresAt === 'string' && body.expiresAt.trim() ? body.expiresAt.trim() : null;
               await onSaveItem({
                 barcode: typeof body.barcode === 'string' ? body.barcode.trim() : '',
                 name: (body.name as string).trim(),
@@ -303,6 +318,7 @@ export async function startScannerServer(
                 location: location as 'fridge' | 'freezer' | 'pantry',
                 category: typeof body.category === 'string' ? body.category.trim() || null : null,
                 shelfLifeDays: Math.max(1, Number(body.shelfLifeDays) || 30),
+                expiresAt: rawExpiresAt && !isNaN(new Date(rawExpiresAt).getTime()) ? rawExpiresAt : null,
               });
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ ok: true }));

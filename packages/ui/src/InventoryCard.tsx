@@ -11,10 +11,14 @@ type InventoryCardProps = {
   onEdit?: (id: string) => void;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
+  warningWindowDays?: number;
+  onTagClick?: (tag: string) => void;
+  caloriesPer100g?: number | null;
+  allergens?: string[];
 };
 
-export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect }: InventoryCardProps) {
-  const status = calculateExpiryStatus(item.expiresAt);
+export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect, warningWindowDays, onTagClick, caloriesPer100g, allergens }: InventoryCardProps) {
+  const status = calculateExpiryStatus(item.expiresAt, warningWindowDays);
 
   return (
     <article className="inventory-card" data-status={status} data-selected={selected ? 'true' : undefined}>
@@ -33,7 +37,16 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
           <span>{item.location}</span>
           {item.category ? <span className="tag">{item.category}</span> : null}
           {item.tags?.map((tag) => (
-            <span key={tag} className="tag">{tag}</span>
+            <span
+              key={tag}
+              className={onTagClick ? 'tag tag--clickable' : 'tag'}
+              role={onTagClick ? 'button' : undefined}
+              tabIndex={onTagClick ? 0 : undefined}
+              onClick={onTagClick ? () => onTagClick(tag) : undefined}
+              onKeyDown={onTagClick ? (e) => e.key === 'Enter' && onTagClick(tag) : undefined}
+            >
+              {tag}
+            </span>
           ))}
         </div>
       </header>
@@ -41,6 +54,12 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
       <p>Expires: {new Date(item.expiresAt).toLocaleDateString()}</p>
       <p>Status: {status === 'expiring-soon' ? 'expiring soon' : status}</p>
       {item.barcode ? <p>Barcode: {item.barcode}</p> : null}
+      {(caloriesPer100g != null || (allergens && allergens.length > 0)) && (
+        <div className="card-nutrition">
+          {caloriesPer100g != null && <span className="nutrition-chip">{caloriesPer100g} kcal/100g</span>}
+          {allergens?.map((a) => <span key={a} className="nutrition-chip nutrition-chip--allergen">⚠ {a}</span>)}
+        </div>
+      )}
 
       <div className="card-actions">
         <button

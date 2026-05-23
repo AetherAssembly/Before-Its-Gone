@@ -19,21 +19,40 @@ Offline-first desktop app no account required, all data stays on your machine.
 
 ## Features
 
+### Inventory
+
 - Barcode scanning with local profile storage and Open Food Facts lookup
+- Nutritional info (kcal/100g + allergens) fetched from Open Food Facts and shown on cards
 - Expiry date tracking with shelf-life presets (stored accurately, not recalculated)
 - Color-coded cards: amber (expiring soon) · rose (expired)
-- Desktop notifications for expiring and low-stock items
-- **Search** across name, barcode, and category — debounced, no keystroke lag
-- **Filter** by location (fridge / freezer / pantry)
-- **Sort** by expiry date, date added, or name
-- **Stats dashboard:** items expiring this week, expired count, total units
-- **Quick-add buttons** from your item history, one click to pre-fill the form
-- **Categories & tags:** tag items with e.g. "dairy", "meat", "snacks"
-- **Quantity management:** `− Use one` with low-stock alerts · `+ Add one` to restock in one tap
-- **Undo "Use one":** 5-second slide-in toast lets you reverse accidental taps
-- **Export** to JSON or CSV · **Import** from JSON or CSV
-- **Bulk select:** delete or move multiple items at once
-- **Clear all:** with confirmation guard
+- **Search:** across name, barcode, and category. Debounced, no keystroke lag
+- **Filter:** by location · **Sort** by expiry date, date added, or name
+- **Tag filtering:** click any tag chip to narrow the list (AND semantics)
+- **Stats dashboard:** expiring this week · expiring soon · expired · total units
+- **Quick-add buttons:** from item history one click to pre-fill the form
+- **Quantity management:** `− Use one` with low-stock alerts · `+ Add one` · 5-second Undo toast
+- **Recurring items:** auto-restock to a configured quantity when depleted to zero
+- **Bulk select:** delete or move multiple items at once · Clear all with confirmation guard
+
+### Lists & tracking
+
+- **Shopping list tab:** auto-populated from items below their low-stock threshold; copy or export as plain text
+- **Waste log tab:** expired items are logged when deleted, grouped by month, clearable
+- **Recipe suggestions:** dismissible banner of TheMealDB recipes when 3+ items are expiring
+
+### Scanner
+
+- **Phone barcode scanner:** scan a QR code on any phone browser, camera auto-detects barcodes
+- **Manual expiry date** on the phone review card overrides shelf-life prediction; date and days fields stay in sync
+
+### Settings & data
+
+- **Settings panel:** default location, default shelf life, expiry warning window (configurable days), per-type notification toggles
+- **Custom storage locations:** add locations beyond fridge / freezer / pantry
+- **Export** to JSON or CSV · **Import** from JSON or CSV · **Batch barcode import** from a plain-text file (one barcode per line, enriched via Open Food Facts)
+- **Email notifications:** optional daily/weekly digest and alerts via Resend or SMTP; pause/snooze controls; HTML templates
+- **Optional cloud sync:** bring your own Supabase project; offline-first by default, last-write-wins merge; no mandatory account
+- Desktop notifications for expiring, expired, and low-stock items
 
 ---
 
@@ -76,7 +95,7 @@ Or grab a specific build from the [Releases](https://github.com/AetherAssembly/B
 
 ### Install
 
-Run the NSIS installer (`before-its-gone-0.7.1-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+Run the NSIS installer (`before-its-gone-0.8.0-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
 
 ### Uninstall
 
@@ -103,11 +122,11 @@ Drag `Before Its Gone` out of your Applications folder and into the Trash.
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.7.1.x86_64.rpm
+sudo dnf install ./before-its-gone-0.8.0.x86_64.rpm
 
 # or
 
-sudo dnf install ./before-its-gone-0.7.1.arm64.rpm
+sudo dnf install ./before-its-gone-0.8.0.arm64.rpm
 ```
 
 ### Uninstall
@@ -121,11 +140,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.7.1-x86_64.rpm
+sudo zypper install ./before-its-gone-0.8.0-x86_64.rpm
 
 # or 
 
-sudo zypper install ./before-its-gone_0.7.1-aarch64.rpm
+sudo zypper install ./before-its-gone_0.8.0-aarch64.rpm
 ```
 
 ### Uninstall
@@ -140,12 +159,12 @@ sudo zypper remove before-its-gone
 
 ```bash
 # All other Debian Distros
-sudo apt install ./before-its-gone-0.7.1-amd64.deb
+sudo apt install ./before-its-gone-0.8.0-amd64.deb
 
 # or
 
 # Raspberry Pi 4/5 
-sudo apt install ./before-its-gone-0.7.1-arm64.deb
+sudo apt install ./before-its-gone-0.8.0-arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -161,12 +180,14 @@ sudo apt remove before-its-gone
 On Raspberry Pi OS, Electron may log a warning about the SUID sandbox on first launch. The app still runs. To fix it permanently, choose one of:
 
 **Option 1 — Enable user namespaces system-wide:**
+
 ```bash
 echo 'kernel.unprivileged_userns_clone = 1' | sudo tee /etc/sysctl.d/00-userns.conf
 sudo sysctl -p /etc/sysctl.d/00-userns.conf
 ```
 
 **Option 2 — Set the SUID bit on the sandbox binary only:**
+
 ```bash
 sudo chmod 4755 /opt/before-its-gone/chrome-sandbox
 ```
@@ -221,13 +242,22 @@ npm run package:windows      # → release/*.exe  (run on Windows)
 
 ## Docs
 
-- [Import & Export Format](docs/import-export-format.md) — JSON and CSV field reference, examples, and validation rules
+- [Import & Export Format](docs/import-export-format.md) — JSON, CSV, and barcode-list field reference, examples, and validation rules
+- [Email Notifications](docs/email-notifications.md) — Resend and SMTP setup, digest scheduling, pause/snooze
+- [Cloud Sync](docs/cloud-sync.md) — Supabase project setup, SQL migration, and sync behaviour
 
 ---
 
 ## Privacy
 
-All data is stored locally in IndexedDB. Nothing is sent to any server except optional barcode lookups to [Open Food Facts](https://world.openfoodfacts.org/), which you trigger explicitly. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
+By default, all data is stored locally in IndexedDB — no account required. Optional features make additional outbound requests:
+
+- **Barcode lookup:** Open Food Facts receives the barcode value you scan. User-triggered only.
+- **Recipe suggestions:** TheMealDB receives the name of an expiring item as an ingredient query. Fires automatically when 3+ items are expiring; dismissible.
+- **Email notifications:** your chosen provider (Resend or your own SMTP server) receives item names and expiry data to compose digest emails. Credentials are stored locally in `userData/email-settings.json`.
+- **Cloud sync:** your Supabase project receives your full inventory. Opt-in only; disabled by default.
+
+See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for full details.
 
 ---
 

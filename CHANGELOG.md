@@ -4,6 +4,48 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [0.8.0] - 2026-05-22
+
+### Added
+
+- **Settings panel:** new tab with default location, default shelf life, configurable expiry warning window, per-notification-type toggles, and custom storage locations. All settings persist in localStorage.
+- **Custom storage locations:** add named locations beyond fridge / freezer / pantry (e.g. "Garage Chest Freezer", "Wine Cellar"). Custom locations appear in all location selects and the inventory filter.
+- **Tag filtering:** clickable tag chips above the inventory list narrow the view to items that match all selected tags (AND semantics). Clicking a tag on an inventory card adds it to the active filter instantly.
+- **Configurable expiry warning window:** the number of days before expiry at which items turn amber is now user-controlled (default 2). Previously hard-coded.
+- **Shopping list tab:** automatically populated with any item whose quantity is at or below its low-stock threshold. Includes copy-to-clipboard and export-as-text buttons.
+- **Waste log tab:** expired items are recorded to IndexedDB when deleted. The Waste Log panel groups entries by calendar month, shows item name, quantity, location, category, and expiry date. Entries can be cleared in bulk.
+- **Recurring / auto-restock items:** items marked "auto-restock when depleted" automatically create a new item with the configured restock quantity and the same shelf life when their quantity reaches zero via the `− Use one` button.
+- **Manual expiry date on phone scanner:** the product review card on the phone now includes a date picker that pre-fills with the predicted expiry date. Setting a date overrides the shelf-life calculation, and changing shelf-life days updates the date picker bidirectionally.
+- **Email notifications:** optional email alerts delivered via Resend or SMTP. Configurable in Settings → Email Notifications. Supports daily or weekly digest (fires at a user-specified time), with 7-day / 30-day / indefinite pause/snooze. Credentials stored in `userData/email-settings.json`, never in localStorage or IndexedDB.
+- **HTML email templates:** expiry alert, low-stock alert, and digest emails rendered with inline CSS and dark-brand styling, compatible with major email clients.
+- **Nutritional info from Open Food Facts:** barcode scans now extract kcal/100g and allergen tags. Displayed as chips in the phone scanner's product review card and on inventory cards in the desktop app. Stored on the barcode profile.
+- **Recipe suggestions:** when 3 or more items are expiring or expired, a dismissible banner fetches up to 3 recipe suggestions from TheMealDB using the first expiring item as the ingredient query. Dismissed for the current day via localStorage.
+- **Batch barcode import:** "Import barcodes (.txt)" accepts a plain text file with one barcode per line. Each barcode is looked up on Open Food Facts; a new inventory item is created with the fetched name and the user's default shelf life and location. A live progress bar tracks enrichment.
+- **Optional Supabase cloud sync:** opt-in sync to a user-owned Supabase project. Inventory is stored as JSONB rows with last-write-wins conflict resolution by `updatedAt`. Auto-syncs on launch if credentials are present. Sign-in, sign-up, sync-now, and sign-out controls in the Settings panel. Required SQL migration is shown inline. Existing offline-first path is completely untouched.
+- **Auto-release CI:** `.github/workflows/release.yml` builds all four platform targets on a `v*` tag push and publishes artifacts plus `latest-linux.yml`, `latest-mac.yml`, and `latest.yml` manifests to the GitHub release. Fixes #24 (auto-updater manifest at wrong URL).
+
+### Changed
+
+- `StorageLocation` type extended from a fixed union to `'fridge' | 'freezer' | 'pantry' | (string & {})`, enabling custom location strings while preserving literal autocomplete.
+- `InventoryItem` gains `recurring?: boolean` and `restockQuantity?: number`.
+- `BarcodeProfile` gains `caloriesPer100g?: number | null` and `allergens?: string[]`.
+- `AppSettings` gains `customLocations: string[]` and `notifications.lowStock: boolean`.
+- `InventoryService.saveProfile()` and `allProfiles()` expose nutritional fields.
+- `getFilteredInventory()` accepts `tags?: string[]` for AND-semantics tag filtering.
+- Low-stock depletion notification is now gated on `settings.notifications.lowStock`.
+- `notifyExpiringItems` respects the per-type notification toggles (`expiring`, `expired`).
+- IndexedDB schema bumped to version 4 with a `wasteLog` object store.
+- `release/` directory fully untracked from git; blanket `release/` gitignore entry replaces nine specific patterns.
+- `CLAUDE.md` added to `.gitignore` so it never ships.
+
+### Fixed
+
+- `expiry-prediction.ts` TypeScript error (TS7053) when indexing `ShelfLifeByLocation` with a `StorageLocation` that includes the `string & {}` intersection — fixed with a double cast.
+- `PhoneSavePayload` type in `vite-env.d.ts` was missing `expiresAt: string | null`, causing TS2339 in App.tsx.
+- `onQuickAdd` was missing `recurring` and `restockQuantity` fields in the `FormState` object it constructed, leaving the form in an incomplete state.
+
+---
+
 ## [0.7.1] - 2026-05-19
 
 ### Added

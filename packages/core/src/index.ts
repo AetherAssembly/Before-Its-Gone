@@ -1,3 +1,4 @@
+export * from './email-templates';
 export * from './expiry-prediction';
 export * from './inventory';
 export * from './models';

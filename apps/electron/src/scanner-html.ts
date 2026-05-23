@@ -113,7 +113,7 @@ export function buildScannerHtml(token: string): string {
       font-size: 1rem;
       font-weight: 600;
     }
-    input[type="text"], input[type="number"] {
+    input[type="text"], input[type="number"], input[type="date"] {
       width: 100%;
       background: #1a1a1a;
       border: 1px solid #333;
@@ -122,8 +122,9 @@ export function buildScannerHtml(token: string): string {
       font-size: 1rem;
       padding: 10px 12px;
       font-family: inherit;
+      color-scheme: dark;
     }
-    input[type="text"]:focus, input[type="number"]:focus {
+    input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus {
       outline: none;
       border-color: #22d3ee;
     }
@@ -220,6 +221,28 @@ export function buildScannerHtml(token: string): string {
       font-family: inherit;
     }
 
+    /* Nutrition chips */
+    .nutrition-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .nutrition-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .nutrition-chip.allergen {
+      border-color: #854d0e;
+      color: #fbbf24;
+    }
+
     /* Saving / saved states */
     #saving-view, #saved-view {
       display: none;
@@ -261,6 +284,10 @@ export function buildScannerHtml(token: string): string {
   <div class="result-body">
     <div id="product-img-wrap"></div>
 
+    <div id="nutrition-wrap" style="display:none">
+      <div class="nutrition-row" id="nutrition-chips"></div>
+    </div>
+
     <div>
       <div class="field-label">Name</div>
       <input type="text" id="name-input" placeholder="Product name" autocomplete="off" />
@@ -293,6 +320,11 @@ export function buildScannerHtml(token: string): string {
       <div class="field-label">Shelf life (days)</div>
       <input type="number" id="shelf-input" min="1" max="3650" />
       <div class="expiry-preview" id="expiry-preview"></div>
+    </div>
+
+    <div>
+      <div class="field-label">Expiry date (optional — overrides shelf life)</div>
+      <input type="date" id="expiry-input" />
     </div>
 
     <div class="action-row">
@@ -340,12 +372,28 @@ export function buildScannerHtml(token: string): string {
   var nameInput    = document.getElementById('name-input');
   var categoryInput= document.getElementById('category-input');
   var shelfInput   = document.getElementById('shelf-input');
+  var expiryInput  = document.getElementById('expiry-input');
   var qtyDisplay   = document.getElementById('qty-display');
   var expiryPreview= document.getElementById('expiry-preview');
-  var saveBtn      = document.getElementById('save-btn');
-  var cancelBtn    = document.getElementById('cancel-btn');
-  var imgWrap      = document.getElementById('product-img-wrap');
-  var locBtns      = document.querySelectorAll('.loc-btn');
+  var saveBtn       = document.getElementById('save-btn');
+  var cancelBtn     = document.getElementById('cancel-btn');
+  var imgWrap       = document.getElementById('product-img-wrap');
+  var nutritionWrap = document.getElementById('nutrition-wrap');
+  var nutritionChips= document.getElementById('nutrition-chips');
+  var locBtns       = document.querySelectorAll('.loc-btn');
+
+  function daysToDateStr(days) {
+    var d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function dateStrToDays(dateStr) {
+    var d = new Date(dateStr + 'T23:59:59');
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.max(1, Math.round((d.getTime() - today.getTime()) / 86400000));
+  }
 
   function show(view) {
     cameraView.style.display  = 'none';
@@ -377,21 +425,37 @@ export function buildScannerHtml(token: string): string {
   // ── Shelf life input ──
   shelfInput.addEventListener('input', function() {
     state.shelfLifeDays = Math.max(1, parseInt(shelfInput.value, 10) || 1);
+    expiryInput.value = daysToDateStr(state.shelfLifeDays);
+    updateExpiryPreview();
+  });
+
+  // ── Expiry date input (takes precedence over shelf life) ──
+  expiryInput.addEventListener('change', function() {
+    if (!expiryInput.value) return;
+    var days = dateStrToDays(expiryInput.value);
+    state.shelfLifeDays = days;
+    shelfInput.value = days;
     updateExpiryPreview();
   });
 
   function updateExpiryPreview() {
-    var d = new Date();
-    d.setDate(d.getDate() + state.shelfLifeDays);
-    expiryPreview.textContent = 'Expires ~' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    var dateStr = expiryInput.value;
+    if (dateStr) {
+      var d = new Date(dateStr + 'T12:00:00');
+      expiryPreview.textContent = 'Expires ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } else {
+      var d2 = new Date();
+      d2.setDate(d2.getDate() + state.shelfLifeDays);
+      expiryPreview.textContent = 'Expires ~' + d2.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
   }
 
   function updateShelfSuggestion() {
-    // Adjust suggestion when location changes based on original product data
     if (state._shelfByLocation) {
       var days = state._shelfByLocation[state.location] || state.shelfLifeDays;
       state.shelfLifeDays = days;
       shelfInput.value = days;
+      expiryInput.value = daysToDateStr(days);
       updateExpiryPreview();
     }
   }
@@ -423,6 +487,7 @@ export function buildScannerHtml(token: string): string {
         location: state.location,
         category: state.category || null,
         shelfLifeDays: state.shelfLifeDays,
+        expiresAt: expiryInput.value ? (expiryInput.value + 'T23:59:59.000Z') : null,
       })
     }).then(function(res) {
       if (res.ok) {
@@ -449,6 +514,7 @@ export function buildScannerHtml(token: string): string {
     nameInput.value = state.name;
     categoryInput.value = state.category;
     shelfInput.value = state.shelfLifeDays;
+    expiryInput.value = daysToDateStr(state.shelfLifeDays);
     qtyDisplay.textContent = '1';
     updateExpiryPreview();
 
@@ -470,6 +536,29 @@ export function buildScannerHtml(token: string): string {
       imgWrap.appendChild(img);
     } else {
       imgWrap.innerHTML = '<div class="product-placeholder">📦</div>';
+    }
+
+    // Nutritional info chips
+    nutritionChips.innerHTML = '';
+    var chips = [];
+    if (product.caloriesPer100g != null) {
+      chips.push({ label: product.caloriesPer100g + ' kcal / 100g', allergen: false });
+    }
+    if (product.allergens && product.allergens.length > 0) {
+      product.allergens.forEach(function(a) {
+        chips.push({ label: '⚠ ' + a, allergen: true });
+      });
+    }
+    if (chips.length > 0) {
+      chips.forEach(function(chip) {
+        var span = document.createElement('span');
+        span.className = 'nutrition-chip' + (chip.allergen ? ' allergen' : '');
+        span.textContent = chip.label;
+        nutritionChips.appendChild(span);
+      });
+      nutritionWrap.style.display = 'block';
+    } else {
+      nutritionWrap.style.display = 'none';
     }
 
     show(resultView);

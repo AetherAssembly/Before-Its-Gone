@@ -3,15 +3,8 @@ node_modules/
 
 # Build output
 dist/
-release/builder-debug.yml
-release/effective-config.json
-release/@before-its-gone/
-release/linux-arm64-unpacked/
-release/linux-unpacked/
-release/win-unpacked/
-release/win-arm64-unpacked/
-release/releases/
-release/Old-Versions/
+release/
+CLAUDE.md
 *.tsbuildinfo
 packaging/
 

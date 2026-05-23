@@ -3,11 +3,18 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import QRCode from 'qrcode';
 import { startScannerServer, stopScannerServer } from './scanner-server.js';
+import {
+  DigestScheduler,
+  readEmailSettings,
+  sendEmail,
+  writeEmailSettings,
+} from './email-service.js';
 
 const isDevelopment = !app.isPackaged;
 
 let pendingSaveResolve: (() => void) | null = null;
 let pendingSaveReject: ((err: Error) => void) | null = null;
+const digestScheduler = new DigestScheduler();
 
 function configureLinuxDisplayBackend(): void {
   if (process.platform !== 'linux') {
@@ -147,6 +154,30 @@ app.whenReady().then(() => {
   ipcMain.handle('updater:install', () => { autoUpdater.quitAndInstall(); });
   ipcMain.handle('updater:download', () => autoUpdater.downloadUpdate());
 
+  const userDataDir = app.getPath('userData');
+
+  ipcMain.handle('email:get-settings', () => readEmailSettings(userDataDir));
+
+  ipcMain.handle('email:save-settings', (_e, settings: unknown) => {
+    writeEmailSettings(userDataDir, settings as import('./email-service.js').EmailSettings);
+  });
+
+  ipcMain.handle('email:send', async (_e, payload: { subject: string; html: string }) => {
+    const settings = readEmailSettings(userDataDir);
+    if (!settings.to) throw new Error('No recipient configured.');
+    await sendEmail(settings, { to: settings.to, subject: payload.subject, html: payload.html });
+    const updated = { ...settings, lastSentAt: new Date().toISOString() };
+    writeEmailSettings(userDataDir, updated);
+  });
+
+  digestScheduler.start(
+    () => userDataDir,
+    () => {
+      const win = BrowserWindow.getAllWindows()[0];
+      win?.webContents.send('email:digest-fire');
+    }
+  );
+
   if (app.isPackaged) {
     autoUpdater.checkForUpdates().catch(() => {});
   }
@@ -159,6 +190,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  digestScheduler.stop();
   if (process.platform !== 'darwin') {
     app.quit();
   }

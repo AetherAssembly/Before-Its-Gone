@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            publish_script: publish:linux
+          - os: ubuntu-24.04-arm
+            publish_script: publish:linux:arm64
+          - os: macos-latest
+            publish_script: publish:macos
+          - os: windows-latest
+            publish_script: publish:windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build:electron
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # For macOS code signing, add CSC_LINK (base64 p12) + CSC_KEY_PASSWORD secrets.
+          # Without them the build is unsigned — set AUTO_DISCOVERY=false to suppress warnings.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: npm --workspace apps/electron run ${{ matrix.publish_script }}

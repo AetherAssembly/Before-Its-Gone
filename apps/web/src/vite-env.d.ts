@@ -7,6 +7,23 @@ type PhoneSavePayload = {
   location: 'fridge' | 'freezer' | 'pantry';
   category: string | null;
   shelfLifeDays: number;
+  expiresAt: string | null;
+};
+
+type EmailSettings = {
+  provider: 'none' | 'resend' | 'smtp';
+  to: string;
+  resendApiKey: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPass: string;
+  smtpTls: boolean;
+  digest: 'never' | 'daily' | 'weekly';
+  digestTime: string;
+  paused: boolean;
+  resumeAt: string | null;
+  lastSentAt: string | null;
 };
 
 interface Window {
@@ -23,6 +40,10 @@ interface Window {
     onUpdateError?(cb: (msg: string) => void): void;
     installUpdate?(): Promise<void>;
     downloadUpdate?(): Promise<void>;
+    getEmailSettings?(): Promise<EmailSettings>;
+    saveEmailSettings?(settings: EmailSettings): Promise<void>;
+    sendEmail?(payload: { subject: string; html: string }): Promise<void>;
+    onDigestFire?(cb: () => void): void;
   };
 }
 

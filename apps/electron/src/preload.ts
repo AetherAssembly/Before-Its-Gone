@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { PhoneSavePayload } from './scanner-server.js';
+import type { EmailSettings } from './email-service.js';
 
 contextBridge.exposeInMainWorld('beforeItsGone', {
   getAppVersion: () => ipcRenderer.invoke('app:version') as Promise<string>,
@@ -35,4 +36,11 @@ contextBridge.exposeInMainWorld('beforeItsGone', {
   },
   installUpdate: () => ipcRenderer.invoke('updater:install') as Promise<void>,
   downloadUpdate: () => ipcRenderer.invoke('updater:download') as Promise<void>,
+  getEmailSettings: () => ipcRenderer.invoke('email:get-settings') as Promise<EmailSettings>,
+  saveEmailSettings: (settings: EmailSettings) => ipcRenderer.invoke('email:save-settings', settings) as Promise<void>,
+  sendEmail: (payload: { subject: string; html: string }) => ipcRenderer.invoke('email:send', payload) as Promise<void>,
+  onDigestFire: (cb: () => void) => {
+    ipcRenderer.removeAllListeners('email:digest-fire');
+    ipcRenderer.on('email:digest-fire', () => cb());
+  },
 });

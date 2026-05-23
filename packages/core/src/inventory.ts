@@ -7,15 +7,19 @@ import type {
   NewInventoryItem,
   SortDirection,
   SortField,
-  StorageLocation
+  StorageLocation,
+  WasteLogEntry
 } from './models';
 import {
+  addWasteLogEntry,
   clearAllInventoryItems,
+  clearWasteLogEntries,
   getBarcodeProfile,
   getItemHistory,
   listBarcodeProfiles,
   listInventoryItems,
   listItemHistory,
+  listWasteLogEntries,
   removeInventoryItem,
   upsertBarcodeProfile,
   upsertInventoryItem,
@@ -32,12 +36,17 @@ export async function getFilteredInventory(options: {
   location?: FilterLocation;
   sortField?: SortField;
   sortDirection?: SortDirection;
+  tags?: string[];
 }): Promise<InventoryItem[]> {
-  const { search = '', location = 'all', sortField = 'expiresAt', sortDirection = 'asc' } = options;
+  const { search = '', location = 'all', sortField = 'expiresAt', sortDirection = 'asc', tags = [] } = options;
   let items = await listInventoryItems();
 
   if (location !== 'all') {
     items = items.filter((item) => item.location === location);
+  }
+
+  if (tags.length > 0) {
+    items = items.filter((item) => tags.every((t) => item.tags.includes(t)));
   }
 
   if (search.trim()) {
@@ -84,7 +93,9 @@ export async function createInventoryItem(
     updatedAt: timestamp,
     category: item.category ?? null,
     depletionThreshold: item.depletionThreshold ?? null,
-    tags: item.tags ?? []
+    tags: item.tags ?? [],
+    recurring: item.recurring ?? false,
+    restockQuantity: item.restockQuantity,
   };
 
   await upsertInventoryItem(nextItem);
@@ -95,7 +106,7 @@ export async function createInventoryItem(
 export async function updateInventoryItem(
   id: string,
   patch: Partial<
-    Pick<InventoryItem, 'name' | 'quantity' | 'location' | 'barcode' | 'expiresAt' | 'shelfLifeDays' | 'category' | 'depletionThreshold' | 'tags'>
+    Pick<InventoryItem, 'name' | 'quantity' | 'location' | 'barcode' | 'expiresAt' | 'shelfLifeDays' | 'category' | 'depletionThreshold' | 'tags' | 'recurring' | 'restockQuantity'>
   >
 ): Promise<InventoryItem | null> {
   const items = await listInventoryItems();
@@ -204,13 +215,17 @@ export async function saveBarcodeProfile(input: {
   productName: string;
   defaultShelfLifeDays: number;
   preferredLocation: StorageLocation;
+  caloriesPer100g?: number | null;
+  allergens?: string[];
 }): Promise<BarcodeProfile> {
   const profile: BarcodeProfile = {
     barcode: input.barcode,
     productName: input.productName,
     defaultShelfLifeDays: Math.max(1, Math.floor(input.defaultShelfLifeDays)),
     preferredLocation: input.preferredLocation,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    caloriesPer100g: input.caloriesPer100g ?? null,
+    allergens: input.allergens ?? [],
   };
 
   await upsertBarcodeProfile(profile);
@@ -256,6 +271,35 @@ export async function getFrequentItems(limit = 5): Promise<ItemHistory[]> {
   return history
     .sort((a, b) => b.useCount - a.useCount || b.lastUsedAt.localeCompare(a.lastUsedAt))
     .slice(0, limit);
+}
+
+export function getShoppingList(items: InventoryItem[]): InventoryItem[] {
+  return items
+    .filter((item) => item.depletionThreshold !== null && item.quantity <= item.depletionThreshold)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function logWastedItem(item: InventoryItem): Promise<WasteLogEntry> {
+  const entry: WasteLogEntry = {
+    id: crypto.randomUUID(),
+    itemName: item.name,
+    quantity: item.quantity,
+    location: item.location,
+    category: item.category,
+    expiresAt: item.expiresAt,
+    wastedAt: new Date().toISOString(),
+  };
+  await addWasteLogEntry(entry);
+  return entry;
+}
+
+export async function getWasteLog(): Promise<WasteLogEntry[]> {
+  const entries = await listWasteLogEntries();
+  return entries.sort((a, b) => b.wastedAt.localeCompare(a.wastedAt));
+}
+
+export async function clearWasteLog(): Promise<void> {
+  await clearWasteLogEntries();
 }
 
 export function exportInventoryAsJSON(items: InventoryItem[]): string {

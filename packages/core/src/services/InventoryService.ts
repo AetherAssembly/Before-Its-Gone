@@ -11,6 +11,7 @@ import {
   getFrequentItems,
   findBarcodeProfile,
   saveBarcodeProfile,
+  getBarcodeProfiles,
 } from '../inventory.js';
 import type {
   BarcodeProfile,
@@ -29,6 +30,7 @@ export class InventoryService {
     location?: FilterLocation;
     sortField?: SortField;
     sortDirection?: SortDirection;
+    tags?: string[];
   } = {}): Promise<InventoryItem[]> {
     return getFilteredInventory(options);
   }
@@ -81,8 +83,14 @@ export class InventoryService {
     productName: string;
     defaultShelfLifeDays: number;
     preferredLocation: StorageLocation;
+    caloriesPer100g?: number | null;
+    allergens?: string[];
   }): Promise<BarcodeProfile> {
     return saveBarcodeProfile(input);
+  }
+
+  async allProfiles(): Promise<BarcodeProfile[]> {
+    return getBarcodeProfiles();
   }
 }
 

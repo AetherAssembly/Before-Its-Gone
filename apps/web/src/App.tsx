@@ -1,19 +1,33 @@
 import { type ChangeEvent, type FormEvent, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ScanModal } from './ScanModal.js';
 import { AboutDialog } from './AboutDialog.js';
+import { SettingsPanel } from './SettingsPanel.js';
 import {
   calculateExpiryDateISO,
   calculateExpiryStatus,
   createLocalStorageAdapter,
+  getShoppingList,
+  getWasteLog,
+  listInventoryItems,
+  upsertInventoryItem,
+  logWastedItem,
+  clearWasteLog,
+  renderDigest,
   importExportService,
   inventoryService,
+  type AppSettings,
+  DEFAULT_APP_SETTINGS,
+  SETTINGS_STORAGE_KEY,
+  SYNC_SETTINGS_STORAGE_KEY,
   type FilterLocation,
   type InventoryItem,
   type ItemHistory,
   type SortDirection,
   type SortField,
-  type StorageLocation
+  type StorageLocation,
+  type WasteLogEntry
 } from '@before-its-gone/core';
+import { syncService } from './SyncService.js';
 import { InventoryCard } from '@before-its-gone/ui';
 
 type FormState = {
@@ -26,26 +40,53 @@ type FormState = {
   category: string;
   depletionThreshold: string;
   tags: string;
+  recurring: boolean;
+  restockQuantity: string;
 };
 
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
-const INITIAL_FORM: FormState = {
-  name: '',
-  quantity: 1,
-  location: 'fridge',
-  barcode: '',
-  shelfLifeDays: 7,
-  expiryDate: new Date(calculateExpiryDateISO(7)).toISOString().slice(0, 10),
-  category: '',
-  depletionThreshold: '',
-  tags: ''
-};
-
-const notificationStorage = createLocalStorageAdapter();
+const appStorage = createLocalStorageAdapter();
 const NOTIFICATION_LOG_KEY = 'before-its-gone.notification-log';
 
-async function notifyExpiringItems(items: InventoryItem[]): Promise<void> {
+function getInitialSettings(): AppSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<AppSettings>;
+      return {
+        ...DEFAULT_APP_SETTINGS,
+        ...parsed,
+        notifications: { ...DEFAULT_APP_SETTINGS.notifications, ...(parsed.notifications ?? {}) }
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return { ...DEFAULT_APP_SETTINGS };
+}
+
+function makeInitialForm(s: AppSettings): FormState {
+  return {
+    name: '',
+    quantity: 1,
+    location: s.defaultLocation,
+    barcode: '',
+    shelfLifeDays: s.defaultShelfLifeDays,
+    expiryDate: new Date(calculateExpiryDateISO(s.defaultShelfLifeDays)).toISOString().slice(0, 10),
+    category: '',
+    depletionThreshold: '',
+    tags: '',
+    recurring: false,
+    restockQuantity: '',
+  };
+}
+
+async function notifyExpiringItems(
+  items: InventoryItem[],
+  warningWindowDays: number,
+  prefs: { expiring: boolean; expired: boolean }
+): Promise<void> {
   if (typeof window === 'undefined' || !('Notification' in window)) {
     return;
   }
@@ -55,32 +96,25 @@ async function notifyExpiringItems(items: InventoryItem[]): Promise<void> {
   }
 
   const logged =
-    (await notificationStorage.get<Record<string, true>>(NOTIFICATION_LOG_KEY)) ?? {};
+    (await appStorage.get<Record<string, true>>(NOTIFICATION_LOG_KEY)) ?? {};
   const dayStamp = new Date().toISOString().slice(0, 10);
 
   for (const item of items) {
-    const status = calculateExpiryStatus(item.expiresAt);
-    if (status === 'fresh') {
-      continue;
-    }
+    const status = calculateExpiryStatus(item.expiresAt, warningWindowDays);
+    if (status === 'fresh') continue;
+    if (status === 'expiring-soon' && !prefs.expiring) continue;
+    if (status === 'expired' && !prefs.expired) continue;
 
     const id = `${item.id}:${status}:${dayStamp}`;
-    if (logged[id]) {
-      continue;
-    }
+    if (logged[id]) continue;
 
-    const title =
-      status === 'expired'
-        ? `${item.name} has expired`
-        : `${item.name} expires soon`;
-    const body = `${item.quantity} unit(s) in ${item.location}. Expires ${new Date(
-      item.expiresAt
-    ).toLocaleDateString()}.`;
+    const title = status === 'expired' ? `${item.name} has expired` : `${item.name} expires soon`;
+    const body = `${item.quantity} unit(s) in ${item.location}. Expires ${new Date(item.expiresAt).toLocaleDateString()}.`;
     new Notification(title, { body, tag: id });
     logged[id] = true;
   }
 
-  await notificationStorage.set(NOTIFICATION_LOG_KEY, logged);
+  await appStorage.set(NOTIFICATION_LOG_KEY, logged);
 }
 
 async function notifyDepletion(item: InventoryItem): Promise<void> {
@@ -141,8 +175,17 @@ function getExpiringThisWeek(items: InventoryItem[]): number {
 }
 
 function App() {
+  const [settings, setSettings] = useState<AppSettings>(getInitialSettings);
+  const [activeTab, setActiveTab] = useState<'inventory' | 'shopping' | 'waste' | 'settings'>('inventory');
+  const [wasteLog, setWasteLog] = useState<WasteLogEntry[]>([]);
+
+  const onChangeSettings = useCallback((next: AppSettings) => {
+    setSettings(next);
+    void appStorage.set(SETTINGS_STORAGE_KEY, next);
+  }, []);
+
   const [items, setItems] = useState<InventoryItem[]>([]);
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [form, setForm] = useState<FormState>(() => makeInitialForm(getInitialSettings()));
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [frequentItems, setFrequentItems] = useState<ItemHistory[]>([]);
@@ -152,9 +195,12 @@ function App() {
   const [filterLocation, setFilterLocation] = useState<FilterLocation>('all');
   const [sortField, setSortField] = useState<SortField>('expiresAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [activeTags, setActiveTags] = useState<string[]>([]);
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
+  const barcodeImportRef = useRef<HTMLInputElement>(null);
+  const [barcodeImportProgress, setBarcodeImportProgress] = useState<{ done: number; total: number } | null>(null);
 
   const [scanModal, setScanModal] = useState<{
     qrDataUrl: string;
@@ -186,6 +232,11 @@ function App() {
   });
 
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [emailPaused, setEmailPaused] = useState(false);
+
+  type RecipeSuggestion = { idMeal: string; strMeal: string; strMealThumb: string };
+  const [recipeBanner, setRecipeBanner] = useState<RecipeSuggestion[] | null>(null);
+  const RECIPE_DISMISS_KEY = 'before-its-gone.recipe-dismissed';
   const [appVersion, setAppVersion] = useState(() => import.meta.env.VITE_APP_VERSION ?? '');
   const [updateBanner, setUpdateBanner] = useState<{
     version: string;
@@ -193,8 +244,8 @@ function App() {
   } | null>(null);
 
   const loadInventory = useCallback(
-    () => inventoryService.list({ search, location: filterLocation, sortField, sortDirection }),
-    [search, filterLocation, sortField, sortDirection]
+    () => inventoryService.list({ search, location: filterLocation, sortField, sortDirection, tags: activeTags }),
+    [search, filterLocation, sortField, sortDirection, activeTags]
   );
 
   useEffect(() => {
@@ -202,11 +253,15 @@ function App() {
   }, [loadInventory]);
 
   useEffect(() => {
-    void notifyExpiringItems(items);
-  }, [items]);
+    void notifyExpiringItems(items, settings.expiryWarningDays, settings.notifications);
+  }, [items, settings.expiryWarningDays, settings.notifications]);
 
   useEffect(() => {
     void inventoryService.frequentItems(5).then(setFrequentItems);
+  }, []);
+
+  useEffect(() => {
+    void getWasteLog().then(setWasteLog);
   }, []);
 
   useEffect(() => {
@@ -227,13 +282,37 @@ function App() {
   }, []);
 
   useEffect(() => {
+    void window.beforeItsGone?.getEmailSettings?.().then((s) => { if (s?.paused) setEmailPaused(true); });
+  }, []);
+
+  useEffect(() => {
+    window.beforeItsGone?.onDigestFire?.(async () => {
+      const api = window.beforeItsGone;
+      if (!api?.sendEmail) return;
+      const emailSettings = await api.getEmailSettings?.();
+      if (!emailSettings || emailSettings.paused || emailSettings.provider === 'none') return;
+
+      const all = await inventoryService.list({});
+      const expired = all.filter((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) === 'expired');
+      const expiringSoon = all.filter((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) === 'expiring-soon');
+      const depleted = getShoppingList(all);
+
+      if (expired.length === 0 && expiringSoon.length === 0 && depleted.length === 0) return;
+
+      const html = renderDigest({ expired, expiringSoon, depleted, digestType: emailSettings.digest === 'weekly' ? 'weekly' : 'daily' });
+      await api.sendEmail({ subject: `Before It's Gone — ${emailSettings.digest} digest`, html });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     window.beforeItsGone?.onSaveItemFromPhone?.(async (data) => {
       await inventoryService.create({
         name: data.name,
         quantity: data.quantity,
         location: data.location,
         barcode: data.barcode || null,
-        expiresAt: calculateExpiryDateISO(data.shelfLifeDays),
+        expiresAt: data.expiresAt ?? calculateExpiryDateISO(data.shelfLifeDays),
         category: data.category
       });
       if (data.barcode) {
@@ -250,7 +329,63 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const onSyncComplete = useCallback(() => {
+    void loadInventory().then(setItems);
+    bumpStats();
+  }, [loadInventory]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SYNC_SETTINGS_STORAGE_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw) as { enabled?: boolean; supabaseUrl?: string; supabaseAnonKey?: string };
+      if (!s.enabled || !s.supabaseUrl || !s.supabaseAnonKey) return;
+      syncService.connect(s.supabaseUrl, s.supabaseAnonKey);
+      void syncService.restoreSession().then(async (user) => {
+        if (!user || !syncService.isReady()) return;
+        const local = await listInventoryItems();
+        const { merged } = await syncService.sync(local);
+        for (const item of merged) await upsertInventoryItem(item);
+        onSyncComplete();
+      });
+    } catch {
+      // sync is best-effort
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [profileMap, setProfileMap] = useState<Map<string, { caloriesPer100g?: number | null; allergens?: string[] }>>(new Map());
+
+  useEffect(() => {
+    void inventoryService.allProfiles().then((profiles) => {
+      setProfileMap(new Map(profiles.map((p) => [p.barcode, { caloriesPer100g: p.caloriesPer100g, allergens: p.allergens }])));
+    });
+  }, [statsVersion]);
+
   const [allItems, setAllItems] = useState<InventoryItem[]>([]);
+
+  const expiringCount = useMemo(
+    () => allItems.filter((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) !== 'fresh').length,
+    [allItems, settings.expiryWarningDays]
+  );
+
+  useEffect(() => {
+    if (expiringCount < 3) return;
+    const dismissedDate = localStorage.getItem(RECIPE_DISMISS_KEY);
+    if (dismissedDate === new Date().toISOString().slice(0, 10)) return;
+
+    const firstExpiring = allItems.find((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) !== 'fresh');
+    if (!firstExpiring) return;
+    const ingredient = firstExpiring.name.split(' ')[0];
+    void fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`)
+      .then((r) => r.json())
+      .then((data: { meals?: RecipeSuggestion[] | null }) => {
+        const meals = data.meals;
+        if (meals && meals.length > 0) setRecipeBanner(meals.slice(0, 3));
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expiringCount]);
 
   useEffect(() => {
     void inventoryService.list({}).then(setAllItems);
@@ -263,16 +398,50 @@ function App() {
   );
 
   const expiredItems = useMemo(
-    () => items.filter((item) => calculateExpiryStatus(item.expiresAt) === 'expired').length,
-    [items]
+    () => items.filter((item) => calculateExpiryStatus(item.expiresAt, settings.expiryWarningDays) === 'expired').length,
+    [items, settings.expiryWarningDays]
   );
 
   const expiringSoonItems = useMemo(
-    () => items.filter((item) => calculateExpiryStatus(item.expiresAt) === 'expiring-soon').length,
-    [items]
+    () => items.filter((item) => calculateExpiryStatus(item.expiresAt, settings.expiryWarningDays) === 'expiring-soon').length,
+    [items, settings.expiryWarningDays]
   );
 
   const expiringThisWeek = useMemo(() => getExpiringThisWeek(items), [items]);
+
+  const availableTags = useMemo(
+    () => [...new Set(allItems.flatMap((item) => item.tags))].sort(),
+    [allItems]
+  );
+
+  const shoppingListItems = useMemo(() => getShoppingList(allItems), [allItems]);
+
+  const formatShoppingListText = (listItems: InventoryItem[]) => {
+    const date = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    const lines = [
+      "Shopping List — Before It's Gone",
+      `Generated: ${date}`,
+      '',
+      ...listItems.map((item) => {
+        const threshold = item.depletionThreshold;
+        return `☐ ${item.name} (${item.quantity} left${threshold ? `, need ${threshold}+` : ''}) — ${item.location}`;
+      })
+    ];
+    return lines.join('\n');
+  };
+
+  const onCopyShoppingList = async () => {
+    await navigator.clipboard.writeText(formatShoppingListText(shoppingListItems));
+    setStatusMessage('Shopping list copied to clipboard.');
+  };
+
+  const onExportShoppingList = () => {
+    triggerDownload(formatShoppingListText(shoppingListItems), `shopping-list-${TODAY_ISO}.txt`, 'text/plain');
+  };
+
+  const onToggleTag = (tag: string) => {
+    setActiveTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
+  };
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -364,7 +533,9 @@ function App() {
       expiryDate: new Date(calculateExpiryDateISO(entry.shelfLifeDays)).toISOString().slice(0, 10),
       category: entry.category ?? '',
       depletionThreshold: '',
-      tags: ''
+      tags: '',
+      recurring: false,
+      restockQuantity: '',
     });
     setStatusMessage(`Pre-filled form from "${entry.name}" history.`);
   };
@@ -380,7 +551,7 @@ function App() {
       setNotificationState(permission);
       if (permission === 'granted') {
         setStatusMessage('Notifications enabled for expiring items.');
-        void notifyExpiringItems(items);
+        void notifyExpiringItems(items, settings.expiryWarningDays, settings.notifications);
       }
     } catch {
       setNotificationState('denied');
@@ -404,7 +575,9 @@ function App() {
         shelfLifeDays: Math.max(1, form.shelfLifeDays),
         category: form.category.trim() || null,
         depletionThreshold: form.depletionThreshold ? Number(form.depletionThreshold) : null,
-        tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean)
+        tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+        recurring: form.recurring,
+        restockQuantity: form.restockQuantity ? Number(form.restockQuantity) : undefined,
       });
 
       if (form.barcode.trim()) {
@@ -417,7 +590,7 @@ function App() {
       }
 
       setItems((prev) => [newItem, ...prev]);
-      setForm(INITIAL_FORM);
+      setForm(makeInitialForm(settings));
       setStatusMessage('Item saved.');
       bumpStats();
       void inventoryService.frequentItems(5).then(setFrequentItems);
@@ -427,8 +600,13 @@ function App() {
   };
 
   const onDelete = async (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (item && calculateExpiryStatus(item.expiresAt, settings.expiryWarningDays) === 'expired') {
+      const entry = await logWastedItem(item);
+      setWasteLog((prev) => [entry, ...prev]);
+    }
     await inventoryService.remove(id);
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => prev.filter((i) => i.id !== id));
     bumpStats();
   };
 
@@ -442,7 +620,25 @@ function App() {
     setItems((prev) => prev.map((i) => (i.id === id ? item : i)));
     bumpStats();
 
-    if (depleted) void notifyDepletion(item);
+    if (depleted && settings.notifications.lowStock) void notifyDepletion(item);
+
+    if (item.quantity === 0 && existing.recurring) {
+      const restocked = await inventoryService.create({
+        name: existing.name,
+        quantity: existing.restockQuantity ?? 1,
+        location: existing.location,
+        barcode: existing.barcode,
+        expiresAt: calculateExpiryDateISO(existing.shelfLifeDays ?? 7),
+        shelfLifeDays: existing.shelfLifeDays,
+        category: existing.category,
+        depletionThreshold: existing.depletionThreshold,
+        tags: existing.tags,
+        recurring: true,
+        restockQuantity: existing.restockQuantity,
+      });
+      setItems((prev) => [...prev, restocked]);
+      bumpStats();
+    }
 
     setUndoPending((prev) => {
       if (prev) clearTimeout(prev.timer);
@@ -485,7 +681,9 @@ function App() {
       expiryDate: new Date(item.expiresAt).toISOString().slice(0, 10),
       category: item.category ?? '',
       depletionThreshold: item.depletionThreshold != null ? String(item.depletionThreshold) : '',
-      tags: item.tags?.join(', ') ?? ''
+      tags: item.tags?.join(', ') ?? '',
+      recurring: item.recurring ?? false,
+      restockQuantity: item.restockQuantity != null ? String(item.restockQuantity) : '',
     });
   };
 
@@ -504,7 +702,9 @@ function App() {
         shelfLifeDays: Math.max(1, editForm.shelfLifeDays),
         category: editForm.category.trim() || null,
         depletionThreshold: editForm.depletionThreshold ? Number(editForm.depletionThreshold) : null,
-        tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean)
+        tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
+        recurring: editForm.recurring,
+        restockQuantity: editForm.restockQuantity ? Number(editForm.restockQuantity) : undefined,
       });
       if (updated) {
         setItems((prev) => prev.map((i) => (i.id === editingItemId ? updated : i)));
@@ -606,6 +806,66 @@ function App() {
     bumpStats();
   };
 
+  const onBarcodeImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const barcodes = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (barcodes.length === 0) { setStatusMessage('No barcodes found in file.'); return; }
+
+    setBarcodeImportProgress({ done: 0, total: barcodes.length });
+    let imported = 0;
+
+    for (let i = 0; i < barcodes.length; i++) {
+      const barcode = barcodes[i];
+      setBarcodeImportProgress({ done: i, total: barcodes.length });
+      try {
+        const res = await fetch(
+          `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`
+        );
+        const data = res.ok
+          ? (await res.json()) as { product?: { product_name?: string; categories_tags?: string[]; nutriments?: Record<string, unknown>; allergens_tags?: string[] } }
+          : null;
+        const p = data?.product;
+        const name = p?.product_name?.trim() || barcode;
+        const category = null;
+        const rawCal = p?.nutriments?.['energy-kcal_100g'];
+        const caloriesPer100g = typeof rawCal === 'number' ? Math.round(rawCal) : null;
+        const allergens = (p?.allergens_tags ?? []).map((t) => t.replace(/^en:/, '')).filter(Boolean);
+        const shelfLifeDays = settings.defaultShelfLifeDays;
+
+        await inventoryService.create({
+          name,
+          quantity: 1,
+          location: settings.defaultLocation,
+          barcode,
+          expiresAt: calculateExpiryDateISO(shelfLifeDays),
+          shelfLifeDays,
+          category,
+        });
+
+        await inventoryService.saveProfile({
+          barcode,
+          productName: name,
+          defaultShelfLifeDays: shelfLifeDays,
+          preferredLocation: settings.defaultLocation,
+          caloriesPer100g,
+          allergens,
+        });
+
+        imported++;
+      } catch {
+        // skip failed barcodes
+      }
+    }
+
+    setBarcodeImportProgress(null);
+    setItems(await loadInventory());
+    bumpStats();
+    setStatusMessage(`Imported ${imported} of ${barcodes.length} barcodes.`);
+    if (barcodeImportRef.current) barcodeImportRef.current.value = '';
+  };
+
   return (
     <>
     {updateBanner && (
@@ -622,6 +882,47 @@ function App() {
         <button className="update-banner-dismiss" onClick={() => setUpdateBanner(null)} aria-label="Dismiss">&times;</button>
       </div>
     )}
+    {emailPaused && (
+      <div className="update-banner" data-state="downloading">
+        <span>Email notifications are paused. <button className="btn-link" onClick={() => {
+          void window.beforeItsGone?.getEmailSettings?.().then(async (s) => {
+            if (!s) return;
+            await window.beforeItsGone?.saveEmailSettings?.({ ...s, paused: false, resumeAt: null });
+            setEmailPaused(false);
+          });
+        }}>Resume</button></span>
+        <button className="update-banner-dismiss" onClick={() => setEmailPaused(false)} aria-label="Dismiss">&times;</button>
+      </div>
+    )}
+    {recipeBanner && recipeBanner.length > 0 && expiringCount >= 3 && (
+      <div className="recipe-banner">
+        <div className="recipe-banner-header">
+          <span>Use your expiring items — recipe ideas:</span>
+          <button
+            className="update-banner-dismiss"
+            onClick={() => {
+              localStorage.setItem(RECIPE_DISMISS_KEY, new Date().toISOString().slice(0, 10));
+              setRecipeBanner(null);
+            }}
+            aria-label="Dismiss"
+          >&times;</button>
+        </div>
+        <div className="recipe-cards">
+          {recipeBanner.map((meal) => (
+            <a
+              key={meal.idMeal}
+              className="recipe-card"
+              href={`https://www.themealdb.com/meal/${meal.idMeal}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img src={meal.strMealThumb + '/preview'} alt={meal.strMeal} className="recipe-thumb" />
+              <span className="recipe-name">{meal.strMeal}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
     <main className="app-shell">
       <header className="app-header">
         <div className="app-brand">
@@ -635,6 +936,131 @@ function App() {
       </header>
       <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} version={appVersion} />
 
+      <nav className="tab-nav">
+        <button
+          type="button"
+          className="tab-btn"
+          data-active={activeTab === 'inventory' ? 'true' : undefined}
+          onClick={() => setActiveTab('inventory')}
+        >
+          Inventory
+        </button>
+        <button
+          type="button"
+          className="tab-btn"
+          data-active={activeTab === 'shopping' ? 'true' : undefined}
+          onClick={() => setActiveTab('shopping')}
+        >
+          Shopping List{shoppingListItems.length > 0 && <span className="tab-badge">{shoppingListItems.length}</span>}
+        </button>
+        <button
+          type="button"
+          className="tab-btn"
+          data-active={activeTab === 'waste' ? 'true' : undefined}
+          onClick={() => setActiveTab('waste')}
+        >
+          Waste Log{wasteLog.length > 0 && <span className="tab-badge">{wasteLog.length}</span>}
+        </button>
+        <button
+          type="button"
+          className="tab-btn"
+          data-active={activeTab === 'settings' ? 'true' : undefined}
+          onClick={() => setActiveTab('settings')}
+        >
+          Settings
+        </button>
+      </nav>
+
+      {activeTab === 'shopping' && (
+        <section className="panel">
+          <h2>Shopping List</h2>
+          {shoppingListItems.length === 0 ? (
+            <p className="status-msg">No items are below their low-stock threshold. Set a &ldquo;Low stock alert at&rdquo; value on an item to track it here.</p>
+          ) : (
+            <>
+              <div className="shopping-list">
+                {shoppingListItems.map((item) => (
+                  <div key={item.id} className="shopping-row">
+                    <span className="shopping-name">{item.name}</span>
+                    <span className="shopping-meta">
+                      {item.quantity} left
+                      {item.depletionThreshold ? ` · need ${item.depletionThreshold}+` : ''}
+                      {' · '}{item.location}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="data-actions">
+                <button type="button" onClick={() => { void onCopyShoppingList(); }}>
+                  Copy to clipboard
+                </button>
+                <button type="button" className="btn-ghost" onClick={onExportShoppingList}>
+                  Export as text
+                </button>
+              </div>
+            </>
+          )}
+          {statusMessage ? <p className="status-msg">{statusMessage}</p> : null}
+        </section>
+      )}
+
+      {activeTab === 'waste' && (
+        <section className="panel">
+          <h2>Waste Log</h2>
+          {wasteLog.length === 0 ? (
+            <p className="status-msg">No wasted items recorded yet. Expired items are logged here when deleted.</p>
+          ) : (
+            <>
+              {(() => {
+                const grouped = wasteLog.reduce<Record<string, WasteLogEntry[]>>((acc, entry) => {
+                  const month = new Date(entry.wastedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
+                  (acc[month] ??= []).push(entry);
+                  return acc;
+                }, {});
+                return Object.entries(grouped).map(([month, entries]) => (
+                  <div key={month} className="waste-group">
+                    <h3 className="waste-month">{month} <span className="waste-count">({entries.length} item{entries.length !== 1 ? 's' : ''})</span></h3>
+                    <ul className="waste-list">
+                      {entries.map((entry) => (
+                        <li key={entry.id} className="waste-row">
+                          <span className="waste-name">{entry.itemName}</span>
+                          <span className="waste-meta">
+                            {entry.quantity} unit{entry.quantity !== 1 ? 's' : ''}
+                            {entry.category ? ` · ${entry.category}` : ''}
+                            {' · '}{entry.location}
+                            {' · '}expired {new Date(entry.expiresAt).toLocaleDateString()}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ));
+              })()}
+              <div className="data-actions">
+                <button
+                  type="button"
+                  className="btn-danger"
+                  onClick={() => { void clearWasteLog().then(() => setWasteLog([])); }}
+                >
+                  Clear waste log
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
+      {activeTab === 'settings' && (
+        <SettingsPanel
+          settings={settings}
+          onChange={onChangeSettings}
+          notificationState={notificationState}
+          onEnableNotifications={() => { void onNotificationEnable(); }}
+          onSyncComplete={onSyncComplete}
+        />
+      )}
+
+      {activeTab === 'inventory' && <>
       <section className="summary">
         <div className="summary-grid">
           <div className="stat-card">
@@ -679,23 +1105,6 @@ function App() {
           </div>
         </section>
       )}
-
-      <section className="panel">
-        <h2>Notifications</h2>
-        <p>
-          Status:{' '}
-          <strong>
-            {notificationState === 'unsupported'
-              ? 'not supported on this browser'
-              : notificationState}
-          </strong>
-        </p>
-        {notificationState !== 'granted' && notificationState !== 'unsupported' ? (
-          <button type="button" onClick={onNotificationEnable}>
-            Enable expiry notifications
-          </button>
-        ) : null}
-      </section>
 
       <section className="panel">
         <h2>Add item</h2>
@@ -802,6 +1211,28 @@ function App() {
             />
           </label>
 
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={form.recurring}
+              onChange={(e) => setField('recurring', e.target.checked)}
+            />
+            Auto-restock when depleted
+          </label>
+
+          {form.recurring && (
+            <label>
+              Restock quantity
+              <input
+                type="number"
+                min={1}
+                value={form.restockQuantity}
+                placeholder="e.g. 3"
+                onChange={(e) => setField('restockQuantity', e.target.value)}
+              />
+            </label>
+          )}
+
           <label>
             Location
             <select
@@ -811,6 +1242,9 @@ function App() {
               <option value="fridge">Fridge</option>
               <option value="freezer">Freezer</option>
               <option value="pantry">Pantry</option>
+              {settings.customLocations.map((loc) => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
             </select>
           </label>
 
@@ -840,6 +1274,9 @@ function App() {
             <option value="fridge">Fridge</option>
             <option value="freezer">Freezer</option>
             <option value="pantry">Pantry</option>
+            {settings.customLocations.map((loc) => (
+              <option key={loc} value={loc}>{loc}</option>
+            ))}
           </select>
 
           <select
@@ -906,16 +1343,54 @@ function App() {
                   <option value="fridge">Fridge</option>
                   <option value="freezer">Freezer</option>
                   <option value="pantry">Pantry</option>
+                  {settings.customLocations.map((loc) => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
                 </select>
               </label>
               <label>Low stock alert at (optional)
                 <input type="number" min={1} value={editForm.depletionThreshold} placeholder="e.g. 2" onChange={(e) => setEditForm((f) => f ? { ...f, depletionThreshold: e.target.value } : f)} />
               </label>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={editForm.recurring}
+                  onChange={(e) => setEditForm((f) => f ? { ...f, recurring: e.target.checked } : f)}
+                />
+                Auto-restock when depleted
+              </label>
+              {editForm.recurring && (
+                <label>Restock quantity
+                  <input type="number" min={1} value={editForm.restockQuantity} placeholder="e.g. 3" onChange={(e) => setEditForm((f) => f ? { ...f, restockQuantity: e.target.value } : f)} />
+                </label>
+              )}
               <div className="confirm-row">
                 <button type="button" disabled={loading} onClick={() => void onEditSave()}>{loading ? 'Saving…' : 'Save changes'}</button>
                 <button type="button" className="btn-ghost" onClick={onEditCancel}>Cancel</button>
               </div>
             </div>
+          </div>
+        )}
+
+        {availableTags.length > 0 && (
+          <div className="tag-filters">
+            {availableTags.map((tag) => (
+              <span
+                key={tag}
+                className={`tag tag--filter${activeTags.includes(tag) ? ' tag--active' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => onToggleTag(tag)}
+                onKeyDown={(e) => e.key === 'Enter' && onToggleTag(tag)}
+              >
+                {tag}
+              </span>
+            ))}
+            {activeTags.length > 0 && (
+              <button type="button" className="btn-ghost btn-sm" onClick={() => setActiveTags([])}>
+                Clear
+              </button>
+            )}
           </div>
         )}
 
@@ -930,6 +1405,10 @@ function App() {
               onEdit={onEdit}
               selected={bulkMode ? selectedIds.has(item.id) : undefined}
               onToggleSelect={bulkMode ? onToggleSelect : undefined}
+              warningWindowDays={settings.expiryWarningDays}
+              onTagClick={onToggleTag}
+              caloriesPer100g={item.barcode ? profileMap.get(item.barcode)?.caloriesPer100g : undefined}
+              allergens={item.barcode ? profileMap.get(item.barcode)?.allergens : undefined}
             />
           ))}
           {items.length === 0 ? <p>No items match your filters.</p> : null}
@@ -956,6 +1435,31 @@ function App() {
             />
           </label>
 
+          <label className="file-label">
+            Import barcodes (.txt)
+            <input
+              ref={barcodeImportRef}
+              type="file"
+              accept=".txt,.csv"
+              className="sr-only"
+              onChange={(e) => { void onBarcodeImport(e); }}
+            />
+          </label>
+
+          {barcodeImportProgress && (
+            <div className="barcode-import-progress">
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${Math.round((barcodeImportProgress.done / barcodeImportProgress.total) * 100)}%` }}
+                />
+              </div>
+              <span className="progress-label">
+                Looking up {barcodeImportProgress.done} / {barcodeImportProgress.total} barcodes…
+              </span>
+            </div>
+          )}
+
           {!showClearConfirm ? (
             <button
               type="button"
@@ -977,6 +1481,7 @@ function App() {
           )}
         </div>
       </section>
+      </>}
     </main>
 
     {undoPending && (
