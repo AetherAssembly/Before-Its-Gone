@@ -53,6 +53,8 @@ export interface BarcodeProfile {
   defaultShelfLifeDays: number;
   preferredLocation: StorageLocation;
   updatedAt: string;
+  caloriesPer100g?: number | null;
+  allergens?: string[];
 }
 
 export interface ItemHistory {

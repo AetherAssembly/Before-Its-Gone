@@ -221,6 +221,28 @@ export function buildScannerHtml(token: string): string {
       font-family: inherit;
     }
 
+    /* Nutrition chips */
+    .nutrition-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .nutrition-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .nutrition-chip.allergen {
+      border-color: #854d0e;
+      color: #fbbf24;
+    }
+
     /* Saving / saved states */
     #saving-view, #saved-view {
       display: none;
@@ -261,6 +283,10 @@ export function buildScannerHtml(token: string): string {
   <div class="result-header">Review item</div>
   <div class="result-body">
     <div id="product-img-wrap"></div>
+
+    <div id="nutrition-wrap" style="display:none">
+      <div class="nutrition-row" id="nutrition-chips"></div>
+    </div>
 
     <div>
       <div class="field-label">Name</div>
@@ -349,10 +375,12 @@ export function buildScannerHtml(token: string): string {
   var expiryInput  = document.getElementById('expiry-input');
   var qtyDisplay   = document.getElementById('qty-display');
   var expiryPreview= document.getElementById('expiry-preview');
-  var saveBtn      = document.getElementById('save-btn');
-  var cancelBtn    = document.getElementById('cancel-btn');
-  var imgWrap      = document.getElementById('product-img-wrap');
-  var locBtns      = document.querySelectorAll('.loc-btn');
+  var saveBtn       = document.getElementById('save-btn');
+  var cancelBtn     = document.getElementById('cancel-btn');
+  var imgWrap       = document.getElementById('product-img-wrap');
+  var nutritionWrap = document.getElementById('nutrition-wrap');
+  var nutritionChips= document.getElementById('nutrition-chips');
+  var locBtns       = document.querySelectorAll('.loc-btn');
 
   function daysToDateStr(days) {
     var d = new Date();
@@ -508,6 +536,29 @@ export function buildScannerHtml(token: string): string {
       imgWrap.appendChild(img);
     } else {
       imgWrap.innerHTML = '<div class="product-placeholder">📦</div>';
+    }
+
+    // Nutritional info chips
+    nutritionChips.innerHTML = '';
+    var chips = [];
+    if (product.caloriesPer100g != null) {
+      chips.push({ label: product.caloriesPer100g + ' kcal / 100g', allergen: false });
+    }
+    if (product.allergens && product.allergens.length > 0) {
+      product.allergens.forEach(function(a) {
+        chips.push({ label: '⚠ ' + a, allergen: true });
+      });
+    }
+    if (chips.length > 0) {
+      chips.forEach(function(chip) {
+        var span = document.createElement('span');
+        span.className = 'nutrition-chip' + (chip.allergen ? ' allergen' : '');
+        span.textContent = chip.label;
+        nutritionChips.appendChild(span);
+      });
+      nutritionWrap.style.display = 'block';
+    } else {
+      nutritionWrap.style.display = 'none';
     }
 
     show(resultView);

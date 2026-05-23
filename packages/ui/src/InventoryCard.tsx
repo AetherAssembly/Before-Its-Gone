@@ -13,9 +13,11 @@ type InventoryCardProps = {
   onToggleSelect?: (id: string) => void;
   warningWindowDays?: number;
   onTagClick?: (tag: string) => void;
+  caloriesPer100g?: number | null;
+  allergens?: string[];
 };
 
-export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect, warningWindowDays, onTagClick }: InventoryCardProps) {
+export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect, warningWindowDays, onTagClick, caloriesPer100g, allergens }: InventoryCardProps) {
   const status = calculateExpiryStatus(item.expiresAt, warningWindowDays);
 
   return (
@@ -52,6 +54,12 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
       <p>Expires: {new Date(item.expiresAt).toLocaleDateString()}</p>
       <p>Status: {status === 'expiring-soon' ? 'expiring soon' : status}</p>
       {item.barcode ? <p>Barcode: {item.barcode}</p> : null}
+      {(caloriesPer100g != null || (allergens && allergens.length > 0)) && (
+        <div className="card-nutrition">
+          {caloriesPer100g != null && <span className="nutrition-chip">{caloriesPer100g} kcal/100g</span>}
+          {allergens?.map((a) => <span key={a} className="nutrition-chip nutrition-chip--allergen">⚠ {a}</span>)}
+        </div>
+      )}
 
       <div className="card-actions">
         <button

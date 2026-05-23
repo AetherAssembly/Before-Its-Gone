@@ -94,6 +94,8 @@ type OFBProduct = {
   imageUrl: string | null;
   suggestedShelfLifeDays: number;
   category: string | null;
+  caloriesPer100g: number | null;
+  allergens: string[];
 };
 
 let activeServer: https.Server | null = null;
@@ -205,6 +207,8 @@ async function lookupProduct(barcode: string): Promise<OFBProduct> {
     imageUrl: null,
     suggestedShelfLifeDays: 30,
     category: null,
+    caloriesPer100g: null,
+    allergens: [],
   };
 
   try {
@@ -219,6 +223,8 @@ async function lookupProduct(barcode: string): Promise<OFBProduct> {
         image_url?: string;
         image_thumb_url?: string;
         categories_tags?: string[];
+        nutriments?: Record<string, unknown>;
+        allergens_tags?: string[];
       };
     };
 
@@ -231,7 +237,14 @@ async function lookupProduct(barcode: string): Promise<OFBProduct> {
     const category = predictShelfLifeCategory(categoriesTags);
     const suggestedShelfLifeDays = predictShelfLife(categoriesTags, 'fridge');
 
-    return { name, imageUrl, suggestedShelfLifeDays, category };
+    const rawCal = p.nutriments?.['energy-kcal_100g'];
+    const caloriesPer100g = typeof rawCal === 'number' ? Math.round(rawCal) : null;
+
+    const allergens = (p.allergens_tags ?? [])
+      .map((t) => t.replace(/^en:/, ''))
+      .filter(Boolean);
+
+    return { name, imageUrl, suggestedShelfLifeDays, category, caloriesPer100g, allergens };
   } catch {
     return defaultProduct;
   }

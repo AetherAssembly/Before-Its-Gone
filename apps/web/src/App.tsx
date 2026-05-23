@@ -195,6 +195,8 @@ function App() {
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
+  const barcodeImportRef = useRef<HTMLInputElement>(null);
+  const [barcodeImportProgress, setBarcodeImportProgress] = useState<{ done: number; total: number } | null>(null);
 
   const [scanModal, setScanModal] = useState<{
     qrDataUrl: string;
@@ -227,6 +229,10 @@ function App() {
 
   const [aboutOpen, setAboutOpen] = useState(false);
   const [emailPaused, setEmailPaused] = useState(false);
+
+  type RecipeSuggestion = { idMeal: string; strMeal: string; strMealThumb: string };
+  const [recipeBanner, setRecipeBanner] = useState<RecipeSuggestion[] | null>(null);
+  const RECIPE_DISMISS_KEY = 'before-its-gone.recipe-dismissed';
   const [appVersion, setAppVersion] = useState(() => import.meta.env.VITE_APP_VERSION ?? '');
   const [updateBanner, setUpdateBanner] = useState<{
     version: string;
@@ -319,7 +325,38 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [profileMap, setProfileMap] = useState<Map<string, { caloriesPer100g?: number | null; allergens?: string[] }>>(new Map());
+
+  useEffect(() => {
+    void inventoryService.allProfiles().then((profiles) => {
+      setProfileMap(new Map(profiles.map((p) => [p.barcode, { caloriesPer100g: p.caloriesPer100g, allergens: p.allergens }])));
+    });
+  }, [statsVersion]);
+
   const [allItems, setAllItems] = useState<InventoryItem[]>([]);
+
+  const expiringCount = useMemo(
+    () => allItems.filter((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) !== 'fresh').length,
+    [allItems, settings.expiryWarningDays]
+  );
+
+  useEffect(() => {
+    if (expiringCount < 3) return;
+    const dismissedDate = localStorage.getItem(RECIPE_DISMISS_KEY);
+    if (dismissedDate === new Date().toISOString().slice(0, 10)) return;
+
+    const firstExpiring = allItems.find((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) !== 'fresh');
+    if (!firstExpiring) return;
+    const ingredient = firstExpiring.name.split(' ')[0];
+    void fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`)
+      .then((r) => r.json())
+      .then((data: { meals?: RecipeSuggestion[] | null }) => {
+        const meals = data.meals;
+        if (meals && meals.length > 0) setRecipeBanner(meals.slice(0, 3));
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expiringCount]);
 
   useEffect(() => {
     void inventoryService.list({}).then(setAllItems);
@@ -740,6 +777,66 @@ function App() {
     bumpStats();
   };
 
+  const onBarcodeImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const barcodes = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (barcodes.length === 0) { setStatusMessage('No barcodes found in file.'); return; }
+
+    setBarcodeImportProgress({ done: 0, total: barcodes.length });
+    let imported = 0;
+
+    for (let i = 0; i < barcodes.length; i++) {
+      const barcode = barcodes[i];
+      setBarcodeImportProgress({ done: i, total: barcodes.length });
+      try {
+        const res = await fetch(
+          `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`
+        );
+        const data = res.ok
+          ? (await res.json()) as { product?: { product_name?: string; categories_tags?: string[]; nutriments?: Record<string, unknown>; allergens_tags?: string[] } }
+          : null;
+        const p = data?.product;
+        const name = p?.product_name?.trim() || barcode;
+        const category = null;
+        const rawCal = p?.nutriments?.['energy-kcal_100g'];
+        const caloriesPer100g = typeof rawCal === 'number' ? Math.round(rawCal) : null;
+        const allergens = (p?.allergens_tags ?? []).map((t) => t.replace(/^en:/, '')).filter(Boolean);
+        const shelfLifeDays = settings.defaultShelfLifeDays;
+
+        await inventoryService.create({
+          name,
+          quantity: 1,
+          location: settings.defaultLocation,
+          barcode,
+          expiresAt: calculateExpiryDateISO(shelfLifeDays),
+          shelfLifeDays,
+          category,
+        });
+
+        await inventoryService.saveProfile({
+          barcode,
+          productName: name,
+          defaultShelfLifeDays: shelfLifeDays,
+          preferredLocation: settings.defaultLocation,
+          caloriesPer100g,
+          allergens,
+        });
+
+        imported++;
+      } catch {
+        // skip failed barcodes
+      }
+    }
+
+    setBarcodeImportProgress(null);
+    setItems(await loadInventory());
+    bumpStats();
+    setStatusMessage(`Imported ${imported} of ${barcodes.length} barcodes.`);
+    if (barcodeImportRef.current) barcodeImportRef.current.value = '';
+  };
+
   return (
     <>
     {updateBanner && (
@@ -766,6 +863,35 @@ function App() {
           });
         }}>Resume</button></span>
         <button className="update-banner-dismiss" onClick={() => setEmailPaused(false)} aria-label="Dismiss">&times;</button>
+      </div>
+    )}
+    {recipeBanner && recipeBanner.length > 0 && expiringCount >= 3 && (
+      <div className="recipe-banner">
+        <div className="recipe-banner-header">
+          <span>Use your expiring items — recipe ideas:</span>
+          <button
+            className="update-banner-dismiss"
+            onClick={() => {
+              localStorage.setItem(RECIPE_DISMISS_KEY, new Date().toISOString().slice(0, 10));
+              setRecipeBanner(null);
+            }}
+            aria-label="Dismiss"
+          >&times;</button>
+        </div>
+        <div className="recipe-cards">
+          {recipeBanner.map((meal) => (
+            <a
+              key={meal.idMeal}
+              className="recipe-card"
+              href={`https://www.themealdb.com/meal/${meal.idMeal}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img src={meal.strMealThumb + '/preview'} alt={meal.strMeal} className="recipe-thumb" />
+              <span className="recipe-name">{meal.strMeal}</span>
+            </a>
+          ))}
+        </div>
       </div>
     )}
     <main className="app-shell">
@@ -1251,6 +1377,8 @@ function App() {
               onToggleSelect={bulkMode ? onToggleSelect : undefined}
               warningWindowDays={settings.expiryWarningDays}
               onTagClick={onToggleTag}
+              caloriesPer100g={item.barcode ? profileMap.get(item.barcode)?.caloriesPer100g : undefined}
+              allergens={item.barcode ? profileMap.get(item.barcode)?.allergens : undefined}
             />
           ))}
           {items.length === 0 ? <p>No items match your filters.</p> : null}
@@ -1276,6 +1404,31 @@ function App() {
               onChange={(e) => { void onImport(e); }}
             />
           </label>
+
+          <label className="file-label">
+            Import barcodes (.txt)
+            <input
+              ref={barcodeImportRef}
+              type="file"
+              accept=".txt,.csv"
+              className="sr-only"
+              onChange={(e) => { void onBarcodeImport(e); }}
+            />
+          </label>
+
+          {barcodeImportProgress && (
+            <div className="barcode-import-progress">
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${Math.round((barcodeImportProgress.done / barcodeImportProgress.total) * 100)}%` }}
+                />
+              </div>
+              <span className="progress-label">
+                Looking up {barcodeImportProgress.done} / {barcodeImportProgress.total} barcodes…
+              </span>
+            </div>
+          )}
 
           {!showClearConfirm ? (
             <button

@@ -215,13 +215,17 @@ export async function saveBarcodeProfile(input: {
   productName: string;
   defaultShelfLifeDays: number;
   preferredLocation: StorageLocation;
+  caloriesPer100g?: number | null;
+  allergens?: string[];
 }): Promise<BarcodeProfile> {
   const profile: BarcodeProfile = {
     barcode: input.barcode,
     productName: input.productName,
     defaultShelfLifeDays: Math.max(1, Math.floor(input.defaultShelfLifeDays)),
     preferredLocation: input.preferredLocation,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    caloriesPer100g: input.caloriesPer100g ?? null,
+    allergens: input.allergens ?? [],
   };
 
   await upsertBarcodeProfile(profile);
