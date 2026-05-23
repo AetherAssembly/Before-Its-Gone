@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-04-19
+Last updated: 2026-05-22
 
 ## Overview
 
@@ -26,21 +26,50 @@ This data is stored locally in browser-compatible storage used by the Electron r
 
 This project does not include:
 
-- User accounts
-- Cloud sync
+- Mandatory user accounts
 - Built-in analytics or tracking
 - Advertising identifiers
 - Remote telemetry sent by the application itself
 
 ## Network Requests
 
-The application may make outbound requests only when you explicitly use barcode lookup features backed by Open Food Facts, or when you choose to access project resources such as GitHub releases.
+The application makes outbound network requests only in the following circumstances:
 
-Those third-party services may receive standard request metadata such as your IP address, user agent, and request time according to their own policies.
+### Always off by default / user-triggered
+
+| Request | Destination | When |
+| ------- | ----------- | ---- |
+| Barcode product lookup | [Open Food Facts](https://world.openfoodfacts.org/) | When you scan or look up a barcode |
+| Batch barcode enrichment | Open Food Facts | When you import a barcode list file |
+| Auto-update check | GitHub Releases | On desktop app startup (packaged builds only) |
+
+### Automatic when 3+ items are expiring (dismissible)
+
+| Request | Destination | Data sent |
+| ------- | ----------- | --------- |
+| Recipe suggestions | [TheMealDB](https://www.themealdb.com/) | The name of one expiring item as an ingredient query |
+
+### Opt-in only
+
+| Feature | Destination | Data sent |
+| ------- | ----------- | --------- |
+| Email notifications (Resend) | resend.com | Item names, expiry dates, quantities |
+| Email notifications (SMTP) | Your SMTP server | Item names, expiry dates, quantities |
+| Cloud sync | Your Supabase project | Your full inventory (all fields) |
+
+All third-party services may receive standard HTTP request metadata (IP address, user agent, request timestamp) according to their own privacy policies.
 
 ## Notifications
 
-The app may request permission to display local desktop notifications for items that are expiring soon or already expired. Notification scheduling state is stored locally on your device.
+The app may request permission to display local desktop notifications for items that are expiring soon, already expired, or running low on stock. Notification scheduling state is stored locally on your device.
+
+## Email Credential Storage
+
+If you configure email notifications, your API key or SMTP credentials are stored in `email-settings.json` inside Electron's `userData` directory on your device. They are never transmitted anywhere other than the email provider you configure.
+
+## Cloud Sync
+
+If you enable optional Supabase cloud sync, your inventory data is transmitted to and stored in the Supabase project you configure. AetherAssembly does not operate or have access to your Supabase project. Your Supabase URL and anon key are stored in your device's local browser storage. Sync is disabled by default and requires explicit opt-in.
 
 ## Data Sharing
 

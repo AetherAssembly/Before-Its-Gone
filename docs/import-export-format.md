@@ -19,7 +19,7 @@ The app exports a single JSON object with three top-level keys:
 ```
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | ---- | ----------- |
 | `version` | `number` | Schema version. Currently always `1`. |
 | `exportedAt` | `string` | ISO 8601 timestamp of when the export was created. |
 | `items` | `array` | Array of inventory item objects (see below). |
@@ -27,7 +27,7 @@ The app exports a single JSON object with three top-level keys:
 #### Item object
 
 | Field | Type | Notes |
-|-------|------|-------|
+| ----- | ---- | ----- |
 | `id` | `string` | UUID. Preserved on re-import — re-importing the same export will overwrite the existing record rather than duplicate it. |
 | `name` | `string` | Display name of the item. |
 | `quantity` | `number` | Must be a positive integer ≥ 1. |
@@ -40,6 +40,8 @@ The app exports a single JSON object with three top-level keys:
 | `category` | `string \| null` | Free-text category label, or `null`. |
 | `depletionThreshold` | `number \| null` | Low-stock alert threshold (quantity), or `null` if unset. |
 | `tags` | `string[]` | Array of tag strings. Empty array if none. |
+| `recurring` | `boolean` | Whether the item auto-restocks when depleted. Optional; defaults to `false`. |
+| `restockQuantity` | `number \| undefined` | Quantity to restock to when `recurring` is true. Optional. |
 
 #### Full example
 
@@ -120,7 +122,7 @@ The CSV importer is more flexible than the exporter — it accepts any column or
 #### Column reference
 
 | Column name | Required | Type | Notes |
-|-------------|----------|------|-------|
+| ----------- | -------- | ---- | ----- |
 | `name` | **Yes** | `string` | Item display name. Rows with an empty name are skipped. |
 | `expires_at` | **Yes** | `string` | Expiry date. See [date formats](#date-formats) below. Also accepted as `expiresat` (no underscore). |
 | `location` | **Yes** | `string` | Must be exactly `fridge`, `freezer`, or `pantry` (case-sensitive). Rows with any other value are skipped. |
@@ -136,7 +138,7 @@ The CSV importer is more flexible than the exporter — it accepts any column or
 `expires_at` accepts any date string that JavaScript's `Date` constructor can parse. The most reliable formats are:
 
 | Format | Example | Notes |
-|--------|---------|-------|
+| ------ | ------- | ----- |
 | `YYYY-MM-DD` | `2026-06-01` | Recommended. Time is set to `23:59:59` automatically. |
 | `YYYY-MM-DDTHH:MM:SS` | `2026-06-01T23:59:59` | Full ISO local time. |
 | `YYYY-MM-DDTHH:MM:SSZ` | `2026-06-01T23:59:59Z` | ISO UTC. |
@@ -175,7 +177,7 @@ Frozen Peas,4,freezer,2027-03-01,,vegetables,365,bulk,
 ## Format comparison
 
 | | JSON export | CSV export | JSON import | CSV import |
-|--|:-----------:|:----------:|:-----------:|:----------:|
+| - | :-----------: | :----------: | :-----------: | :----------: |
 | `id` | ✅ | ❌ | ✅ preserved | ❌ new UUIDs assigned |
 | `name` | ✅ | ✅ | ✅ | ✅ |
 | `quantity` | ✅ | ✅ | ✅ | ✅ |
@@ -190,3 +192,25 @@ Frozen Peas,4,freezer,2027-03-01,,vegetables,365,bulk,
 
 **For a lossless round-trip (export → edit → re-import), always use JSON.**  
 CSV export omits shelf life, tags, and depletion threshold. CSV import creates new item IDs and timestamps.
+
+---
+
+## Barcode import
+
+The **Import barcodes (.txt)** button in the Data section accepts a plain text file with one barcode per line.
+
+```txt
+5000112637922
+5010029005120
+3017620429484
+```
+
+For each barcode the app:
+
+1. Queries Open Food Facts for the product name, category, and nutritional info.
+2. Creates a new inventory item using your **default shelf life** and **default storage location** from Settings.
+3. Saves the nutritional profile (kcal/100g, allergens) to the barcode profile store.
+
+A progress bar tracks enrichment. Barcodes that Open Food Facts does not recognise are still imported, using the raw barcode string as the item name.
+
+> **Note:** Barcode import always creates new items with new UUIDs. It does not deduplicate against existing inventory.

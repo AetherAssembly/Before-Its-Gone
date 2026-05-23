@@ -37,7 +37,7 @@ npm ci
 The repo is an npm workspaces monorepo with four packages:
 
 | Package | Path | Purpose |
-|---------|------|---------|
+| ------- | ---- | ------- |
 | `before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
 | `before-its-gone-web` | `apps/web` | React renderer (Vite) |
 | `@before-its-gone/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/` — avoid calling storage functions directly. |
@@ -107,9 +107,110 @@ Artifacts are written to `release/` (gitignored — local output only, not commi
 
 ---
 
+## Where things live
+
+Before adding a feature, identify which layer it belongs to:
+
+| What you're adding | Where it goes |
+| ------------------ | ------------- |
+| A new data field on an inventory item | `packages/core/src/models.ts` |
+| A new filter or query | `packages/core/src/inventory.ts` |
+| A new storage key (localStorage) | `packages/core/src/storage.ts`, key constant in `models.ts` |
+| A new IndexedDB object store | `packages/core/src/storage.ts` — increment DB version, add upgrade branch |
+| A new UI component (reusable) | `packages/ui/src/` |
+| A new UI panel or tab | `apps/web/src/App.tsx` or a new `*Panel.tsx` sibling |
+| Something that needs Node.js (file system, native modules, sending email) | `apps/electron/src/` behind an IPC handler |
+| Something only the packaged app can do | guard it with `if (window.beforeItsGone?.yourMethod)` in the renderer |
+
+See [`docs/architecture.md`](../docs/architecture.md) for a full overview of the layers, data flows, and key decisions.
+
+---
+
+## Adding an IPC channel
+
+If your feature needs to cross the renderer/main boundary (e.g. reading a file, calling a native API, sending email):
+
+1. **Define the handler** in `apps/electron/src/main.ts`:
+
+   ```typescript
+   ipcMain.handle('your:channel', async (_event, arg: YourType) => {
+     // Node.js-side logic here
+     return result;
+   });
+   ```
+
+2. **Expose it through the bridge** in `apps/electron/src/preload.ts`:
+
+   ```typescript
+   contextBridge.exposeInMainWorld('beforeItsGone', {
+     // ...existing entries...
+     yourMethod: (arg: YourType) => ipcRenderer.invoke('your:channel', arg),
+   });
+   ```
+
+3. **Type it** in `apps/web/src/vite-env.d.ts` under the `Window.beforeItsGone` interface.
+
+4. **Call it** from the renderer with a feature guard:
+
+   ```typescript
+   const result = await window.beforeItsGone?.yourMethod(arg);
+   ```
+
+The feature guard ensures the web-only build (`npm run dev:web`) doesn't throw when Electron APIs are absent.
+
+---
+
+## Adding an IndexedDB object store
+
+If your feature needs persistent structured storage beyond key-value pairs:
+
+1. Add your type to `packages/core/src/models.ts`.
+2. Add the store to the `BeforeItsGoneDB` schema interface in `packages/core/src/storage.ts`.
+3. Increment the DB version constant (`openDB('before-its-gone', N + 1, ...)`) and add an `if (oldVersion < N + 1)` upgrade branch that creates the new store.
+4. Add CRUD functions (`list*`, `upsert*`, `remove*`) below the existing ones.
+5. Export the new functions from `packages/core/src/index.ts`.
+
+Never remove or modify existing upgrade branches — they run for users upgrading from older versions.
+
+---
+
+## Testing
+
+There is no automated test suite yet. Manual testing is the current approach:
+
+- **Renderer logic** (`packages/core`): run `npm run dev:web` and exercise the feature in the browser. Check the browser DevTools console for errors.
+- **Electron-specific features** (IPC, scanner, email, auto-updater): run `npm run dev` and test in the full Electron app.
+- **Platform packaging**: run `npm run package:<your-platform>` and install the output artifact. Verify the auto-updater manifest path matches the GitHub release URL pattern if your change touches update files.
+- **Email**: use the "Send test email" button in Settings. For SMTP, a local SMTP catcher such as Mailpit on `localhost:1025` is useful for development.
+- **Cloud sync**: create a Supabase project, run the SQL migration from `docs/cloud-sync.md`, and test sign-in + Sync now.
+
+If you add testable pure functions to `packages/core`, adding unit tests with Vitest is welcome.
+
+---
+
 ## Import & export formats
 
 Full documentation for the JSON and CSV import/export formats — including field reference tables, date format rules, and examples — is in [`docs/import-export-format.md`](../docs/import-export-format.md).
+
+---
+
+## External APIs
+
+The app integrates with four external services. Open Food Facts and TheMealDB require no API keys. Resend and Supabase require free-tier accounts configured by the user. See [`docs/api-setup.md`](../docs/api-setup.md) for details on each service, and [`docs/smtp-config.md`](../docs/smtp-config.md) for SMTP provider-specific setup.
+
+---
+
+## Issue labels
+
+| Label | Meaning |
+| ----- | ------- |
+| `bug` | Something broken in an existing release |
+| `feature` | New capability or user-visible behaviour |
+| `enhancement` | Improvement to an existing feature |
+| `docs` | Documentation only |
+| `good first issue` | Small, well-scoped, low risk — good for first contributions |
+| `electron` | Affects the Electron main process or packaging |
+| `core` | Affects `packages/core` business logic |
 
 ---
 
