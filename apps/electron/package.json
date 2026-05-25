@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "electron-updater": "^6.3.9",
-    "nodemailer": "^8.0.7",
+    "nodemailer": "^8.0.8",
     "qrcode": "^1.5.4",
     "resend": "^6.12.3",
     "selfsigned": "^5.5.0"
