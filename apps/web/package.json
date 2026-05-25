@@ -11,7 +11,7 @@
   "dependencies": {
     "@before-its-gone/core": "file:../../packages/core",
     "@before-its-gone/ui": "file:../../packages/ui",
-    "@supabase/supabase-js": "^2.106.1",
+    "@supabase/supabase-js": "^2.106.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
