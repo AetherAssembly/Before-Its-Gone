@@ -28,13 +28,16 @@
     "checksum:windows": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>f.endsWith('.exe'));if(!files.length){console.log('No Windows artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",
     "lint": "eslint . --ext .ts,.tsx"
   },
+  "overrides": {
+    "tmp": "^0.2.7"
+  },
   "devDependencies": {
-    "@types/node": "^25.9.0",
-    "@typescript-eslint/eslint-plugin": "^8.59.4",
-    "@typescript-eslint/parser": "^8.59.4",
+    "@types/node": "^25.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.60.0",
+    "@typescript-eslint/parser": "^8.60.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "electron": "^42.1.0",
+    "electron": "^42.2.0",
     "electron-builder": "^26.8.1",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
