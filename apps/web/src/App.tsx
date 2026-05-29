@@ -30,20 +30,10 @@ import {
 import { syncService } from './SyncService.js';
 import { InventoryCard } from '@before-its-gone/ui';
 import { useToast } from './Toast.js';
+import { ItemDrawer, type FormState } from './ItemDrawer.js';
+import { StatsCharts } from './StatsCharts.js';
+import { ExpiryTimeline } from './ExpiryTimeline.js';
 
-type FormState = {
-  name: string;
-  quantity: number;
-  location: StorageLocation;
-  barcode: string;
-  shelfLifeDays: number;
-  expiryDate: string;
-  category: string;
-  depletionThreshold: string;
-  tags: string;
-  recurring: boolean;
-  restockQuantity: string;
-};
 
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
@@ -216,6 +206,10 @@ function App() {
 
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<FormState | null>(null);
+  const [drawerItem, setDrawerItem] = useState<InventoryItem | null>(null);
+  const [chartsOpen, setChartsOpen] = useState(false);
+  const [inventoryView, setInventoryView] = useState<'list' | 'timeline'>('list');
+  const [, setHighlightedItemId] = useState<string | null>(null);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -311,7 +305,7 @@ function App() {
       if (expired.length === 0 && expiringSoon.length === 0 && depleted.length === 0) return;
 
       const html = renderDigest({ expired, expiringSoon, depleted, digestType: emailSettings.digest === 'weekly' ? 'weekly' : 'daily' });
-      await api.sendEmail({ subject: `Before It's Gone — ${emailSettings.digest} digest`, html });
+      await api.sendEmail({ subject: `Before It's Gone - ${emailSettings.digest} digest`, html });
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -430,12 +424,12 @@ function App() {
   const formatShoppingListText = (listItems: InventoryItem[]) => {
     const date = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     const lines = [
-      "Shopping List — Before It's Gone",
+      "Shopping List - Before It's Gone",
       `Generated: ${date}`,
       '',
       ...listItems.map((item) => {
         const threshold = item.depletionThreshold;
-        return `☐ ${item.name} (${item.quantity} left${threshold ? `, need ${threshold}+` : ''}) — ${item.location}`;
+        return `☐ ${item.name} (${item.quantity} left${threshold ? `, need ${threshold}+` : ''}) - ${item.location}`;
       })
     ];
     return lines.join('\n');
@@ -677,25 +671,39 @@ function App() {
     bumpStats();
   };
 
+  const buildEditForm = (item: InventoryItem): FormState => ({
+    name: item.name,
+    quantity: item.quantity,
+    location: item.location,
+    barcode: item.barcode ?? '',
+    shelfLifeDays: item.shelfLifeDays ?? Math.max(1, Math.round(
+      (new Date(item.expiresAt).getTime() - Date.now()) / 86400000
+    )),
+    expiryDate: new Date(item.expiresAt).toISOString().slice(0, 10),
+    category: item.category ?? '',
+    depletionThreshold: item.depletionThreshold != null ? String(item.depletionThreshold) : '',
+    tags: item.tags?.join(', ') ?? '',
+    recurring: item.recurring ?? false,
+    restockQuantity: item.restockQuantity != null ? String(item.restockQuantity) : '',
+  });
+
   const onEdit = (id: string) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
     setEditingItemId(id);
-    setEditForm({
-      name: item.name,
-      quantity: item.quantity,
-      location: item.location,
-      barcode: item.barcode ?? '',
-      shelfLifeDays: item.shelfLifeDays ?? Math.max(1, Math.round(
-        (new Date(item.expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
-      )),
-      expiryDate: new Date(item.expiresAt).toISOString().slice(0, 10),
-      category: item.category ?? '',
-      depletionThreshold: item.depletionThreshold != null ? String(item.depletionThreshold) : '',
-      tags: item.tags?.join(', ') ?? '',
-      recurring: item.recurring ?? false,
-      restockQuantity: item.restockQuantity != null ? String(item.restockQuantity) : '',
-    });
+    setEditForm(buildEditForm(item));
+    setDrawerItem(item);
+  };
+
+  const onOpenDrawer = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (item) setDrawerItem(item);
+  };
+
+  const onDrawerStartEdit = () => {
+    if (!drawerItem) return;
+    setEditingItemId(drawerItem.id);
+    setEditForm(buildEditForm(drawerItem));
   };
 
   const onEditSave = async () => {
@@ -719,7 +727,9 @@ function App() {
       });
       if (updated) {
         setItems((prev) => prev.map((i) => (i.id === editingItemId ? updated : i)));
+        setDrawerItem(updated);
         bumpStats();
+        addToast('Changes saved.');
       }
       setEditingItemId(null);
       setEditForm(null);
@@ -731,6 +741,7 @@ function App() {
   const onEditCancel = () => {
     setEditingItemId(null);
     setEditForm(null);
+    setDrawerItem(null);
   };
 
   const onToggleSelect = (id: string) => {
@@ -792,7 +803,7 @@ function App() {
       if (file.name.endsWith('.csv')) {
         const { imported, skipped } = await inventoryService.importCSV(text);
         count = imported;
-        if (skipped > 0) extra = ` (${skipped} row${skipped > 1 ? 's' : ''} skipped — missing name/expires_at or invalid location)`;
+        if (skipped > 0) extra = ` (${skipped} row${skipped > 1 ? 's' : ''} skipped - missing name/expires_at or invalid location)`;
       } else {
         const parsed = importExportService.parseJSON(text);
         count = await inventoryService.importJSON(parsed);
@@ -908,7 +919,7 @@ function App() {
     {recipeBanner && recipeBanner.length > 0 && expiringCount >= 3 && (
       <div className="recipe-banner">
         <div className="recipe-banner-header">
-          <span>Use your expiring items — recipe ideas:</span>
+          <span>Use your expiring items - recipe ideas:</span>
           <button
             className="update-banner-dismiss"
             onClick={() => {
@@ -1094,28 +1105,39 @@ function App() {
 
       {activeTab === 'inventory' && <>
       <section className="summary">
-        <div className="summary-grid">
-          <div className="stat-card">
-            <span className="stat-value">{totalCount}</span>
-            <span className="stat-label">products</span>
+        <div className="summary-header">
+          <div className="summary-grid">
+            <div className="stat-card">
+              <span className="stat-value">{totalCount}</span>
+              <span className="stat-label">products</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-value">{totalUnits}</span>
+              <span className="stat-label">units</span>
+            </div>
+            <div className="stat-card stat-card--warning">
+              <span className="stat-value">{expiringThisWeek}</span>
+              <span className="stat-label">expiring this week</span>
+            </div>
+            <div className="stat-card stat-card--warning">
+              <span className="stat-value">{expiringSoonItems}</span>
+              <span className="stat-label">expiring soon</span>
+            </div>
+            <div className="stat-card stat-card--danger">
+              <span className="stat-value">{expiredItems}</span>
+              <span className="stat-label">expired</span>
+            </div>
           </div>
-          <div className="stat-card">
-            <span className="stat-value">{totalUnits}</span>
-            <span className="stat-label">units</span>
-          </div>
-          <div className="stat-card stat-card--warning">
-            <span className="stat-value">{expiringThisWeek}</span>
-            <span className="stat-label">expiring this week</span>
-          </div>
-          <div className="stat-card stat-card--warning">
-            <span className="stat-value">{expiringSoonItems}</span>
-            <span className="stat-label">expiring soon</span>
-          </div>
-          <div className="stat-card stat-card--danger">
-            <span className="stat-value">{expiredItems}</span>
-            <span className="stat-label">expired</span>
-          </div>
+          <button
+            type="button"
+            className="btn-ghost btn-sm charts-toggle"
+            onClick={() => setChartsOpen(o => !o)}
+            aria-expanded={chartsOpen}
+          >
+            {chartsOpen ? 'Hide charts' : 'Show charts'}
+          </button>
         </div>
+        {chartsOpen && <StatsCharts items={allItems} warningWindowDays={settings.expiryWarningDays} />}
       </section>
 
       {frequentItems.length > 0 && (
@@ -1158,7 +1180,7 @@ function App() {
           {window.beforeItsGone?.startBarcodeServer && (
             scannerActive ? (
               <button type="button" className="btn-ghost" onClick={onStopScanner}>
-                Scanner active — click to stop
+                Scanner active - click to stop
               </button>
             ) : (
               <button type="button" onClick={() => void onScanWithPhone()} disabled={loading}>
@@ -1238,7 +1260,7 @@ function App() {
               type="number"
               min={1}
               value={form.depletionThreshold}
-              placeholder="e.g. 2 — notify when ≤ this many left"
+              placeholder="e.g. 2 - notify when &le; this many left"
               onChange={(e) => setField('depletionThreshold', e.target.value)}
             />
           </label>
@@ -1287,7 +1309,27 @@ function App() {
       </section>
 
       <section className="panel">
-        <h2>Inventory</h2>
+        <div className="inventory-section-header">
+          <h2>Inventory</h2>
+          <div className="view-toggle" role="group" aria-label="Inventory view">
+            <button
+              type="button"
+              className={`btn-sm${inventoryView === 'list' ? ' btn-view-active' : ' btn-ghost'}`}
+              onClick={() => setInventoryView('list')}
+              aria-pressed={inventoryView === 'list'}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              className={`btn-sm${inventoryView === 'timeline' ? ' btn-view-active' : ' btn-ghost'}`}
+              onClick={() => setInventoryView('timeline')}
+              aria-pressed={inventoryView === 'timeline'}
+            >
+              Timeline
+            </button>
+          </div>
+        </div>
 
         <div className="controls-row">
           <input
@@ -1350,59 +1392,6 @@ function App() {
           </div>
         )}
 
-        {editingItemId && editForm && (
-          <div className="panel edit-panel">
-            <h3>Edit item</h3>
-            <div className="inventory-form">
-              <label>Name
-                <input value={editForm.name} required onChange={(e) => setEditForm((f) => f ? { ...f, name: e.target.value } : f)} />
-              </label>
-              <label>Category (optional)
-                <input value={editForm.category} placeholder="e.g. dairy" onChange={(e) => setEditForm((f) => f ? { ...f, category: e.target.value } : f)} />
-              </label>
-              <label>Tags (comma-separated)
-                <input value={editForm.tags} placeholder="e.g. organic, local" onChange={(e) => setEditForm((f) => f ? { ...f, tags: e.target.value } : f)} />
-              </label>
-              <label>Quantity
-                <input type="number" min={1} value={editForm.quantity} onChange={(e) => setEditForm((f) => f ? { ...f, quantity: Number(e.target.value) || 1 } : f)} />
-              </label>
-              <label>Expiry date
-                <input type="date" value={editForm.expiryDate} onChange={(e) => setEditForm((f) => f ? { ...f, expiryDate: e.target.value } : f)} />
-              </label>
-              <label>Location
-                <select value={editForm.location} onChange={(e) => setEditForm((f) => f ? { ...f, location: e.target.value as StorageLocation } : f)}>
-                  <option value="fridge">Fridge</option>
-                  <option value="freezer">Freezer</option>
-                  <option value="pantry">Pantry</option>
-                  {settings.customLocations.map((loc) => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
-              </label>
-              <label>Low stock alert at (optional)
-                <input type="number" min={1} value={editForm.depletionThreshold} placeholder="e.g. 2" onChange={(e) => setEditForm((f) => f ? { ...f, depletionThreshold: e.target.value } : f)} />
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={editForm.recurring}
-                  onChange={(e) => setEditForm((f) => f ? { ...f, recurring: e.target.checked } : f)}
-                />
-                Auto-restock when depleted
-              </label>
-              {editForm.recurring && (
-                <label>Restock quantity
-                  <input type="number" min={1} value={editForm.restockQuantity} placeholder="e.g. 3" onChange={(e) => setEditForm((f) => f ? { ...f, restockQuantity: e.target.value } : f)} />
-                </label>
-              )}
-              <div className="confirm-row">
-                <button type="button" disabled={loading} onClick={() => void onEditSave()}>{loading ? 'Saving…' : 'Save changes'}</button>
-                <button type="button" className="btn-ghost" onClick={onEditCancel}>Cancel</button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {availableTags.length > 0 && (
           <div className="tag-filters">
             {availableTags.map((tag) => (
@@ -1429,27 +1418,37 @@ function App() {
           <div className="skeleton-grid" aria-label="Loading inventory">
             {[0, 1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-card" />)}
           </div>
-        ) : null}
-
-        <div className="inventory-grid" style={!inventoryReady ? { display: 'none' } : undefined}>
-          {items.map((item) => (
-            <InventoryCard
-              key={item.id}
-              item={item}
-              onDelete={onDelete}
-              onDecrement={onDecrement}
-              onIncrement={onIncrement}
-              onEdit={onEdit}
-              selected={bulkMode ? selectedIds.has(item.id) : undefined}
-              onToggleSelect={bulkMode ? onToggleSelect : undefined}
-              warningWindowDays={settings.expiryWarningDays}
-              onTagClick={onToggleTag}
-              caloriesPer100g={item.barcode ? profileMap.get(item.barcode)?.caloriesPer100g : undefined}
-              allergens={item.barcode ? profileMap.get(item.barcode)?.allergens : undefined}
-            />
-          ))}
-          {items.length === 0 ? <p>No items match your filters.</p> : null}
-        </div>
+        ) : inventoryView === 'timeline' ? (
+          <ExpiryTimeline
+            items={items}
+            warningWindowDays={settings.expiryWarningDays}
+            onSelect={(id) => {
+              setHighlightedItemId(id);
+              setInventoryView('list');
+            }}
+          />
+        ) : (
+          <div className="inventory-grid">
+            {items.map((item) => (
+              <InventoryCard
+                key={item.id}
+                item={item}
+                onDelete={onDelete}
+                onDecrement={onDecrement}
+                onIncrement={onIncrement}
+                onEdit={onEdit}
+                onDetail={onOpenDrawer}
+                selected={bulkMode ? selectedIds.has(item.id) : undefined}
+                onToggleSelect={bulkMode ? onToggleSelect : undefined}
+                warningWindowDays={settings.expiryWarningDays}
+                onTagClick={onToggleTag}
+                caloriesPer100g={item.barcode ? profileMap.get(item.barcode)?.caloriesPer100g : undefined}
+                allergens={item.barcode ? profileMap.get(item.barcode)?.allergens : undefined}
+              />
+            ))}
+            {items.length === 0 ? <p>No items match your filters.</p> : null}
+          </div>
+        )}
       </section>
 
       <section className="panel">
@@ -1520,6 +1519,17 @@ function App() {
       </section>
       </>}
     </main>
+
+    <ItemDrawer
+      item={drawerItem}
+      editForm={editForm}
+      loading={loading}
+      customLocations={settings.customLocations}
+      onStartEdit={onDrawerStartEdit}
+      onEditFormChange={(updater) => setEditForm(f => f ? updater(f) : f)}
+      onEditSave={() => { void onEditSave(); }}
+      onClose={onEditCancel}
+    />
 
     {undoPending && (
       <div className="undo-toast" role="status" aria-live="polite">

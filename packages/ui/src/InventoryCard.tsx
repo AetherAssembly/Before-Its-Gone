@@ -9,6 +9,7 @@ type InventoryCardProps = {
   onDecrement: (id: string) => void;
   onIncrement?: (id: string) => void;
   onEdit?: (id: string) => void;
+  onDetail?: (id: string) => void;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   warningWindowDays?: number;
@@ -17,11 +18,17 @@ type InventoryCardProps = {
   allergens?: string[];
 };
 
-export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, selected, onToggleSelect, warningWindowDays, onTagClick, caloriesPer100g, allergens }: InventoryCardProps) {
+export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit, onDetail, selected, onToggleSelect, warningWindowDays, onTagClick, caloriesPer100g, allergens }: InventoryCardProps) {
   const status = calculateExpiryStatus(item.expiresAt, warningWindowDays);
 
   return (
-    <article className="inventory-card" data-status={status} data-selected={selected ? 'true' : undefined}>
+    <article
+      className="inventory-card"
+      data-status={status}
+      data-selected={selected ? 'true' : undefined}
+      onClick={onDetail ? () => onDetail(item.id) : undefined}
+      style={onDetail ? { cursor: 'pointer' } : undefined}
+    >
       <header>
         {onToggleSelect && (
           <input
@@ -42,8 +49,8 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
               className={onTagClick ? 'tag tag--clickable' : 'tag'}
               role={onTagClick ? 'button' : undefined}
               tabIndex={onTagClick ? 0 : undefined}
-              onClick={onTagClick ? () => onTagClick(tag) : undefined}
-              onKeyDown={onTagClick ? (e) => e.key === 'Enter' && onTagClick(tag) : undefined}
+              onClick={onTagClick ? (e) => { e.stopPropagation(); onTagClick(tag); } : undefined}
+              onKeyDown={onTagClick ? (e) => { if (e.key === 'Enter') { e.stopPropagation(); onTagClick(tag); } } : undefined}
             >
               {tag}
             </span>
@@ -61,15 +68,16 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
         </div>
       )}
 
-      <div className="card-actions">
+      <div className="card-actions" onClick={e => e.stopPropagation()}>
         <button
           type="button"
           className="btn-sm"
           onClick={() => onDecrement(item.id)}
           title="Use one"
+          aria-label={`Use one ${item.name}`}
           disabled={item.quantity <= 0}
         >
-          − Use one
+          - Use one
         </button>
         <span className="qty-display">{item.quantity} left</span>
         {onIncrement && (
@@ -78,6 +86,7 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
             className="btn-sm"
             onClick={() => onIncrement(item.id)}
             title="Add one"
+            aria-label={`Add one ${item.name}`}
           >
             + Add one
           </button>
@@ -87,6 +96,7 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
             type="button"
             className="btn-sm"
             onClick={() => onEdit(item.id)}
+            aria-label={`Edit ${item.name}`}
           >
             Edit
           </button>
@@ -95,6 +105,7 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
           type="button"
           className="btn-remove"
           onClick={() => onDelete(item.id)}
+          aria-label={`Remove ${item.name}`}
         >
           Remove
         </button>
