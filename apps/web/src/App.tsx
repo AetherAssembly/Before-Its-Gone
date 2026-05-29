@@ -48,6 +48,7 @@ const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
 const appStorage = createLocalStorageAdapter();
 const NOTIFICATION_LOG_KEY = 'before-its-gone.notification-log';
+const THEME_KEY = 'before-its-gone.theme';
 
 function getInitialSettings(): AppSettings {
   try {
@@ -177,6 +178,7 @@ function getExpiringThisWeek(items: InventoryItem[]): number {
 function App() {
   const [settings, setSettings] = useState<AppSettings>(getInitialSettings);
   const [activeTab, setActiveTab] = useState<'inventory' | 'shopping' | 'waste' | 'settings'>('inventory');
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem(THEME_KEY) as 'dark' | 'light') ?? 'dark');
   const [wasteLog, setWasteLog] = useState<WasteLogEntry[]>([]);
 
   const onChangeSettings = useCallback((next: AppSettings) => {
@@ -247,6 +249,13 @@ function App() {
     () => inventoryService.list({ search, location: filterLocation, sortField, sortDirection, tags: activeTags }),
     [search, filterLocation, sortField, sortDirection, activeTags]
   );
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
 
   useEffect(() => {
     void loadInventory().then(setItems);
@@ -932,7 +941,29 @@ function App() {
             <p>Offline inventory tracking that works on web and desktop.</p>
           </div>
         </div>
-        <button className="about-trigger" onClick={() => setAboutOpen(true)} title="About" aria-label="About">&#9432;</button>
+        <div className="header-actions">
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            )}
+          </button>
+          <button className="about-trigger" onClick={() => setAboutOpen(true)} title="About" aria-label="About">&#9432;</button>
+        </div>
       </header>
       <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} version={appVersion} />
 
