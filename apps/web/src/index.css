@@ -333,7 +333,7 @@ button:focus-visible {
 .inventory-card header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 0.5rem;
   margin-bottom: 0;
 }
@@ -1522,4 +1522,142 @@ button:focus-visible {
 
 .drawer-edit {
   padding: 1rem;
+}
+
+/* --- Photo thumbnail on inventory card --- */
+.item-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* --- Photo in drawer detail view --- */
+.drawer-photo {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(var(--bg-panel), 0.4);
+}
+
+/* --- Photo picker in forms --- */
+.photo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.photo-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.photo-preview {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+/* --- Drop zone strip (U12) --- */
+.drop-zone-strip {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.drop-zone {
+  flex: 1;
+  min-width: 80px;
+  padding: 0.5rem 0.75rem;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  cursor: default;
+}
+
+.drop-zone[data-over="true"],
+.drop-zone:focus-within {
+  border-color: var(--accent);
+  background: rgba(var(--bg-panel), 0.5);
+  color: var(--accent);
+}
+
+/* --- Keyboard shortcuts modal (U11) --- */
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 300;
+}
+
+.shortcuts-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 301;
+  background: rgb(var(--bg-panel));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  min-width: 280px;
+  max-width: 90vw;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+}
+
+.shortcuts-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.shortcuts-modal-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.shortcut-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0;
+}
+
+.shortcut-list dt {
+  display: flex;
+  align-items: center;
+}
+
+.shortcut-list dd {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 0.2em 0.4em;
+  background: rgba(var(--bg-panel), 0.8);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--text-primary);
 }

@@ -30,7 +30,7 @@ import {
 import { syncService } from './SyncService.js';
 import { InventoryCard } from '@before-its-gone/ui';
 import { useToast } from './Toast.js';
-import { ItemDrawer, type FormState } from './ItemDrawer.js';
+import { ItemDrawer, type FormState, resizeImage } from './ItemDrawer.js';
 import { StatsCharts } from './StatsCharts.js';
 import { ExpiryTimeline } from './ExpiryTimeline.js';
 
@@ -71,6 +71,7 @@ function makeInitialForm(s: AppSettings): FormState {
     tags: '',
     recurring: false,
     restockQuantity: '',
+    photo: '',
   };
 }
 
@@ -194,6 +195,10 @@ function App() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
   const barcodeImportRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const addItemNameRef = useRef<HTMLInputElement>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [barcodeImportProgress, setBarcodeImportProgress] = useState<{ done: number; total: number } | null>(null);
 
   const [scanModal, setScanModal] = useState<{
@@ -210,6 +215,7 @@ function App() {
   const [chartsOpen, setChartsOpen] = useState(false);
   const [inventoryView, setInventoryView] = useState<'list' | 'timeline'>('list');
   const [, setHighlightedItemId] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -252,6 +258,23 @@ function App() {
   }, [theme]);
 
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      const inInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+      if (e.key === 'Escape') {
+        if (shortcutsOpen) { setShortcutsOpen(false); return; }
+        if (drawerItem) { setDrawerItem(null); setEditingItemId(null); setEditForm(null); return; }
+      }
+      if (inInput) return;
+      if (e.key === '?') { e.preventDefault(); setShortcutsOpen(o => !o); }
+      if (e.key === 'n' || e.key === 'N') { setActiveTab('inventory'); setTimeout(() => addItemNameRef.current?.focus(), 50); }
+      if (e.key === '/') { e.preventDefault(); setActiveTab('inventory'); setTimeout(() => searchRef.current?.focus(), 50); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [shortcutsOpen, drawerItem]);
 
   useEffect(() => {
     void loadInventory().then(result => { setItems(result); setInventoryReady(true); });
@@ -541,6 +564,7 @@ function App() {
       tags: '',
       recurring: false,
       restockQuantity: '',
+      photo: '',
     });
     addToast(`Pre-filled form from "${entry.name}" history.`);
   };
@@ -583,6 +607,7 @@ function App() {
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
         recurring: form.recurring,
         restockQuantity: form.restockQuantity ? Number(form.restockQuantity) : undefined,
+        photo: form.photo || undefined,
       });
 
       if (form.barcode.trim()) {
@@ -685,6 +710,7 @@ function App() {
     tags: item.tags?.join(', ') ?? '',
     recurring: item.recurring ?? false,
     restockQuantity: item.restockQuantity != null ? String(item.restockQuantity) : '',
+    photo: item.photo ?? '',
   });
 
   const onEdit = (id: string) => {
@@ -724,6 +750,7 @@ function App() {
         tags: editForm.tags.split(',').map((t) => t.trim()).filter(Boolean),
         recurring: editForm.recurring,
         restockQuantity: editForm.restockQuantity ? Number(editForm.restockQuantity) : undefined,
+        photo: editForm.photo || undefined,
       });
       if (updated) {
         setItems((prev) => prev.map((i) => (i.id === editingItemId ? updated : i)));
@@ -1192,6 +1219,7 @@ function App() {
           <label>
             Name
             <input
+              ref={addItemNameRef}
               required
               value={form.name}
               onChange={(e) => setField('name', e.target.value)}
@@ -1302,6 +1330,33 @@ function App() {
             </select>
           </label>
 
+          <div className="photo-field">
+            {form.photo && (
+              <div className="photo-preview-row">
+                <img src={form.photo} alt="Item photo" className="photo-preview" />
+                <button type="button" className="btn-ghost btn-sm" onClick={() => setField('photo', '')}>
+                  Remove photo
+                </button>
+              </div>
+            )}
+            <label className="file-label btn-sm" style={{ display: 'inline-block' }}>
+              {form.photo ? 'Replace photo' : 'Add photo (optional)'}
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const dataUrl = await resizeImage(file);
+                  setField('photo', dataUrl);
+                  if (photoInputRef.current) photoInputRef.current.value = '';
+                }}
+              />
+            </label>
+          </div>
+
           <button type="submit" disabled={loading}>
             {loading ? 'Saving…' : 'Save item'}
           </button>
@@ -1333,6 +1388,7 @@ function App() {
 
         <div className="controls-row">
           <input
+            ref={searchRef}
             className="search-input"
             placeholder="Search name, barcode, category…"
             value={searchInput}
@@ -1414,6 +1470,28 @@ function App() {
           </div>
         )}
 
+        {inventoryReady && inventoryView === 'list' && (
+          <div className="drop-zone-strip" aria-label="Drag here to move to location">
+            {(['fridge', 'freezer', 'pantry'] as StorageLocation[]).concat(settings.customLocations).map(loc => (
+              <div
+                key={loc}
+                className="drop-zone"
+                onDragOver={e => e.preventDefault()}
+                onDrop={() => {
+                  if (!draggedId) return;
+                  const id = draggedId;
+                  setDraggedId(null);
+                  void inventoryService.update(id, { location: loc }).then(updated => {
+                    if (updated) { setItems(prev => prev.map(i => i.id === id ? updated : i)); bumpStats(); }
+                  });
+                }}
+              >
+                {loc}
+              </div>
+            ))}
+          </div>
+        )}
+
         {!inventoryReady ? (
           <div className="skeleton-grid" aria-label="Loading inventory">
             {[0, 1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-card" />)}
@@ -1430,21 +1508,27 @@ function App() {
         ) : (
           <div className="inventory-grid">
             {items.map((item) => (
-              <InventoryCard
+              <div
                 key={item.id}
-                item={item}
-                onDelete={onDelete}
-                onDecrement={onDecrement}
-                onIncrement={onIncrement}
-                onEdit={onEdit}
-                onDetail={onOpenDrawer}
-                selected={bulkMode ? selectedIds.has(item.id) : undefined}
-                onToggleSelect={bulkMode ? onToggleSelect : undefined}
-                warningWindowDays={settings.expiryWarningDays}
-                onTagClick={onToggleTag}
-                caloriesPer100g={item.barcode ? profileMap.get(item.barcode)?.caloriesPer100g : undefined}
-                allergens={item.barcode ? profileMap.get(item.barcode)?.allergens : undefined}
-              />
+                draggable
+                onDragStart={() => setDraggedId(item.id)}
+                onDragEnd={() => setDraggedId(null)}
+              >
+                <InventoryCard
+                  item={item}
+                  onDelete={onDelete}
+                  onDecrement={onDecrement}
+                  onIncrement={onIncrement}
+                  onEdit={onEdit}
+                  onDetail={onOpenDrawer}
+                  selected={bulkMode ? selectedIds.has(item.id) : undefined}
+                  onToggleSelect={bulkMode ? onToggleSelect : undefined}
+                  warningWindowDays={settings.expiryWarningDays}
+                  onTagClick={onToggleTag}
+                  caloriesPer100g={item.barcode ? profileMap.get(item.barcode)?.caloriesPer100g : undefined}
+                  allergens={item.barcode ? profileMap.get(item.barcode)?.allergens : undefined}
+                />
+              </div>
             ))}
             {items.length === 0 ? <p>No items match your filters.</p> : null}
           </div>
@@ -1546,6 +1630,24 @@ function App() {
         platform={platform}
         onClose={onCloseScanModal}
       />
+    )}
+
+    {shortcutsOpen && (
+      <>
+        <div className="shortcuts-overlay" onClick={() => setShortcutsOpen(false)} aria-hidden="true" />
+        <div className="shortcuts-modal" role="dialog" aria-label="Keyboard shortcuts" aria-modal="true">
+          <div className="shortcuts-modal-header">
+            <h2>Keyboard Shortcuts</h2>
+            <button type="button" className="drawer-close" onClick={() => setShortcutsOpen(false)} aria-label="Close">&#x2715;</button>
+          </div>
+          <dl className="shortcut-list">
+            <dt><kbd>N</kbd></dt><dd>Open add item form</dd>
+            <dt><kbd>/</kbd></dt><dd>Focus search</dd>
+            <dt><kbd>Esc</kbd></dt><dd>Close drawer or modal</dd>
+            <dt><kbd>?</kbd></dt><dd>Toggle this shortcuts list</dd>
+          </dl>
+        </div>
+      </>
     )}
     </>
   );

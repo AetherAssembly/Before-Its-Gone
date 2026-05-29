@@ -1,5 +1,28 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { type InventoryItem, type StorageLocation } from '@before-its-gone/core';
+
+export function resizeImage(file: File): Promise<string> {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const MAX = 200;
+      let { width, height } = img;
+      if (width > height) {
+        if (width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+      } else {
+        if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.src = url;
+  });
+}
 
 export type FormState = {
   name: string;
@@ -13,6 +36,7 @@ export type FormState = {
   tags: string;
   recurring: boolean;
   restockQuantity: string;
+  photo: string;
 };
 
 type Props = {
@@ -27,12 +51,7 @@ type Props = {
 };
 
 export function ItemDrawer({ item, editForm, loading, customLocations, onStartEdit, onEditFormChange, onEditSave, onClose }: Props) {
-  useEffect(() => {
-    if (!item) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [item, onClose]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <>
@@ -64,6 +83,9 @@ export function ItemDrawer({ item, editForm, loading, customLocations, onStartEd
 
         {!editForm ? (
           <div className="drawer-detail">
+            {item.photo && (
+              <img src={item.photo} alt={item.name} className="drawer-photo" />
+            )}
             <dl className="detail-list">
               <dt>Location</dt><dd>{item.location}</dd>
               {item.category && <><dt>Category</dt><dd>{item.category}</dd></>}
@@ -123,6 +145,32 @@ export function ItemDrawer({ item, editForm, loading, customLocations, onStartEd
                 <input type="number" min={1} value={editForm.restockQuantity} placeholder="e.g. 3" onChange={e => onEditFormChange(f => ({ ...f, restockQuantity: e.target.value }))} />
               </label>
             )}
+            <div className="photo-field">
+              {editForm.photo && (
+                <div className="photo-preview-row">
+                  <img src={editForm.photo} alt="Item photo" className="photo-preview" />
+                  <button type="button" className="btn-ghost btn-sm" onClick={() => onEditFormChange(f => ({ ...f, photo: '' }))}>
+                    Remove photo
+                  </button>
+                </div>
+              )}
+              <label className="file-label btn-sm" style={{ display: 'inline-block' }}>
+                {editForm.photo ? 'Replace photo' : 'Add photo'}
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={async e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const dataUrl = await resizeImage(file);
+                    onEditFormChange(f => ({ ...f, photo: dataUrl }));
+                    if (photoInputRef.current) photoInputRef.current.value = '';
+                  }}
+                />
+              </label>
+            </div>
             <div className="confirm-row">
               <button type="button" disabled={loading} onClick={onEditSave}>
                 {loading ? 'Saving...' : 'Save changes'}

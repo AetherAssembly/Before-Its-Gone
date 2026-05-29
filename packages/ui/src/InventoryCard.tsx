@@ -30,6 +30,9 @@ export function InventoryCard({ item, onDelete, onDecrement, onIncrement, onEdit
       style={onDetail ? { cursor: 'pointer' } : undefined}
     >
       <header>
+        {item.photo && (
+          <img src={item.photo} alt="" aria-hidden="true" className="item-thumb" />
+        )}
         {onToggleSelect && (
           <input
             type="checkbox"

@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [0.9.0] - 2026-05-29
+
+### Added
+
+- **Dark/light mode toggle:** sun/moon button in the header switches between dark (default) and light themes. Choice is persisted in localStorage. All colors are now CSS custom properties, making the entire UI re-theme cleanly.
+- **Animated background:** subtle `hue-rotate` animation on the page background (0-8 degrees over 12 seconds); imperceptible but adds life to the dark theme.
+- **Glass morphism panels:** all `.panel` and `.stat-card` elements now use `backdrop-filter: blur(12px)` with a semi-transparent background, giving a frosted glass effect.
+- **Toast notification system:** a `ToastProvider` context replaces all static status messages. Toasts appear bottom-right, auto-dismiss after 3 seconds, and have success (cyan), warning (amber), and error (rose) variants. The existing undo toast is preserved as a separate lower-level component.
+- **Responsive layout:** new breakpoint at 480px stacks `.controls-row` vertically and makes all form fields full-width. Button min-height is 44px for touch targets. A 400px breakpoint tightens side padding further.
+- **Loading skeleton states:** while the inventory loads on first render, 6 shimmer placeholder cards are shown instead of an empty list.
+- **Stats charts:** a "Show charts" toggle in the inventory summary reveals three Recharts visualisations: a pie chart of items by location, a horizontal bar chart of items by category (top 8, rest grouped as "other"), and a vertical bar chart of items expiring within each of the next 7 days.
+- **Expiry timeline view:** a segmented "List / Timeline" control above the inventory switches to a horizontal scrollable timeline. Items are shown as color-coded dots (fresh/expiring-soon/expired) on a date axis spanning today to the furthest expiry date. Clicking a dot switches back to list view.
+- **Item detail drawer:** clicking any inventory card opens a slide-in drawer from the right showing all item fields. An "Edit item" button within the drawer reveals an inline edit form (same fields as before, including photo). The drawer closes on Esc, overlay click, or the X button. The previous inline edit panel has been removed.
+- **Item photos:** a file picker (with canvas resize to 200x200 max, JPEG 0.75) is available on both the add-item form and the drawer edit form. Thumbnails (48x48, rounded) appear in the card header; the full image is shown at the top of the drawer detail view.
+- **Keyboard shortcuts:** global keydown handler in App.tsx. `N` focuses the add-item name field (switching to the Inventory tab first); `/` focuses the search input; `Esc` closes the drawer or the shortcuts modal; `?` toggles a modal listing all shortcuts.
+- **Drag-and-drop location move:** each inventory card is draggable. A strip of drop targets (one per location, including custom locations) appears above the grid while the inventory tab is active. Dropping a card on a target calls `inventoryService.update` with the new location.
+
+### Changed
+
+- `InventoryItem` and `NewInventoryItem` gain `photo?: string` (base64 data URL, stored in IndexedDB).
+- `updateInventoryItem` patch type now includes `'photo'`.
+- All em-dashes in code comments, toast messages, and doc strings replaced with hyphens or colons.
+- Dependency bumps: `@types/node` 25.9.1, `@types/react` 19.2.15, `@supabase/supabase-js` 2.106.2, `@typescript-eslint/{eslint-plugin,parser}` 8.60.0, `electron` 42.2.0, `nodemailer` 8.0.8, `resend` 6.12.4, `vite` 8.0.14, `tmp` 0.2.7 (via overrides).
+- `recharts` 3.x added as a dependency in `apps/web`.
+
+---
+
 ## [0.8.0] - 2026-05-22
 
 ### Added

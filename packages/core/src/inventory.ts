@@ -106,7 +106,7 @@ export async function createInventoryItem(
 export async function updateInventoryItem(
   id: string,
   patch: Partial<
-    Pick<InventoryItem, 'name' | 'quantity' | 'location' | 'barcode' | 'expiresAt' | 'shelfLifeDays' | 'category' | 'depletionThreshold' | 'tags' | 'recurring' | 'restockQuantity'>
+    Pick<InventoryItem, 'name' | 'quantity' | 'location' | 'barcode' | 'expiresAt' | 'shelfLifeDays' | 'category' | 'depletionThreshold' | 'tags' | 'recurring' | 'restockQuantity' | 'photo'>
   >
 ): Promise<InventoryItem | null> {
   const items = await listInventoryItems();

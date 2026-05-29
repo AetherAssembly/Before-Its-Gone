@@ -21,6 +21,7 @@ export interface InventoryItem {
   tags: string[];
   recurring?: boolean;
   restockQuantity?: number;
+  photo?: string;
 }
 
 export interface NewInventoryItem {
@@ -35,6 +36,7 @@ export interface NewInventoryItem {
   tags?: string[];
   recurring?: boolean;
   restockQuantity?: number;
+  photo?: string;
 }
 
 export interface WasteLogEntry {

@@ -28,11 +28,16 @@ Offline-first desktop app no account required, all data stays on your machine.
 - **Search:** across name, barcode, and category. Debounced, no keystroke lag
 - **Filter:** by location · **Sort** by expiry date, date added, or name
 - **Tag filtering:** click any tag chip to narrow the list (AND semantics)
-- **Stats dashboard:** expiring this week · expiring soon · expired · total units
+- **Stats dashboard:** expiring this week · expiring soon · expired · total units; collapsible charts (by location, by category, 7-day expiry countdown)
+- **Expiry timeline view:** toggle from list view to a horizontal timeline showing all items color-coded by status
+- **Item photos:** attach a photo to any item; thumbnail shown on card, full image in the detail drawer
+- **Item detail drawer:** click any card to open a slide-in drawer with all fields and an inline edit form
 - **Quick-add buttons:** from item history one click to pre-fill the form
-- **Quantity management:** `− Use one` with low-stock alerts · `+ Add one` · 5-second Undo toast
+- **Quantity management:** `- Use one` with low-stock alerts · `+ Add one` · 5-second Undo toast
 - **Recurring items:** auto-restock to a configured quantity when depleted to zero
 - **Bulk select:** delete or move multiple items at once · Clear all with confirmation guard
+- **Drag-and-drop:** drag any card onto a location chip above the grid to move it instantly
+- **Keyboard shortcuts:** `N` add item · `/` search · `Esc` close drawer · `?` show shortcut list
 
 ### Lists & tracking
 
@@ -44,6 +49,15 @@ Offline-first desktop app no account required, all data stays on your machine.
 
 - **Phone barcode scanner:** scan a QR code on any phone browser, camera auto-detects barcodes
 - **Manual expiry date** on the phone review card overrides shelf-life prediction; date and days fields stay in sync
+
+### UI
+
+- **Dark and light mode:** toggle in the header, persisted across sessions
+- **Animated background:** subtle hue-shift animation on the background
+- **Glass panels:** frosted glass effect on all panels via backdrop-filter
+- **Toast notifications:** success, warning, and error toasts replace status messages; auto-dismiss after 3 seconds
+- **Responsive layout:** controls stack vertically on narrow screens; 44px touch targets
+- **Loading skeletons:** shimmer placeholder cards shown while inventory loads
 
 ### Settings & data
 
@@ -95,7 +109,7 @@ Or grab a specific build from the [Releases](https://github.com/AetherAssembly/B
 
 ### Install
 
-Run the NSIS installer (`before-its-gone-0.8.0-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+Run the NSIS installer (`before-its-gone-0.9.0-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
 
 ### Uninstall
 
@@ -122,11 +136,11 @@ Drag `Before Its Gone` out of your Applications folder and into the Trash.
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.8.0.x86_64.rpm
+sudo dnf install ./before-its-gone-0.9.0.x86_64.rpm
 
 # or
 
-sudo dnf install ./before-its-gone-0.8.0.arm64.rpm
+sudo dnf install ./before-its-gone-0.9.0.arm64.rpm
 ```
 
 ### Uninstall
@@ -140,11 +154,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.8.0-x86_64.rpm
+sudo zypper install ./before-its-gone-0.9.0-x86_64.rpm
 
 # or 
 
-sudo zypper install ./before-its-gone_0.8.0-aarch64.rpm
+sudo zypper install ./before-its-gone_0.9.0-aarch64.rpm
 ```
 
 ### Uninstall
@@ -159,12 +173,12 @@ sudo zypper remove before-its-gone
 
 ```bash
 # All other Debian Distros
-sudo apt install ./before-its-gone-0.8.0-amd64.deb
+sudo apt install ./before-its-gone-0.9.0-amd64.deb
 
 # or
 
 # Raspberry Pi 4/5 
-sudo apt install ./before-its-gone-0.8.0-arm64.deb
+sudo apt install ./before-its-gone-0.9.0-arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
