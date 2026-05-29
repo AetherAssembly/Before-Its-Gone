@@ -29,6 +29,7 @@ import {
 } from '@before-its-gone/core';
 import { syncService } from './SyncService.js';
 import { InventoryCard } from '@before-its-gone/ui';
+import { useToast } from './Toast.js';
 
 type FormState = {
   name: string;
@@ -188,8 +189,9 @@ function App() {
 
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [form, setForm] = useState<FormState>(() => makeInitialForm(getInitialSettings()));
-  const [statusMessage, setStatusMessage] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [inventoryReady, setInventoryReady] = useState(false);
+  const { addToast } = useToast();
   const [frequentItems, setFrequentItems] = useState<ItemHistory[]>([]);
 
   const [searchInput, setSearchInput] = useState('');
@@ -258,7 +260,7 @@ function App() {
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
 
   useEffect(() => {
-    void loadInventory().then(setItems);
+    void loadInventory().then(result => { setItems(result); setInventoryReady(true); });
   }, [loadInventory]);
 
   useEffect(() => {
@@ -441,7 +443,7 @@ function App() {
 
   const onCopyShoppingList = async () => {
     await navigator.clipboard.writeText(formatShoppingListText(shoppingListItems));
-    setStatusMessage('Shopping list copied to clipboard.');
+    addToast('Shopping list copied to clipboard.');
   };
 
   const onExportShoppingList = () => {
@@ -474,9 +476,9 @@ function App() {
             .toISOString()
             .slice(0, 10)
         }));
-        setStatusMessage('Loaded saved barcode profile.');
+        addToast('Loaded saved barcode profile.');
       } else {
-        setStatusMessage('No saved profile for that barcode yet.');
+        addToast('No saved profile for that barcode yet.', 'warning');
       }
     } finally {
       setLoading(false);
@@ -508,7 +510,7 @@ function App() {
       });
     } catch {
       setScannerActive(false);
-      setStatusMessage('Could not start phone scanner. Check that no other app is using the port.');
+      addToast('Could not start phone scanner. Check that no other app is using the port.', 'error');
     }
   };
 
@@ -522,11 +524,11 @@ function App() {
     try {
       const remoteName = await lookupBarcodeOnline(barcode);
       if (!remoteName) {
-        setStatusMessage('No product name found from online lookup.');
+        addToast('No product name found from online lookup.', 'warning');
         return;
       }
       setField('name', remoteName);
-      setStatusMessage('Loaded product name from barcode database.');
+      addToast('Loaded product name from barcode database.');
     } finally {
       setLoading(false);
     }
@@ -546,7 +548,7 @@ function App() {
       recurring: false,
       restockQuantity: '',
     });
-    setStatusMessage(`Pre-filled form from "${entry.name}" history.`);
+    addToast(`Pre-filled form from "${entry.name}" history.`);
   };
 
   const onNotificationEnable = async () => {
@@ -559,12 +561,12 @@ function App() {
       const permission = await Notification.requestPermission();
       setNotificationState(permission);
       if (permission === 'granted') {
-        setStatusMessage('Notifications enabled for expiring items.');
+        addToast('Notifications enabled for expiring items.');
         void notifyExpiringItems(items, settings.expiryWarningDays, settings.notifications);
       }
     } catch {
       setNotificationState('denied');
-      setStatusMessage('Could not request notification permission.');
+      addToast('Could not request notification permission.', 'error');
     }
   };
 
@@ -600,7 +602,7 @@ function App() {
 
       setItems((prev) => [newItem, ...prev]);
       setForm(makeInitialForm(settings));
-      setStatusMessage('Item saved.');
+      addToast('Item saved.');
       bumpStats();
       void inventoryService.frequentItems(5).then(setFrequentItems);
     } finally {
@@ -798,9 +800,9 @@ function App() {
 
       setItems(await loadInventory());
       bumpStats();
-      setStatusMessage(`Imported ${count} items.${extra}`);
+      addToast(`Imported ${count} items.${extra}`);
     } catch {
-      setStatusMessage('Import failed — check the file format (JSON or CSV).');
+      addToast('Import failed - check the file format (JSON or CSV).', 'error');
     } finally {
       setLoading(false);
       if (importRef.current) importRef.current.value = '';
@@ -811,7 +813,7 @@ function App() {
     await inventoryService.clear();
     setItems([]);
     setShowClearConfirm(false);
-    setStatusMessage('All inventory cleared.');
+    addToast('All inventory cleared.');
     bumpStats();
   };
 
@@ -820,7 +822,7 @@ function App() {
     if (!file) return;
     const text = await file.text();
     const barcodes = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    if (barcodes.length === 0) { setStatusMessage('No barcodes found in file.'); return; }
+    if (barcodes.length === 0) { addToast('No barcodes found in file.', 'warning'); return; }
 
     setBarcodeImportProgress({ done: 0, total: barcodes.length });
     let imported = 0;
@@ -871,7 +873,7 @@ function App() {
     setBarcodeImportProgress(null);
     setItems(await loadInventory());
     bumpStats();
-    setStatusMessage(`Imported ${imported} of ${barcodes.length} barcodes.`);
+    addToast(`Imported ${imported} of ${barcodes.length} barcodes.`);
     if (barcodeImportRef.current) barcodeImportRef.current.value = '';
   };
 
@@ -1031,7 +1033,6 @@ function App() {
               </div>
             </>
           )}
-          {statusMessage ? <p className="status-msg">{statusMessage}</p> : null}
         </section>
       )}
 
@@ -1283,7 +1284,6 @@ function App() {
             {loading ? 'Saving…' : 'Save item'}
           </button>
         </form>
-        {statusMessage ? <p className="status-msg">{statusMessage}</p> : null}
       </section>
 
       <section className="panel">
@@ -1425,7 +1425,13 @@ function App() {
           </div>
         )}
 
-        <div className="inventory-grid">
+        {!inventoryReady ? (
+          <div className="skeleton-grid" aria-label="Loading inventory">
+            {[0, 1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-card" />)}
+          </div>
+        ) : null}
+
+        <div className="inventory-grid" style={!inventoryReady ? { display: 'none' } : undefined}>
           {items.map((item) => (
             <InventoryCard
               key={item.id}

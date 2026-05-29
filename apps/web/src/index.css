@@ -426,7 +426,7 @@ button:focus-visible {
   background: var(--accent-hover);
 }
 
-/* Responsive (existing breakpoints) */
+/* Responsive breakpoints */
 
 @media (max-width: 780px) {
   .app-shell {
@@ -446,6 +446,31 @@ button:focus-visible {
   .stat-card {
     padding: 0.5rem 0.65rem;
     min-width: 70px;
+  }
+}
+
+/* U08 - Mobile layout (480px and below) */
+
+@media (max-width: 480px) {
+  .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    min-width: 0;
+  }
+
+  button,
+  .file-label,
+  select {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 400px) {
+  .app-shell {
+    padding: 0.75rem 0.5rem 2rem;
   }
 }
 
@@ -1172,4 +1197,77 @@ button:focus-visible {
   height: 1rem;
   accent-color: var(--indigo);
   cursor: pointer;
+}
+
+/* U05 - Toast notification stack */
+
+.toast-stack {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 150;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  animation: toast-slide-in 0.2s ease;
+  max-width: 320px;
+  pointer-events: auto;
+}
+
+.toast--success {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.toast--warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.toast--error {
+  background: rgba(244, 63, 94, 0.1);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(1rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* U09 - Loading skeleton states */
+
+.skeleton-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.skeleton-card {
+  height: 100px;
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated) 25%,
+    var(--border) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
