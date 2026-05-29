@@ -1,0 +1,18 @@
+; Before It's Gone - custom NSIS installer pages
+
+; Two license pages: EULA first, then the AGPL source license.
+; customLicensePage replaces the single automatic page from electron-builder.
+!macro customLicensePage
+  !define MUI_PAGE_HEADER_TEXT "End-User License Agreement"
+  !define MUI_PAGE_HEADER_SUBTEXT "Please read this agreement before installing Before It's Gone."
+  !insertmacro MUI_PAGE_LICENSE "$PLUGINSDIR\license.rtf"
+
+  !undef MUI_PAGE_HEADER_TEXT
+  !undef MUI_PAGE_HEADER_SUBTEXT
+  !define MUI_PAGE_HEADER_TEXT "Open Source License"
+  !define MUI_PAGE_HEADER_SUBTEXT "Before It's Gone is open source under the GNU Affero General Public License v3."
+  !insertmacro MUI_PAGE_LICENSE "${BUILD_RESOURCES_DIR}\agpl.txt"
+
+  !undef MUI_PAGE_HEADER_TEXT
+  !undef MUI_PAGE_HEADER_SUBTEXT
+!macroend
