@@ -1,7 +1,7 @@
 {
   "name": "before-its-gone",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Before It's Gone — cross-platform food expiry tracker for Linux, macOS, and Windows",
   "workspaces": [
     "apps/*",
