@@ -12,12 +12,12 @@
     "@before-its-gone/core": "file:../../packages/core",
     "@before-its-gone/ui": "file:../../packages/ui",
     "@supabase/supabase-js": "^2.106.2",
-    "react": "^19.2.0",
+    "react": "^19.2.7",
     "react-dom": "^19.2.0",
     "recharts": "^3.8.1"
   },
   "devDependencies": {
-    "@types/react": "^19.2.15",
+    "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^6.0.2",
     "typescript": "^6.0.3",
