@@ -109,7 +109,7 @@ Or grab a specific build from the [Releases](https://github.com/AetherAssembly/B
 
 ### Install
 
-Run the NSIS installer (`before-its-gone-0.9.0-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+Run the NSIS installer (`before-its-gone-0.9.1-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
 
 ### Uninstall
 
@@ -136,11 +136,11 @@ Drag `Before Its Gone` out of your Applications folder and into the Trash.
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.9.0.x86_64.rpm
+sudo dnf install ./before-its-gone-0.9.1.x86_64.rpm
 
 # or
 
-sudo dnf install ./before-its-gone-0.9.0.arm64.rpm
+sudo dnf install ./before-its-gone-0.9.1.arm64.rpm
 ```
 
 ### Uninstall
@@ -154,11 +154,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.9.0-x86_64.rpm
+sudo zypper install ./before-its-gone-0.9.1-x86_64.rpm
 
 # or 
 
-sudo zypper install ./before-its-gone_0.9.0-aarch64.rpm
+sudo zypper install ./before-its-gone_0.9.1-aarch64.rpm
 ```
 
 ### Uninstall
@@ -173,12 +173,12 @@ sudo zypper remove before-its-gone
 
 ```bash
 # All other Debian Distros
-sudo apt install ./before-its-gone-0.9.0-amd64.deb
+sudo apt install ./before-its-gone-0.9.1-amd64.deb
 
 # or
 
 # Raspberry Pi 4/5 
-sudo apt install ./before-its-gone-0.9.0-arm64.deb
+sudo apt install ./before-its-gone-0.9.1-arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
