@@ -1,7 +1,7 @@
-import { type ChangeEvent, type FormEvent, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type FormEvent, lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ScanModal } from './ScanModal.js';
 import { AboutDialog } from './AboutDialog.js';
-import { SettingsPanel } from './SettingsPanel.js';
+const SettingsPanel = lazy(() => import('./SettingsPanel.js').then(m => ({ default: m.SettingsPanel })));
 import {
   calculateExpiryDateISO,
   calculateExpiryStatus,
@@ -31,8 +31,10 @@ import { syncService } from './SyncService.js';
 import { InventoryCard } from '@before-its-gone/ui';
 import { useToast } from './Toast.js';
 import { ItemDrawer, type FormState, resizeImage } from './ItemDrawer.js';
-import { StatsCharts } from './StatsCharts.js';
+const StatsCharts = lazy(() => import('./StatsCharts.js').then(m => ({ default: m.StatsCharts })));
 import { ExpiryTimeline } from './ExpiryTimeline.js';
+import { ErrorBoundary } from './ErrorBoundary.js';
+import { useFocusTrap } from './useFocusTrap.js';
 
 
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
@@ -198,7 +200,9 @@ function App() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const addItemNameRef = useRef<HTMLInputElement>(null);
+  const shortcutsRef = useRef<HTMLDivElement>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  useFocusTrap(shortcutsRef, shortcutsOpen);
   const [barcodeImportProgress, setBarcodeImportProgress] = useState<{ done: number; total: number } | null>(null);
 
   const [scanModal, setScanModal] = useState<{
@@ -1121,6 +1125,7 @@ function App() {
       )}
 
       {activeTab === 'settings' && (
+        <Suspense fallback={<div className="skeleton-card" aria-label="Loading settings" style={{ height: '200px' }} />}>
         <SettingsPanel
           settings={settings}
           onChange={onChangeSettings}
@@ -1128,31 +1133,32 @@ function App() {
           onEnableNotifications={() => { void onNotificationEnable(); }}
           onSyncComplete={onSyncComplete}
         />
+        </Suspense>
       )}
 
       {activeTab === 'inventory' && <>
       <section className="summary">
         <div className="summary-header">
-          <div className="summary-grid">
-            <div className="stat-card">
-              <span className="stat-value">{totalCount}</span>
-              <span className="stat-label">products</span>
+          <div className="summary-grid" role="region" aria-label="Inventory statistics">
+            <div className="stat-card" role="group" aria-label={`${totalCount} products`}>
+              <span className="stat-value" aria-hidden="true">{totalCount}</span>
+              <span className="stat-label" aria-hidden="true">products</span>
             </div>
-            <div className="stat-card">
-              <span className="stat-value">{totalUnits}</span>
-              <span className="stat-label">units</span>
+            <div className="stat-card" role="group" aria-label={`${totalUnits} units`}>
+              <span className="stat-value" aria-hidden="true">{totalUnits}</span>
+              <span className="stat-label" aria-hidden="true">units</span>
             </div>
-            <div className="stat-card stat-card--warning">
-              <span className="stat-value">{expiringThisWeek}</span>
-              <span className="stat-label">expiring this week</span>
+            <div className="stat-card stat-card--warning" role="group" aria-label={`${expiringThisWeek} expiring this week`}>
+              <span className="stat-value" aria-hidden="true">{expiringThisWeek}</span>
+              <span className="stat-label" aria-hidden="true">expiring this week</span>
             </div>
-            <div className="stat-card stat-card--warning">
-              <span className="stat-value">{expiringSoonItems}</span>
-              <span className="stat-label">expiring soon</span>
+            <div className="stat-card stat-card--warning" role="group" aria-label={`${expiringSoonItems} expiring soon`}>
+              <span className="stat-value" aria-hidden="true">{expiringSoonItems}</span>
+              <span className="stat-label" aria-hidden="true">expiring soon</span>
             </div>
-            <div className="stat-card stat-card--danger">
-              <span className="stat-value">{expiredItems}</span>
-              <span className="stat-label">expired</span>
+            <div className="stat-card stat-card--danger" role="group" aria-label={`${expiredItems} expired`}>
+              <span className="stat-value" aria-hidden="true">{expiredItems}</span>
+              <span className="stat-label" aria-hidden="true">expired</span>
             </div>
           </div>
           <button
@@ -1164,7 +1170,11 @@ function App() {
             {chartsOpen ? 'Hide charts' : 'Show charts'}
           </button>
         </div>
-        {chartsOpen && <StatsCharts items={allItems} warningWindowDays={settings.expiryWarningDays} />}
+        {chartsOpen && (
+          <Suspense fallback={<div className="skeleton-card" aria-label="Loading charts" style={{ height: '240px' }} />}>
+            <StatsCharts items={allItems} warningWindowDays={settings.expiryWarningDays} />
+          </Suspense>
+        )}
       </section>
 
       {frequentItems.length > 0 && (
@@ -1421,7 +1431,7 @@ function App() {
             type="button"
             className="btn-ghost"
             onClick={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-            title="Toggle sort direction"
+            aria-label={`Sort ${sortDirection === 'asc' ? 'ascending' : 'descending'} — click to toggle`}
           >
             {sortDirection === 'asc' ? '↑ Asc' : '↓ Desc'}
           </button>
@@ -1430,6 +1440,7 @@ function App() {
             type="button"
             className="btn-ghost"
             onClick={() => { setBulkMode((m) => !m); setSelectedIds(new Set()); }}
+            aria-label={bulkMode ? 'Cancel bulk selection' : 'Toggle bulk selection mode'}
           >
             {bulkMode ? 'Cancel bulk' : 'Bulk select'}
           </button>
@@ -1506,6 +1517,7 @@ function App() {
             }}
           />
         ) : (
+          <ErrorBoundary>
           <div className="inventory-grid">
             {items.map((item) => (
               <div
@@ -1532,6 +1544,7 @@ function App() {
             ))}
             {items.length === 0 ? <p>No items match your filters.</p> : null}
           </div>
+          </ErrorBoundary>
         )}
       </section>
 
@@ -1604,6 +1617,7 @@ function App() {
       </>}
     </main>
 
+    <ErrorBoundary>
     <ItemDrawer
       item={drawerItem}
       editForm={editForm}
@@ -1614,6 +1628,7 @@ function App() {
       onEditSave={() => { void onEditSave(); }}
       onClose={onEditCancel}
     />
+    </ErrorBoundary>
 
     {undoPending && (
       <div className="undo-toast" role="status" aria-live="polite">
@@ -1635,7 +1650,7 @@ function App() {
     {shortcutsOpen && (
       <>
         <div className="shortcuts-overlay" onClick={() => setShortcutsOpen(false)} aria-hidden="true" />
-        <div className="shortcuts-modal" role="dialog" aria-label="Keyboard shortcuts" aria-modal="true">
+        <div className="shortcuts-modal" role="dialog" aria-label="Keyboard shortcuts" aria-modal="true" ref={shortcutsRef}>
           <div className="shortcuts-modal-header">
             <h2>Keyboard Shortcuts</h2>
             <button type="button" className="drawer-close" onClick={() => setShortcutsOpen(false)} aria-label="Close">&#x2715;</button>

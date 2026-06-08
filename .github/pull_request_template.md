@@ -16,6 +16,7 @@
 
 - [ ] `npm run lint` passes
 - [ ] `npm run build` passes
+- [ ] `npm run test` passes
 - [ ] Tested on Linux / macOS / Windows (check all that apply)
 - [ ] `CHANGELOG.md` updated (for features and bug fixes)
 - [ ] Package versions bumped if applicable

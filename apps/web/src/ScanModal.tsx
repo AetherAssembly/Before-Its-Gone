@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import { useEffect, type ReactElement } from 'react';
 
 interface ScanModalProps {
   qrDataUrl: string;
@@ -9,8 +9,19 @@ interface ScanModalProps {
 }
 
 export function ScanModal({ qrDataUrl, serverUrl, status, platform, onClose }: ScanModalProps): ReactElement {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Barcode scanner"
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0,

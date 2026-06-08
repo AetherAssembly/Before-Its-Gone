@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.0.0-rc.1] - 2026-06-08
+
+### Added
+
+- **Unit test suite:** Vitest infrastructure added for `packages/core`. 64 tests covering `calculateExpiryStatus`, `getShoppingList`, `getFilteredInventory`, `createInventoryItem`, `decrementItemQuantity`, `updateInventoryItem`, `incrementItemQuantity`, `deleteInventoryItem`, `calculateExpiryDateISO`, all CSV/JSON import-export functions, and waste log functions. 87% branch coverage on `inventory.ts`. Run with `npm run test` / `npm run test:coverage`.
+- **React error boundaries:** `ErrorBoundary` class component wraps the inventory card grid and item drawer in `apps/web/src/`. A render crash in any inventory card now shows a recovery panel with a "Reload App" button instead of blanking the whole screen.
+- **Focus trap hook:** `useFocusTrap` (`apps/web/src/useFocusTrap.ts`) constrains Tab/Shift+Tab navigation within open modals. Applied to the keyboard shortcuts modal and About dialog; focus returns to the trigger element on close.
+
+### Changed
+
+- `StatsCharts` and `SettingsPanel` are now lazy-loaded via `React.lazy` + `Suspense`. The recharts bundle (~355 kB) is split into a separate chunk and only fetched when the charts panel is first opened. Build chunk size warning threshold set to 300 kB in `vite.config.ts`.
+- Stat cards in the inventory summary now carry `role="region"` / `role="group"` and descriptive `aria-label` values for screen readers.
+- Sort direction and bulk-select buttons now have `aria-label` attributes.
+- Custom location remove buttons in Settings now carry `aria-label={`Remove location ${loc}`}`.
+- `ScanModal` now has `role="dialog"`, `aria-modal="true"`, and an Escape key handler.
+- `AboutDialog` now traps focus and closes on Escape.
+- `ItemDrawer` role changed from `complementary` to `dialog` with `aria-modal`.
+- `packages/core/tsconfig.json` excludes `src/__tests__/**` so test files are not compiled into `dist/`.
+
+### Internal
+
+- Version bumped to `1.0.0-rc.1` across all five `package.json` files.
+
+---
+
+## [0.9.1] - 2026-06-03
+
+### Changed
+
+- Dependency updates only: `@typescript-eslint/eslint-plugin` 8.60.1, `@typescript-eslint/parser` 8.60.1, `concurrently` 10.0.3. No functional or behavioural changes.
+
+---
+
 ## [0.9.0] - 2026-05-29
 
 ### Added

@@ -69,9 +69,10 @@ npm run build            # full build including Electron main process
 ```bash
 npm run lint    # ESLint across all packages
 npm run build   # TypeScript compilation for all targets
+npm run test    # Vitest unit tests (packages/core)
 ```
 
-Both must pass before opening a PR.
+All three must pass before opening a PR.
 
 ---
 
@@ -84,7 +85,7 @@ Both must pass before opening a PR.
    ```
 
 2. Make your changes. Test on the platform(s) your change affects.
-3. Run `npm run lint` and `npm run build` — fix anything that fails.
+3. Run `npm run lint`, `npm run build`, and `npm run test` — fix anything that fails.
 4. Update `CHANGELOG.md` under the current unreleased version heading.
 5. Open a PR against `main` using the pull request template. Fill in every section.
 
@@ -176,15 +177,24 @@ Never remove or modify existing upgrade branches — they run for users upgradin
 
 ## Testing
 
-There is no automated test suite yet. Manual testing is the current approach:
+### Automated tests
 
-- **Renderer logic** (`packages/core`): run `npm run dev:web` and exercise the feature in the browser. Check the browser DevTools console for errors.
+`packages/core` has a Vitest unit test suite covering the core inventory logic:
+
+```bash
+npm run test           # run all tests (packages/core)
+npm run test:coverage  # run with branch coverage report
+```
+
+Tests live in `packages/core/src/__tests__/inventory.test.ts`. When adding or changing pure functions in `packages/core`, add corresponding tests. The storage layer is mocked via `vi.mock('../storage', ...)` — no IndexedDB or DOM required.
+
+### Manual testing
+
+- **Renderer logic** (UI, interactions): run `npm run dev:web` and exercise the feature in the browser. Check the browser DevTools console for errors.
 - **Electron-specific features** (IPC, scanner, email, auto-updater): run `npm run dev` and test in the full Electron app.
 - **Platform packaging**: run `npm run package:<your-platform>` and install the output artifact. Verify the auto-updater manifest path matches the GitHub release URL pattern if your change touches update files.
 - **Email**: use the "Send test email" button in Settings. For SMTP, a local SMTP catcher such as Mailpit on `localhost:1025` is useful for development.
 - **Cloud sync**: create a Supabase project, run the SQL migration from `docs/cloud-sync.md`, and test sign-in + Sync now.
-
-If you add testable pure functions to `packages/core`, adding unit tests with Vitest is welcome.
 
 ---
 

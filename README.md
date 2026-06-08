@@ -13,7 +13,9 @@
 [![macOS](https://img.shields.io/badge/macOS-DMG-000000?logo=apple&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![Windows](https://img.shields.io/badge/Windows-Installer%20%C2%B7%20Portable-0078D4?logo=windows&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 
-Offline-first desktop app no account required, all data stays on your machine.
+Offline-first desktop app — no account required, all data stays on your machine.
+
+> **v1.0.0 Release Candidate** — All planned features are complete. This build has full test coverage, React error boundaries, lazy-loaded charts, and accessibility improvements. Please [report any issues](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=bug_report.yml) before the stable release.
 
 ---
 
@@ -109,7 +111,7 @@ Or grab a specific build from the [Releases](https://github.com/AetherAssembly/B
 
 ### Install
 
-Run the NSIS installer (`before-its-gone-0.9.1-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+Run the NSIS installer (`before-its-gone-1.0.0-rc.1-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
 
 ### Uninstall
 
@@ -136,11 +138,11 @@ Drag `Before Its Gone` out of your Applications folder and into the Trash.
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-0.9.1.x86_64.rpm
+sudo dnf install ./before-its-gone-1.0.0-rc.1.x86_64.rpm
 
 # or
 
-sudo dnf install ./before-its-gone-0.9.1.arm64.rpm
+sudo dnf install ./before-its-gone-1.0.0-rc.1.arm64.rpm
 ```
 
 ### Uninstall
@@ -154,11 +156,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-0.9.1-x86_64.rpm
+sudo zypper install ./before-its-gone-1.0.0-rc.1-x86_64.rpm
 
 # or 
 
-sudo zypper install ./before-its-gone_0.9.1-aarch64.rpm
+sudo zypper install ./before-its-gone_1.0.0-rc.1-aarch64.rpm
 ```
 
 ### Uninstall
@@ -173,12 +175,12 @@ sudo zypper remove before-its-gone
 
 ```bash
 # All other Debian Distros
-sudo apt install ./before-its-gone-0.9.1-amd64.deb
+sudo apt install ./before-its-gone-1.0.0-rc.1-amd64.deb
 
 # or
 
 # Raspberry Pi 4/5 
-sudo apt install ./before-its-gone-0.9.1-arm64.deb
+sudo apt install ./before-its-gone-1.0.0-rc.1-arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -235,6 +237,13 @@ On Linux the app auto-detects Wayland. To override:
 ```bash
 BIG_LINUX_DISPLAY_BACKEND=x11 npm run dev      # force X11
 BIG_LINUX_DISPLAY_BACKEND=wayland npm run dev  # force Wayland
+```
+
+### Test
+
+```bash
+npm run test           # run unit tests (packages/core)
+npm run test:coverage  # run with branch coverage report (target: ≥ 80%)
 ```
 
 ### Build only

@@ -453,6 +453,7 @@ export function SettingsPanel({ settings, onChange, notificationState, onEnableN
                   <button
                     type="button"
                     className="btn-sm btn-ghost"
+                    aria-label={`Remove location ${loc}`}
                     onClick={() => onChange({
                       ...settings,
                       customLocations: settings.customLocations.filter((l) => l !== loc),

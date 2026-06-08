@@ -1,7 +1,7 @@
 {
   "name": "before-its-gone",
   "private": true,
-  "version": "0.9.1",
+  "version": "1.0.0-rc.1",
   "description": "Before It's Gone — cross-platform food expiry tracker for Linux, macOS, and Windows",
   "workspaces": [
     "apps/*",
@@ -26,7 +26,9 @@
     "package:appimage": "npm run build:electron && npm --workspace apps/electron run package:appimage",
     "checksum:linux": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>['.AppImage','.deb','.rpm'].some(e=>f.endsWith(e)));if(!files.length){console.log('No Linux artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",
     "checksum:windows": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>f.endsWith('.exe'));if(!files.length){console.log('No Windows artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "npm --workspace packages/core run test",
+    "test:coverage": "npm --workspace packages/core run test:coverage"
   },
   "overrides": {
     "tmp": "^0.2.7"
@@ -35,6 +37,7 @@
     "@types/node": "^25.9.1",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
     "@typescript-eslint/parser": "^8.60.1",
+    "@vitest/coverage-v8": "^4.1.8",
     "concurrently": "^10.0.3",
     "cross-env": "^10.1.0",
     "electron": "^42.3.2",
@@ -45,6 +48,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "prettier": "^3.6.2",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.8",
     "wait-on": "^9.0.1"
   }
 }

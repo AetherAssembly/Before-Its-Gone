@@ -47,7 +47,7 @@ Enter the email address that should receive notifications in the **Recipient ema
 
 | Setting | Description |
 | ------- | ----------- |
-| **Never** | No automatic digest emails. Alerts are still triggered by the app when items are near expiry (if implemented). |
+| **Never** | No automatic digest emails. Desktop notifications for expiring, expired, and low-stock items still fire as normal. |
 | **Daily** | One email per day at the chosen time. |
 | **Weekly** | One email per week (sent at least 6.5 days after the last digest). |
 | **Send time** | Time of day to send the digest (24-hour, e.g. `08:00`). |

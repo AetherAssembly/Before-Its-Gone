@@ -125,7 +125,7 @@ The CSV importer is more flexible than the exporter — it accepts any column or
 | ----------- | -------- | ---- | ----- |
 | `name` | **Yes** | `string` | Item display name. Rows with an empty name are skipped. |
 | `expires_at` | **Yes** | `string` | Expiry date. See [date formats](#date-formats) below. Also accepted as `expiresat` (no underscore). |
-| `location` | **Yes** | `string` | Must be exactly `fridge`, `freezer`, or `pantry` (case-sensitive). Rows with any other value are skipped. |
+| `location` | **Yes** | `string` | Must be exactly `fridge`, `freezer`, or `pantry` (case-sensitive). Rows with any other value — including custom locations defined in Settings — are skipped. |
 | `quantity` | No | `number` | Defaults to `1` if missing or non-numeric. Always at least `1`. |
 | `barcode` | No | `string` | Leave empty if none. |
 | `category` | No | `string` | Free-text category label. |
@@ -155,6 +155,8 @@ A row is skipped (counted in the "X rows skipped" status message) if:
 - The entire row throws an unexpected parse error
 
 Skipped rows do not cause the import to fail — the rest of the file continues to be processed.
+
+> **Custom locations:** The CSV importer only accepts the three built-in location values. Items stored in custom locations (e.g. `garage`, `wine rack`) are exported to CSV correctly but cannot be re-imported from CSV — those rows will be skipped. Use JSON export/import for a lossless round-trip that preserves custom locations.
 
 #### Column order
 

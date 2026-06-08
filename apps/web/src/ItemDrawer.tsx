@@ -65,7 +65,8 @@ export function ItemDrawer({ item, editForm, loading, customLocations, onStartEd
       <aside
         className={`item-drawer${item ? ' item-drawer--open' : ''}`}
         aria-label={item ? `Details for ${item.name}` : 'Item details'}
-        role="complementary"
+        role="dialog"
+        aria-modal={!!item}
         aria-hidden={!item}
       >
         {item && <>
