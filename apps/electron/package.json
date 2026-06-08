@@ -27,7 +27,7 @@
     "publish:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish always -c.electronVersion=42.0.1"
   },
   "dependencies": {
-    "electron-updater": "^6.3.9",
+    "electron-updater": "^6.8.9",
     "nodemailer": "^8.0.8",
     "qrcode": "^1.5.4",
     "resend": "^6.12.4",
