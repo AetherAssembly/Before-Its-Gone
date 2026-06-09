@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { calculateExpiryStatus, type InventoryItem } from '@before-its-gone/core';
+import { calculateExpiryStatus, type InventoryItem } from '@aetherAssembly/core';
 
 type Props = {
   items: InventoryItem[];

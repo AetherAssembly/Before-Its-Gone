@@ -26,9 +26,8 @@ import {
   type SortField,
   type StorageLocation,
   type WasteLogEntry
-} from '@before-its-gone/core';
-import { syncService } from './SyncService.js';
-import { InventoryCard } from '@before-its-gone/ui';
+} from '@aetherAssembly/core';
+import { InventoryCard } from '@aetherAssembly/ui';
 import { useToast } from './Toast.js';
 import { ItemDrawer, type FormState, resizeImage } from './ItemDrawer.js';
 const StatsCharts = lazy(() => import('./StatsCharts.js').then(m => ({ default: m.StatsCharts })));
@@ -372,8 +371,9 @@ function App() {
       if (!raw) return;
       const s = JSON.parse(raw) as { enabled?: boolean; supabaseUrl?: string; supabaseAnonKey?: string };
       if (!s.enabled || !s.supabaseUrl || !s.supabaseAnonKey) return;
-      syncService.connect(s.supabaseUrl, s.supabaseAnonKey);
-      void syncService.restoreSession().then(async (user) => {
+      void import('./SyncService.js').then(async ({ syncService }) => {
+        syncService.connect(s.supabaseUrl!, s.supabaseAnonKey!);
+        const user = await syncService.restoreSession();
         if (!user || !syncService.isReady()) return;
         const local = await listInventoryItems();
         const { merged } = await syncService.sync(local);

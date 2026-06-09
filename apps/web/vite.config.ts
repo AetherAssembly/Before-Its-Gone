@@ -16,8 +16,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@before-its-gone/core': path.resolve(rootDir, '../../packages/core/src'),
-      '@before-its-gone/ui': path.resolve(rootDir, '../../packages/ui/src')
+      '@aetherAssembly/core': path.resolve(rootDir, '../../packages/core/src'),
+      '@aetherAssembly/ui': path.resolve(rootDir, '../../packages/ui/src')
     }
   },
   server: {
@@ -25,6 +25,6 @@ export default defineConfig({
     strictPort: true
   },
   build: {
-    chunkSizeWarningLimit: 300,
+    chunkSizeWarningLimit: 400,
   },
 });

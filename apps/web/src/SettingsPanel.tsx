@@ -6,7 +6,7 @@ import {
   SYNC_SETTINGS_STORAGE_KEY,
   listInventoryItems,
   upsertInventoryItem,
-} from '@before-its-gone/core';
+} from '@aetherAssembly/core';
 import { syncService, SETUP_SQL } from './SyncService.js';
 
 const BUILT_IN_LOCATIONS = ['fridge', 'freezer', 'pantry'];

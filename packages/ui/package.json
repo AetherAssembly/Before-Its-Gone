@@ -1,15 +1,17 @@
 {
-  "name": "@before-its-gone/ui",
-  "version": "1.0.0-rc.1",
-  "private": true,
+  "name": "@aetherAssembly/ui",
+  "version": "1.0.0-rc.2",
   "type": "module",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@before-its-gone/core": "*"
+    "@aetherAssembly/core": "*"
   },
   "peerDependencies": {
     "react": "^19.0.0"

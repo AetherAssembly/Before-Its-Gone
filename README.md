@@ -15,7 +15,7 @@
 
 Offline-first desktop app — no account required, all data stays on your machine.
 
-> **v1.0.0 Release Candidate** — All planned features are complete. This build has full test coverage, React error boundaries, lazy-loaded charts, and accessibility improvements. Please [report any issues](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=bug_report.yml) before the stable release.
+> **v1.0.0 Release Candidate** — All planned features are complete. This build has full test coverage, React error boundaries, lazy-loaded charts, accessibility improvements, and a ~45% smaller initial JS bundle. Please [report any issues](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=bug_report.yml) before the stable release.
 
 ---
 
@@ -111,7 +111,7 @@ Or grab a specific build from the [Releases](https://github.com/AetherAssembly/B
 
 ### Install
 
-Run the NSIS installer (`before-its-gone-1.0.0-rc.1-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
+Run the NSIS installer (`before-its-gone-1.0.0-rc.2-setup.exe`) and follow the prompts, or use the portable `.exe` with no installation required.
 
 ### Uninstall
 
@@ -138,11 +138,11 @@ Drag `Before Its Gone` out of your Applications folder and into the Trash.
 ### Install
 
 ```bash
-sudo dnf install ./before-its-gone-1.0.0-rc.1.x86_64.rpm
+sudo dnf install ./before-its-gone-1.0.0-rc.2.x86_64.rpm
 
 # or
 
-sudo dnf install ./before-its-gone-1.0.0-rc.1.arm64.rpm
+sudo dnf install ./before-its-gone-1.0.0-rc.2.arm64.rpm
 ```
 
 ### Uninstall
@@ -156,11 +156,11 @@ sudo dnf remove before-its-gone
 ### Install
 
 ```bash
-sudo zypper install ./before-its-gone-1.0.0-rc.1-x86_64.rpm
+sudo zypper install ./before-its-gone-1.0.0-rc.2-x86_64.rpm
 
 # or 
 
-sudo zypper install ./before-its-gone_1.0.0-rc.1-aarch64.rpm
+sudo zypper install ./before-its-gone_1.0.0-rc.2-aarch64.rpm
 ```
 
 ### Uninstall
@@ -175,12 +175,12 @@ sudo zypper remove before-its-gone
 
 ```bash
 # All other Debian Distros
-sudo apt install ./before-its-gone-1.0.0-rc.1-amd64.deb
+sudo apt install ./before-its-gone-1.0.0-rc.2-amd64.deb
 
 # or
 
 # Raspberry Pi 4/5 
-sudo apt install ./before-its-gone-1.0.0-rc.1-arm64.deb
+sudo apt install ./before-its-gone-1.0.0-rc.2-arm64.deb
 ```
 
 > Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.

@@ -45,7 +45,7 @@ All inventory logic, storage, and shared types.
 | `src/email-templates.ts` | HTML email template functions (pure, no dependencies) |
 | `src/services/InventoryService.ts` | High-level service wrapping storage calls |
 | `src/services/ImportExportService.ts` | CSV/JSON import-export orchestration |
-| `src/index.ts` | Public API barrel — import from `@before-its-gone/core` |
+| `src/index.ts` | Public API barrel — import from `@aetherAssembly/core` |
 
 **Storage:** The app uses two storage mechanisms:
 
@@ -82,7 +82,7 @@ Vite + React single-page application. Entry: `src/main.tsx` → `src/App.tsx`.
 - Email notification settings (form, snooze, test send)
 - Cloud sync (Supabase credentials, sign-in, sync-now)
 
-`SyncService.ts` wraps `@supabase/supabase-js` with a simplified API (`connect`, `signIn`, `signUp`, `sync`). The `sync()` method pushes all local items to Supabase as JSONB rows, then pulls and applies last-write-wins conflict resolution by `updatedAt` timestamp.
+`SyncService.ts` wraps `@supabase/supabase-js` with a simplified API (`connect`, `signIn`, `signUp`, `sync`). The `sync()` method pushes all local items to Supabase as JSONB rows, then pulls and applies last-write-wins conflict resolution by `updatedAt` timestamp. `SyncService` is dynamically imported in `App.tsx` (on-demand at startup only when sync credentials are configured) and statically imported in `SettingsPanel.tsx` (which is itself lazy-loaded). This keeps the ~202 kB Supabase bundle out of the initial JS chunk.
 
 ### `apps/electron`
 

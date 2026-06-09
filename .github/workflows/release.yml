@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   create-release:
@@ -71,9 +72,42 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npm --workspace apps/electron run ${{ matrix.publish_script }}
 
+  publish-packages:
+    name: Publish npm packages
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: '@aetherAssembly'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build packages
+        run: npm run build --workspace packages/core --workspace packages/ui
+
+      - name: Publish core
+        run: npm publish --workspace packages/core
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish ui
+        run: npm publish --workspace packages/ui
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish-release:
     name: Publish release
-    needs: build
+    needs: [build, publish-packages]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

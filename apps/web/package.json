@@ -1,7 +1,7 @@
 {
   "name": "@before-its-gone/web",
   "private": true,
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@before-its-gone/core": "file:../../packages/core",
-    "@before-its-gone/ui": "file:../../packages/ui",
+    "@aetherAssembly/core": "file:../../packages/core",
+    "@aetherAssembly/ui": "file:../../packages/ui",
     "@supabase/supabase-js": "^2.108.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.7",

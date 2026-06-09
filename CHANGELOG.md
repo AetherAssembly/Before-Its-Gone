@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.0.0-rc.2] - 2026-06-09
+
+### Fixed
+
+- **XSS in coverage reporter:** `packages/core/coverage/sorter.js` read `colNode.innerHTML` and wrote it back as HTML when appending the sort indicator `<span>`, allowing DOM-text-to-HTML round-tripping. Replaced with `createElement` + `appendChild` so no existing DOM content is re-parsed as HTML (CWE-79).
+
+### Changed
+
+- **Package names renamed** to match the GitHub organisation scope: `@before-its-gone/core` → `@aetherAssembly/core`, `@before-its-gone/ui` → `@aetherAssembly/ui`. All import paths across `apps/web` and `packages/ui` updated accordingly.
+- **GitHub Packages publishing:** `packages/core` and `packages/ui` are no longer private. Both carry a `publishConfig` pointing to `https://npm.pkg.github.com` and are published automatically on every `v*` tag via a new `publish-packages` job in `release.yml`. The `release.yml` workflow gains `packages: write` permission.
+- **Bundle size (P05):** `SyncService` (Supabase + realtime/gotrue/storage-js, ~202 kB) is now a dynamic `import()` inside the startup `useEffect` in `App.tsx` instead of a static import. The main JS chunk shrinks from ~460 kB to ~258 kB. Users who never enable cloud sync no longer download the Supabase client at all. `chunkSizeWarningLimit` raised to 400 kB to reflect the intentional deferred `StatsCharts` chunk (recharts, already lazy-loaded since rc.1).
+
+### Internal
+
+- Version bumped to `1.0.0-rc.2` across all five `package.json` files.
+
+---
+
 ## [1.0.0-rc.1] - 2026-06-08
 
 ### Added
