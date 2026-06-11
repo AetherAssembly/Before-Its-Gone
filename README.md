@@ -65,7 +65,7 @@ BIG_LINUX_DISPLAY_BACKEND=wayland npm run dev
 BIG_LINUX_DISPLAY_BACKEND=x11    npm run dev
 ```
 
-**Raspberry Pi** — Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://github.com/AetherAssembly/Before-Its-Gone/wiki) to fix it permanently.
+**Raspberry Pi** — Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://aetherassembly.org/wiki/before-its-gone/) to fix it permanently.
 
 ---
 
