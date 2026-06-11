@@ -1,6 +1,6 @@
 {
   "name": "@aetherAssembly/ui",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "type": "module",
   "license": "AGPL-3.0-only",
   "publishConfig": {

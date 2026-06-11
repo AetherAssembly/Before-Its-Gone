@@ -84,6 +84,12 @@ Vite + React single-page application. Entry: `src/main.tsx` → `src/App.tsx`.
 
 `SyncService.ts` wraps `@supabase/supabase-js` with a simplified API (`connect`, `signIn`, `signUp`, `sync`). The `sync()` method pushes all local items to Supabase as JSONB rows, then pulls and applies last-write-wins conflict resolution by `updatedAt` timestamp. `SyncService` is dynamically imported in `App.tsx` (on-demand at startup only when sync credentials are configured) and statically imported in `SettingsPanel.tsx` (which is itself lazy-loaded). This keeps the ~202 kB Supabase bundle out of the initial JS chunk.
 
+`inventory.worker.ts` hosts an `InventoryService` instance inside a dedicated Web Worker, exposed via [Comlink](https://github.com/GoogleChromeLabs/comlink). `inventoryWorkerService.ts` provides a module-level singleton `Remote<InventoryService>` proxy — the interface is identical to the main-thread version so `App.tsx` uses it transparently. All IndexedDB reads/writes happen off the main thread.
+
+`i18n.ts` initialises `i18next` with the `react-i18next` plugin. String resources live in `src/locales/<lang>.json`. Only English (`en`) ships currently; add a new locale file and register it in `i18n.ts` to add a language. Components consume strings via the `useTranslation` hook (`t('key')`).
+
+`main.tsx` registers the service worker (`/sw.js`) for web builds (skipped in Electron via `'electronAPI' in window` check) and captures the `beforeinstallprompt` event so `App.tsx` can surface a native **Install** button when the browser deems the PWA installable.
+
 ### `apps/electron`
 
 Electron main process. Not bundled by Vite — compiled by `tsc` to `dist/`, then loaded by electron-builder.

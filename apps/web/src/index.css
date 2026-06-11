@@ -320,6 +320,8 @@ button:focus-visible {
   padding: 0.75rem;
   display: grid;
   gap: 0.4rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
 }
 
 .inventory-card[data-status="expiring-soon"] {

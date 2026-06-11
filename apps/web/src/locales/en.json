@@ -1,0 +1,77 @@
+{
+  "app": {
+    "title": "Before It's Gone",
+    "tagline": "Offline inventory tracking that works on web and desktop.",
+    "install": "Install"
+  },
+  "tabs": {
+    "inventory": "Inventory",
+    "shoppingList": "Shopping List",
+    "wasteLog": "Waste Log",
+    "settings": "Settings"
+  },
+  "inventory": {
+    "addItem": "Add Item",
+    "editItem": "Edit Item",
+    "noItems": "No items match your filters.",
+    "loading": "Loading inventory",
+    "searchPlaceholder": "Search items…",
+    "sortBy": "Sort by",
+    "bulkSelect": "Bulk select",
+    "clearAll": "Clear all inventory",
+    "clearAllConfirm": "Delete ALL inventory items? This cannot be undone.",
+    "views": {
+      "list": "List view",
+      "timeline": "Timeline view"
+    }
+  },
+  "item": {
+    "name": "Name",
+    "quantity": "Quantity",
+    "location": "Location",
+    "category": "Category",
+    "expiryDate": "Expiry date",
+    "shelfLife": "Shelf life (days)",
+    "tags": "Tags",
+    "barcode": "Barcode",
+    "photo": "Photo",
+    "recurring": "Auto-restock",
+    "restockQty": "Restock quantity",
+    "depletionThreshold": "Depletion threshold",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "decrement": "Use one",
+    "increment": "Add one",
+    "detail": "View details"
+  },
+  "status": {
+    "fresh": "Fresh",
+    "expiringSoon": "Expiring soon",
+    "expired": "Expired"
+  },
+  "shopping": {
+    "empty": "Nothing on the shopping list.",
+    "copy": "Copy list"
+  },
+  "waste": {
+    "empty": "No waste logged yet.",
+    "clearLog": "Clear log"
+  },
+  "sync": {
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "sync": "Sync now",
+    "signOut": "Sign out"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "offline": "You are offline."
+  }
+}

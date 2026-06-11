@@ -22,7 +22,6 @@ Use GitHub private vulnerability reporting if enabled for this repository, or co
 - **Email:** [support@aetherassembly.org](mailto:support@aetherassembly.org)
 - **Contact form:** [https://forms.gle/T4i7GGzaT3HUrffm9](https://forms.gle/T4i7GGzaT3HUrffm9)
 - **Aster (GitHub):** [@Aster1630](https://github.com/Aster1630)
-- **Ollie (GitHub):** [@OllieMochi](https://github.com/olliemochi)
 
 Please include in your report:
 

@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: 2026-06-08
+Last updated: 2026-06-11
 
 ## Acceptance
 
@@ -8,7 +8,7 @@ By downloading, building, running, or distributing Before It's Gone, you agree t
 
 ## Who We Are
 
-Before It's Gone is developed and maintained by AetherAssembly — a small team consisting of Aster, Ollie, and Milo. For questions or support, contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org).
+Before It's Gone is developed and maintained by AetherAssembly — a small team consisting of Aster and Milo. For questions or support, contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org).
 
 ## License
 

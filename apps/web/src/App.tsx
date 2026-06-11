@@ -14,7 +14,6 @@ import {
   clearWasteLog,
   renderDigest,
   importExportService,
-  inventoryService,
   type AppSettings,
   DEFAULT_APP_SETTINGS,
   SETTINGS_STORAGE_KEY,
@@ -27,6 +26,10 @@ import {
   type StorageLocation,
   type WasteLogEntry
 } from '@aetherAssembly/core';
+import { getWorkerInventoryService } from './inventoryWorkerService.js';
+import { useTranslation } from 'react-i18next';
+
+const inventoryService = getWorkerInventoryService();
 import { InventoryCard } from '@aetherAssembly/ui';
 import { useToast } from './Toast.js';
 import { ItemDrawer, type FormState, resizeImage } from './ItemDrawer.js';
@@ -169,6 +172,7 @@ function getExpiringThisWeek(items: InventoryItem[]): number {
 }
 
 function App() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(getInitialSettings);
   const [activeTab, setActiveTab] = useState<'inventory' | 'shopping' | 'waste' | 'settings'>('inventory');
   const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem(THEME_KEY) as 'dark' | 'light') ?? 'dark');
@@ -225,6 +229,8 @@ function App() {
   const [statsVersion, setStatsVersion] = useState(0);
   const bumpStats = () => setStatsVersion((v) => v + 1);
 
+  const [installPrompt, setInstallPrompt] = useState<{ prompt: () => Promise<void> } | null>(null);
+
   const [undoPending, setUndoPending] = useState<{
     id: string;
     prevQty: number;
@@ -259,6 +265,16 @@ function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    if ('electronAPI' in window) return;
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as unknown as { prompt: () => Promise<void> });
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
 
@@ -981,11 +997,24 @@ function App() {
         <div className="app-brand">
           <img src={`${import.meta.env.BASE_URL}icons/icon-192.svg`} className="brand-logo" width="40" height="40" alt="" aria-hidden="true" />
           <div className="brand-text">
-            <h1>Before It&apos;s Gone</h1>
-            <p>Offline inventory tracking that works on web and desktop.</p>
+            <h1>{t('app.title')}</h1>
+            <p>{t('app.tagline')}</p>
           </div>
         </div>
         <div className="header-actions">
+          {installPrompt && (
+            <button
+              className="btn-sm"
+              onClick={() => {
+                void installPrompt.prompt();
+                setInstallPrompt(null);
+              }}
+              title={t('app.install')}
+              aria-label={t('app.install')}
+            >
+              {t('app.install')}
+            </button>
+          )}
           <button
             className="theme-toggle"
             onClick={toggleTheme}
@@ -1018,7 +1047,7 @@ function App() {
           data-active={activeTab === 'inventory' ? 'true' : undefined}
           onClick={() => setActiveTab('inventory')}
         >
-          Inventory
+          {t('tabs.inventory')}
         </button>
         <button
           type="button"
@@ -1026,7 +1055,7 @@ function App() {
           data-active={activeTab === 'shopping' ? 'true' : undefined}
           onClick={() => setActiveTab('shopping')}
         >
-          Shopping List{shoppingListItems.length > 0 && <span className="tab-badge">{shoppingListItems.length}</span>}
+          {t('tabs.shoppingList')}{shoppingListItems.length > 0 && <span className="tab-badge">{shoppingListItems.length}</span>}
         </button>
         <button
           type="button"
@@ -1034,7 +1063,7 @@ function App() {
           data-active={activeTab === 'waste' ? 'true' : undefined}
           onClick={() => setActiveTab('waste')}
         >
-          Waste Log{wasteLog.length > 0 && <span className="tab-badge">{wasteLog.length}</span>}
+          {t('tabs.wasteLog')}{wasteLog.length > 0 && <span className="tab-badge">{wasteLog.length}</span>}
         </button>
         <button
           type="button"
@@ -1042,7 +1071,7 @@ function App() {
           data-active={activeTab === 'settings' ? 'true' : undefined}
           onClick={() => setActiveTab('settings')}
         >
-          Settings
+          {t('tabs.settings')}
         </button>
       </nav>
 
@@ -1504,7 +1533,7 @@ function App() {
         )}
 
         {!inventoryReady ? (
-          <div className="skeleton-grid" aria-label="Loading inventory">
+          <div className="skeleton-grid" aria-label={t('inventory.loading')}>
             {[0, 1, 2, 3, 4, 5].map(i => <div key={i} className="skeleton-card" />)}
           </div>
         ) : inventoryView === 'timeline' ? (
@@ -1542,7 +1571,7 @@ function App() {
                 />
               </div>
             ))}
-            {items.length === 0 ? <p>No items match your filters.</p> : null}
+            {items.length === 0 ? <p>{t('inventory.noItems')}</p> : null}
           </div>
           </ErrorBoundary>
         )}

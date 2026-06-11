@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.0.0-rc.3] - 2026-06-11
+
+### Added
+
+- **Web Worker for storage:** `InventoryService` now runs inside a dedicated Web Worker (`inventory.worker.ts`) exposed via Comlink. All IndexedDB reads and writes happen off the main thread, keeping the UI responsive during filtering, sorting, and bulk operations.
+- **PWA install prompt:** The service worker is now properly registered on web builds (skipped in Electron). A `manifest.webmanifest` `<link>` is included in `index.html`. When the browser fires `beforeinstallprompt`, an **Install** button appears in the app header; clicking it triggers the native install flow.
+- **i18n foundation:** `i18next` + `react-i18next` scaffolding added. English strings live in `apps/web/src/locales/en.json`. The app title, tagline, tab labels, inventory status messages, and the install button are now localised via `t()`. Add a new locale file and pass it to the `resources` map in `apps/web/src/i18n.ts` to add a language.
+
+### Changed
+
+- **Electron startup:** `qrcode` is now dynamically imported inside the `scanner:start` IPC handler instead of at module load time, reducing startup overhead. A `performance.mark` / `performance.measure` pair logs renderer-ready time to the console in development builds.
+- **Rendering performance:** `.inventory-card` gains `content-visibility: auto; contain-intrinsic-size: 0 200px`, enabling browser-native off-screen rendering skipping for large inventories without breaking drag-and-drop or CSS grid layout.
+
+---
+
 ## [1.0.0-rc.2] - 2026-06-09
 
 ### Fixed

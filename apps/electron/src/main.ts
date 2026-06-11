@@ -1,7 +1,6 @@
 import path from 'node:path';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
-import QRCode from 'qrcode';
 import { startScannerServer, stopScannerServer } from './scanner-server.js';
 import {
   DigestScheduler,
@@ -51,6 +50,8 @@ app.setAppUserModelId('com.beforeitsgone.app');
 autoUpdater.autoDownload = true;
 autoUpdater.allowDowngrade = false;
 
+performance.mark('main-init-start');
+
 function getRendererEntryPoint(): string {
   if (process.env.VITE_DEV_SERVER_URL) {
     return process.env.VITE_DEV_SERVER_URL;
@@ -84,6 +85,13 @@ function createWindow(): void {
   });
 
   void window.loadURL(getRendererEntryPoint());
+
+  window.webContents.once('did-finish-load', () => {
+    const measure = performance.measure('startup', 'main-init-start');
+    if (isDevelopment) {
+      console.log(`[startup] renderer ready in ${Math.round(measure.duration)} ms`);
+    }
+  });
 }
 
 app.whenReady().then(() => {
@@ -128,6 +136,7 @@ app.whenReady().then(() => {
     );
 
     const url = `https://${lanIp}:${port}/?token=${token}`;
+    const { default: QRCode } = await import('qrcode');
     const qrDataUrl = await QRCode.toDataURL(url, { width: 256, margin: 1 });
     return { url, qrDataUrl };
   });
