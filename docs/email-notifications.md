@@ -14,7 +14,7 @@ Open the app and go to **Settings → Email Notifications**.
 
 | Provider | Best for |
 | -------- | -------- |
-| **Resend** | Easiest setup — one API key, reliable delivery |
+| **Resend** | Easiest setup: one API key, reliable delivery |
 | **SMTP** | Self-hosted mail servers, Gmail SMTP, Fastmail, etc. |
 
 ### 2. Configure credentials
@@ -62,8 +62,8 @@ Click **Send test email** to verify your credentials before relying on them. A p
 
 A digest email includes:
 
-- **Expiring items** — items within your configured warning window (amber) or already expired (red), with expiry date, quantity, and location
-- **Low stock** — items at or below their low-stock threshold, with quantity and threshold
+- **Expiring items:** items within your configured warning window (amber) or already expired (red), with expiry date, quantity, and location
+- **Low stock:** items at or below their low-stock threshold, with quantity and threshold
 
 If nothing is expiring or low, no digest is sent for that cycle.
 
@@ -85,7 +85,7 @@ A banner in the app header shows when emails are paused.
 
 ## Credential storage
 
-Email credentials (API key or SMTP password) are stored in `email-settings.json` inside Electron's `userData` directory — **not** in the browser's localStorage or IndexedDB, and not synced to any cloud. The file is readable only by your user account.
+Email credentials (API key or SMTP password) are stored in `email-settings.json` inside Electron's `userData` directory, **not** in the browser's localStorage or IndexedDB, and not synced to any cloud. The file is readable only by your user account.
 
 Typical paths:
 

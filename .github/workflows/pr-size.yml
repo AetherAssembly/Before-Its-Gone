@@ -36,7 +36,7 @@ jobs:
                 `git diff --stat ${base}...${head} -- . ':(exclude)package-lock.json' ':(exclude)assets/'`
               ).toString();
             } catch (e) {
-              console.log('Could not compute diff — skipping size label.');
+              console.log('Could not compute diff; skipping size label.');
               return;
             }
 
@@ -86,7 +86,7 @@ jobs:
 
             console.log(`Applied label: ${sizeLabel}`);
 
-            // Leave a warning comment on XL PRs — but don't fail CI
+            // Leave a warning comment on XL PRs; but don't fail CI
             if (sizeLabel === 'size: XL') {
               const { data: comments } = await github.rest.issues.listComments({
                 owner:        context.repo.owner,
@@ -106,9 +106,9 @@ jobs:
                   body: `<!-- pr-size-xl -->
             ### Large PR (${totalLines} lines changed)
 
-            This PR is quite large — it might be worth checking whether it can be split into smaller, more focused PRs. Smaller PRs are faster to review and easier to revert if something goes wrong.
+            This PR is quite large; it might be worth checking whether it can be split into smaller, more focused PRs. Smaller PRs are faster to review and easier to revert if something goes wrong.
 
-            If the size is unavoidable, no worries — this is just a heads-up, not a blocker.`,
+            If the size is unavoidable, no worries; this is just a heads-up, not a blocker.`,
                 });
               }
             }

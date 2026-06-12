@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.0.0-rc.4] - 2026-06-12
+
+### Added
+
+- **WCAG 2.1 AA accessibility (I08):** Full sweep of interactive elements. Tab navigation now uses the correct ARIA `tablist`/`tab`/`tabpanel` pattern with `aria-selected` and `aria-controls`. Tag filter chips have `aria-pressed`. Tab count badges include visually-hidden context text. Bulk "Move to" buttons are wrapped in a labelled `role="group"`. Skip-to-main-content link added. All named `<section>` elements have `aria-labelledby` pointing to their headings. Update banner carries `role="status"` and `aria-live="polite"`. `AboutDialog` now places `role="dialog"` on the inner dialog element (not the overlay) with `aria-labelledby`. Space bar now also activates tag filter chips alongside Enter. `@axe-core/react` wired into dev builds to surface remaining violations in the browser console.
+- **Arch Linux PKGBUILD:** A `PKGBUILD` is now generated and attached to every GitHub release automatically. Arch users can download it and run `makepkg -si` to install directly from the release AppImage. Checksums and version strings are filled in by the release workflow.
+- **Flatpak manifest:** `flatpak/org.aetherassembly.BeforeItsGone.yml` and AppStream metainfo added. A `.flatpak` bundle will be attached to releases in a future update once CI integration is validated locally.
+
+### Internal
+
+- Version bumped to `1.0.0-rc.4` across all five `package.json` files.
+- Replaced all em dashes project-wide with context-appropriate punctuation (colon for introductions, semicolon for clause separation, comma for appositives). Affects docs, changelogs, workflow files, source comments, and template strings.
+
+---
+
 ## [1.0.0-rc.3] - 2026-06-11
 
 ### Added
@@ -133,7 +148,7 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ### Fixed
 
-- `expiry-prediction.ts` TypeScript error (TS7053) when indexing `ShelfLifeByLocation` with a `StorageLocation` that includes the `string & {}` intersection — fixed with a double cast.
+- `expiry-prediction.ts` TypeScript error (TS7053) when indexing `ShelfLifeByLocation` with a `StorageLocation` that includes the `string & {}` intersection ; fixed with a double cast.
 - `PhoneSavePayload` type in `vite-env.d.ts` was missing `expiresAt: string | null`, causing TS2339 in App.tsx.
 - `onQuickAdd` was missing `recurring` and `restockQuantity` fields in the `FormState` object it constructed, leaving the form in an incomplete state.
 
@@ -143,27 +158,27 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ### Added
 
-- **Splash screen** — fridge icon and app name shown on the native background colour while the renderer loads, with a smooth fade-out once React mounts.
-- **Branding in header** — app icon (40×40) displayed alongside the title in the main header.
-- **About dialog** — ⓘ button in the header opens a modal with the app icon, version number, description, GitHub link, and license.
-- **Auto-update** — `electron-updater` checks GitHub Releases on startup and shows an in-app banner. AppImage, NSIS, and DMG installs get a one-click "Restart to install" flow; deb/rpm installs get a direct link to the releases page instead (package manager installs can't be replaced without `sudo`).
-- **arm64 cross-compilation** — `npm run package:linux:arm64` builds arm64 AppImage/deb/rpm locally from any x86_64 machine using electron-builder's built-in cross-compilation (no VM required).
-- **arm64 CI** — `ubuntu-24.04-arm` added to the CI matrix so every PR is lint- and build-checked on native arm64.
+- **Splash screen**: fridge icon and app name shown on the native background colour while the renderer loads, with a smooth fade-out once React mounts.
+- **Branding in header**: app icon (40×40) displayed alongside the title in the main header.
+- **About dialog**: ⓘ button in the header opens a modal with the app icon, version number, description, GitHub link, and license.
+- **Auto-update**: `electron-updater` checks GitHub Releases on startup and shows an in-app banner. AppImage, NSIS, and DMG installs get a one-click "Restart to install" flow; deb/rpm installs get a direct link to the releases page instead (package manager installs can't be replaced without `sudo`).
+- **arm64 cross-compilation**: `npm run package:linux:arm64` builds arm64 AppImage/deb/rpm locally from any x86_64 machine using electron-builder's built-in cross-compilation (no VM required).
+- **arm64 CI**: `ubuntu-24.04-arm` added to the CI matrix so every PR is lint- and build-checked on native arm64.
 
 ### Changed
 
 - **Window title** set explicitly to `"Before It's Gone"` in the `BrowserWindow` config, ensuring consistent taskbar and title-bar text across platforms.
-- **Windows taskbar grouping** — `app.setAppUserModelId('com.beforeitsgone.app')` called before `app.whenReady()`, improving icon and grouping behaviour in the Windows taskbar.
+- **Windows taskbar grouping**: `app.setAppUserModelId('com.beforeitsgone.app')` called before `app.whenReady()`, improving icon and grouping behaviour in the Windows taskbar.
 - **Window icon** wired for dev mode (`icon: path.resolve(__dirname, '../assets/app-icon.png')`); production builds already receive the icon from electron-builder.
 - **electron-builder publish config** set to `provider: github` on all three platform configs, enabling `latest*.yml` update manifest generation.
 - **CI matrix** expanded from 3 runners to 4 (added `ubuntu-24.04-arm`).
-- **README** — Arch/PKGBUILD installation section removed; arm64 cross-compilation script documented; version references updated to 0.7.1.
+- **README**: Arch/PKGBUILD installation section removed; arm64 cross-compilation script documented; version references updated to 0.7.1.
 
 ### Removed
 
-- GitHub Actions release workflows for Linux, macOS, and Windows — builds are now produced locally and uploaded manually.
+- GitHub Actions release workflows for Linux, macOS, and Windows; builds are now produced locally and uploaded manually.
 - VirusTotal scan workflow.
-- AUR/PKGBUILD distribution — no longer maintained.
+- AUR/PKGBUILD distribution: no longer maintained.
 
 ---
 
@@ -171,18 +186,18 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ### Added:
 
-- **+ Add one button** — every inventory card now has a `+ Add one` button alongside `− Use one`, letting you increment stock without opening the edit form. Previously adding more of an existing item required editing it manually.
-- **Undo "Use one"** — after tapping `− Use one`, a slide-in toast appears at the bottom of the screen for 5 seconds with an **Undo** button that restores the previous quantity.
-- **CSV import** — the Data section now accepts `.csv` files alongside `.json`. Supported columns: `name`, `quantity`, `location`, `expires_at`, `barcode`, `category`, `shelf_life_days`, `tags` (semicolon-separated), `depletion_threshold`. Rows missing a required field or with an invalid location are skipped; the status message reports how many were skipped.
+- **+ Add one button**: every inventory card now has a `+ Add one` button alongside `− Use one`, letting you increment stock without opening the edit form. Previously adding more of an existing item required editing it manually.
+- **Undo "Use one"**: after tapping `− Use one`, a slide-in toast appears at the bottom of the screen for 5 seconds with an **Undo** button that restores the previous quantity.
+- **CSV import**: the Data section now accepts `.csv` files alongside `.json`. Supported columns: `name`, `quantity`, `location`, `expires_at`, `barcode`, `category`, `shelf_life_days`, `tags` (semicolon-separated), `depletion_threshold`. Rows missing a required field or with an invalid location are skipped; the status message reports how many were skipped.
 
 ### Changed:
 
-- **Search is debounced** — the inventory filter no longer re-runs on every keystroke. `useDeferredValue` defers the query to idle time, eliminating synchronous re-renders during fast typing.
+- **Search is debounced**: the inventory filter no longer re-runs on every keystroke. `useDeferredValue` defers the query to idle time, eliminating synchronous re-renders during fast typing.
 - `InventoryItem` model gains an optional `shelfLifeDays?: number` field. The value is derived from the expiry date on create (or accepted as explicit input) and stored on the item. The edit form now shows the original shelf life instead of recalculating days remaining from today.
 - The "Import JSON" label and file picker now read "Import JSON / CSV" and accept `.json` and `.csv`.
-- **Service layer** — all database interactions are now routed through two dedicated service classes in `packages/core/src/services/`: `InventoryService` (CRUD, increment/decrement, import, barcode profiles, frequent items) and `ImportExportService` (JSON/CSV serialisation and parsing). `App.tsx` imports singleton instances instead of calling storage functions directly.
-- **Scanner middleware chain** — the phone scanner's per-request auth, body parsing, and method enforcement are now composed from discrete middleware functions (`withMethod`, `withBodyJson`, `withAuth`, `withQueryToken`, `compose`) defined in `apps/electron/src/scanner-middleware.ts`. The previous inline `readBody` helper and repeated token-check blocks have been removed.
-- **TypeScript project references** — `packages/core` and `packages/ui` are now `composite` projects. `packages/ui` references `packages/core`; `apps/electron` references both packages. A root `tsconfig.json` anchors the reference graph. `build:packages` now runs `tsc --build` instead of two sequential `npm --workspace` invocations, giving incremental compilation and enforced dependency ordering.
+- **Service layer**: all database interactions are now routed through two dedicated service classes in `packages/core/src/services/`: `InventoryService` (CRUD, increment/decrement, import, barcode profiles, frequent items) and `ImportExportService` (JSON/CSV serialisation and parsing). `App.tsx` imports singleton instances instead of calling storage functions directly.
+- **Scanner middleware chain**: the phone scanner's per-request auth, body parsing, and method enforcement are now composed from discrete middleware functions (`withMethod`, `withBodyJson`, `withAuth`, `withQueryToken`, `compose`) defined in `apps/electron/src/scanner-middleware.ts`. The previous inline `readBody` helper and repeated token-check blocks have been removed.
+- **TypeScript project references**: `packages/core` and `packages/ui` are now `composite` projects. `packages/ui` references `packages/core`; `apps/electron` references both packages. A root `tsconfig.json` anchors the reference graph. `build:packages` now runs `tsc --build` instead of two sequential `npm --workspace` invocations, giving incremental compilation and enforced dependency ordering.
 
 ### Fixed:
 
@@ -200,12 +215,12 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ### Added:
 
-- **Phone-as-primary scanner** — after scanning the QR code, the phone's camera auto-detects barcodes, looks up the product on Open Food Facts, and shows a full product card with image, predicted shelf life, location picker, and quantity stepper. Tapping "Save & scan next" saves the item directly to the desktop inventory and resets the camera. "Cancel" discards and returns to scanning.
-- **Expiry prediction** — rule-based shelf life algorithm maps Open Food Facts category tags to per-location shelf life estimates (fridge / freezer / pantry) for dairy, meat, fish, produce, bread, canned, pasta/rice, beverages, snacks, frozen, eggs, condiments, and more.
-- **In-place item editing** — inventory cards now have an Edit button that opens an inline edit form pre-filled with all existing fields. Changes are saved without removing and re-adding the item.
-- **Multiple tags per item** — the Add and Edit forms accept a comma-separated tags field. Tags are stored as `string[]` on each inventory item and displayed as chips alongside the category on each card.
-- **Bulk actions** — a "Bulk select" toggle enables checkboxes on every card. Selecting one or more items reveals a toolbar with "Delete selected" and "Move to: Fridge / Freezer / Pantry" buttons.
-- **Silent phone-save refresh** — when the phone saves an item the desktop inventory list refreshes automatically without any toast or modal interruption.
+- **Phone-as-primary scanner**: after scanning the QR code, the phone's camera auto-detects barcodes, looks up the product on Open Food Facts, and shows a full product card with image, predicted shelf life, location picker, and quantity stepper. Tapping "Save & scan next" saves the item directly to the desktop inventory and resets the camera. "Cancel" discards and returns to scanning.
+- **Expiry prediction**: rule-based shelf life algorithm maps Open Food Facts category tags to per-location shelf life estimates (fridge / freezer / pantry) for dairy, meat, fish, produce, bread, canned, pasta/rice, beverages, snacks, frozen, eggs, condiments, and more.
+- **In-place item editing**: inventory cards now have an Edit button that opens an inline edit form pre-filled with all existing fields. Changes are saved without removing and re-adding the item.
+- **Multiple tags per item**: the Add and Edit forms accept a comma-separated tags field. Tags are stored as `string[]` on each inventory item and displayed as chips alongside the category on each card.
+- **Bulk actions**: a "Bulk select" toggle enables checkboxes on every card. Selecting one or more items reveals a toolbar with "Delete selected" and "Move to: Fridge / Freezer / Pantry" buttons.
+- **Silent phone-save refresh**: when the phone saves an item the desktop inventory list refreshes automatically without any toast or modal interruption.
 
 ### Changed:
 
@@ -238,7 +253,7 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ### Added:
 
-- **Phone barcode scanner** — "Scan with phone" button next to the barcode field opens a modal with a QR code. Scanning it on any phone browser (iOS Safari, Android Chrome, Firefox, Edge, Opera) opens a camera view that decodes barcodes and sends the result directly to the desktop form field.
+- **Phone barcode scanner**: "Scan with phone" button next to the barcode field opens a modal with a QR code. Scanning it on any phone browser (iOS Safari, Android Chrome, Firefox, Edge, Opera) opens a camera view that decodes barcodes and sends the result directly to the desktop form field.
 - The scanner page is served over **HTTPS with a self-signed certificate** so `getUserMedia` (camera access) works across all browsers, not just Chrome on Android.
 - **BarcodeDetector API** is used natively on browsers that support it (Chromium); falls back to the **ZXing library** (loaded from CDN) for Safari and all other browsers.
 
@@ -269,21 +284,21 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ### Added:
 
-- **Categories** — Inventory items now support an optional category field (e.g. "dairy", "meat", "snacks") displayed as a pill on each card and searchable via the search bar.
-- **Item history & quick-add buttons** — Every saved item is recorded in a local history store. The top 5 most-used items appear as one-click quick-add buttons that pre-fill the form, eliminating repeat entry.
-- **Item suggestions from history** — Quick-add buttons show the item's category tag and use-count tooltip so you can distinguish similar entries at a glance.
-- **Quantity depletion tracking** — Each item can optionally set a "low stock alert" threshold. Clicking "− Use one" decrements the quantity in place; when it hits the threshold a desktop notification fires.
-- **"Use one" button** — Per-card decrement control lets you consume items without removing them.
-- **Low stock notifications** — Native desktop notification when an item's quantity reaches or falls below its depletion threshold.
-- **Export to JSON** — Download a full inventory snapshot as a portable JSON file.
-- **Export to CSV** — Download inventory in CSV format for spreadsheet use.
-- **Import from JSON** — Restore or merge a previous JSON export back into the app.
-- **Clear all data** — One-click data wipe with a two-step confirmation guard.
-- **Search** — Real-time filter across item name, barcode, and category.
-- **Filter by location** — Show only fridge, freezer, or pantry items.
-- **Sort controls** — Sort by expiry date, date added, or name; toggle ascending/descending.
-- **Stats dashboard** — Summary cards show total products, total units, items expiring this week, expiring soon, and expired.
-- **Consolidated monorepo** — Linux, macOS, and Windows now live in one repo with shared `packages/core` and `packages/ui`, separate `electron-builder` configs per platform, and dedicated release workflows.
+- **Categories**: Inventory items now support an optional category field (e.g. "dairy", "meat", "snacks") displayed as a pill on each card and searchable via the search bar.
+- **Item history & quick-add buttons**: Every saved item is recorded in a local history store. The top 5 most-used items appear as one-click quick-add buttons that pre-fill the form, eliminating repeat entry.
+- **Item suggestions from history**: Quick-add buttons show the item's category tag and use-count tooltip so you can distinguish similar entries at a glance.
+- **Quantity depletion tracking**: Each item can optionally set a "low stock alert" threshold. Clicking "− Use one" decrements the quantity in place; when it hits the threshold a desktop notification fires.
+- **"Use one" button**: Per-card decrement control lets you consume items without removing them.
+- **Low stock notifications**: Native desktop notification when an item's quantity reaches or falls below its depletion threshold.
+- **Export to JSON**: Download a full inventory snapshot as a portable JSON file.
+- **Export to CSV**: Download inventory in CSV format for spreadsheet use.
+- **Import from JSON**: Restore or merge a previous JSON export back into the app.
+- **Clear all data**: One-click data wipe with a two-step confirmation guard.
+- **Search**: Real-time filter across item name, barcode, and category.
+- **Filter by location**: Show only fridge, freezer, or pantry items.
+- **Sort controls**: Sort by expiry date, date added, or name; toggle ascending/descending.
+- **Stats dashboard**: Summary cards show total products, total units, items expiring this week, expiring soon, and expired.
+- **Consolidated monorepo**: Linux, macOS, and Windows now live in one repo with shared `packages/core` and `packages/ui`, separate `electron-builder` configs per platform, and dedicated release workflows.
 
 ### Packaging:
 
@@ -302,16 +317,16 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 ### Added:
 
 - Color-coded expiry status on inventory cards: amber left-border for expiring soon, rose left-border for expired. Allows scanning the inventory at a glance without reading status text.
-- Loading state on the "Lookup barcode online" and "Save" buttons — they disable and show contextual text while async operations are in flight, preventing duplicate submissions.
+- Loading state on the "Lookup barcode online" and "Save" buttons; they disable and show contextual text while async operations are in flight, preventing duplicate submissions.
 
 ### Fixed:
 
-- Dead if/else branch in Electron `main.ts` where both arms called `loadURL` identically — collapsed to a single call.
+- Dead if/else branch in Electron `main.ts` where both arms called `loadURL` identically; collapsed to a single call.
 - `JSON.parse` in the localStorage notification adapter now catches malformed data and returns `null` instead of throwing.
-- `localStorage.setItem` in the notification adapter now catches `QuotaExceededError` silently — notification deduplication state is best-effort and should not crash the app.
-- Removed collision-prone UUID fallback in `createInventoryItem`. `crypto.randomUUID()` is always available in Chromium/Electron — the `Date.now() + Math.random()` fallback was unreachable and unsafe.
+- `localStorage.setItem` in the notification adapter now catches `QuotaExceededError` silently; notification deduplication state is best-effort and should not crash the app.
+- Removed collision-prone UUID fallback in `createInventoryItem`. `crypto.randomUUID()` is always available in Chromium/Electron; the `Date.now() + Math.random()` fallback was unreachable and unsafe.
 - Startup `notifyExpiringItems` was being called twice on load (once directly after `setItems`, once via the `[items]` effect). Removed the redundant call.
-- `Notification.requestPermission()` in `onNotificationEnable` is now wrapped in a try-catch — failures set the notification state to `denied` and surface a status message instead of failing silently.
+- `Notification.requestPermission()` in `onNotificationEnable` is now wrapped in a try-catch; failures set the notification state to `denied` and surface a status message instead of failing silently.
 
 ### Packaging:
 

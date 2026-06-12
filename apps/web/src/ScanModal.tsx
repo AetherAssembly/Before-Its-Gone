@@ -91,10 +91,10 @@ export function ScanModal({ qrDataUrl, serverUrl, status, platform, onClose }: S
           <summary style={{ cursor: 'pointer', marginBottom: '6px' }}>First time? Read this.</summary>
           <ol style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <li>Make sure your phone and PC are on the <strong>same Wi-Fi network.</strong></li>
-            <li>Your browser will show a <strong>&ldquo;connection not private&rdquo; warning</strong> because the certificate is self-signed. This is normal — tap <strong>Advanced → Proceed</strong> (Chrome) or <strong>Show Details → visit this website</strong> (Safari).</li>
+            <li>Your browser will show a <strong>&ldquo;connection not private&rdquo; warning</strong> because the certificate is self-signed. This is normal; tap <strong>Advanced → Proceed</strong> (Chrome) or <strong>Show Details → visit this website</strong> (Safari).</li>
             <li>If you still can&apos;t connect on Windows, right-click the app and choose <strong>Run as administrator</strong> once to set the firewall rule.</li>
             {platform === 'linux' && (
-              <li>On Linux, run <code>sudo ufw allow 45678/tcp</code> once in a terminal to permanently allow connections — you only need to do this once.</li>
+              <li>On Linux, run <code>sudo ufw allow 45678/tcp</code> once in a terminal to permanently allow connections; you only need to do this once.</li>
             )}
           </ol>
         </details>

@@ -1,6 +1,6 @@
 # Architecture Overview
 
-This document describes the technical structure of Before It's Gone — how the codebase is organized, how data moves between layers, and where to look when adding or changing something.
+This document describes the technical structure of Before It's Gone: how the codebase is organized, how data moves between layers, and where to look when adding or changing something.
 
 ---
 
@@ -9,12 +9,12 @@ This document describes the technical structure of Before It's Gone — how the 
 ```bash
 Before-Its-Gone/
 ├── packages/
-│   ├── core/          — Business logic, database, types (shared)
-│   └── ui/            — Shared React components
+│   ├── core/          # Business logic, database, types (shared)
+│   └── ui/            # Shared React components
 ├── apps/
-│   ├── web/           — Vite + React renderer
-│   └── electron/      — Electron main process
-└── .github/workflows/ — CI and release automation
+│   ├── web/           # Vite + React renderer
+│   └── electron/      # Electron main process
+└── .github/workflows/   # CI and release automation
 ```
 
 All packages are npm workspaces. The dependency graph is strictly one-directional:
@@ -45,19 +45,19 @@ All inventory logic, storage, and shared types.
 | `src/email-templates.ts` | HTML email template functions (pure, no dependencies) |
 | `src/services/InventoryService.ts` | High-level service wrapping storage calls |
 | `src/services/ImportExportService.ts` | CSV/JSON import-export orchestration |
-| `src/index.ts` | Public API barrel — import from `@aetherAssembly/core` |
+| `src/index.ts` | Public API barrel; import from `@aetherAssembly/core` |
 
 **Storage:** The app uses two storage mechanisms:
 
-- **IndexedDB** (via the `idb` library) — structured item data. Schema is version-gated:
+- **IndexedDB** (via the `idb` library): structured item data. Schema is version-gated:
   - v2: `inventory`, `barcodeProfiles`
   - v3: `itemHistory`
   - v4: `wasteLog`
-- **localStorage** (via `BrowserLocalStorageAdapter`) — user preferences and sync state. Keys:
-  - `before-its-gone.settings` — `AppSettings` (expiry window, custom locations, etc.)
-  - `before-its-gone.sync` — `SyncSettings` (Supabase URL, anon key, lastSyncedAt)
-  - `before-its-gone.recipe-dismiss-{date}` — recipe banner dismiss state
-  - `supabase.auth.token` — Supabase session (managed by Supabase SDK)
+- **localStorage** (via `BrowserLocalStorageAdapter`): user preferences and sync state. Keys:
+  - `before-its-gone.settings`: `AppSettings` (expiry window, custom locations, etc.)
+  - `before-its-gone.sync`: `SyncSettings` (Supabase URL, anon key, lastSyncedAt)
+  - `before-its-gone.recipe-dismiss-{date}`: recipe banner dismiss state
+  - `supabase.auth.token`: Supabase session (managed by Supabase SDK)
 
 No `electron-store` is used anywhere. All renderer-accessible state lives in the browser storage APIs above.
 
@@ -84,20 +84,20 @@ Vite + React single-page application. Entry: `src/main.tsx` → `src/App.tsx`.
 
 `SyncService.ts` wraps `@supabase/supabase-js` with a simplified API (`connect`, `signIn`, `signUp`, `sync`). The `sync()` method pushes all local items to Supabase as JSONB rows, then pulls and applies last-write-wins conflict resolution by `updatedAt` timestamp. `SyncService` is dynamically imported in `App.tsx` (on-demand at startup only when sync credentials are configured) and statically imported in `SettingsPanel.tsx` (which is itself lazy-loaded). This keeps the ~202 kB Supabase bundle out of the initial JS chunk.
 
-`inventory.worker.ts` hosts an `InventoryService` instance inside a dedicated Web Worker, exposed via [Comlink](https://github.com/GoogleChromeLabs/comlink). `inventoryWorkerService.ts` provides a module-level singleton `Remote<InventoryService>` proxy — the interface is identical to the main-thread version so `App.tsx` uses it transparently. All IndexedDB reads/writes happen off the main thread.
+`inventory.worker.ts` hosts an `InventoryService` instance inside a dedicated Web Worker, exposed via [Comlink](https://github.com/GoogleChromeLabs/comlink). `inventoryWorkerService.ts` provides a module-level singleton `Remote<InventoryService>` proxy; the interface is identical to the main-thread version so `App.tsx` uses it transparently. All IndexedDB reads/writes happen off the main thread.
 
 `i18n.ts` initialises `i18next` with the `react-i18next` plugin. String resources live in `src/locales/<lang>.json`. Only English (`en`) ships currently; add a new locale file and register it in `i18n.ts` to add a language. Components consume strings via the `useTranslation` hook (`t('key')`).
 
-`main.tsx` registers the service worker (`/sw.js`) for web builds (skipped in Electron via `'electronAPI' in window` check) and captures the `beforeinstallprompt` event so `App.tsx` can surface a native **Install** button when the browser deems the PWA installable.
+`main.tsx` registers the service worker (`/sw.js`) for web builds (skipped in Electron via `'electronAPI' in window` check) and captures the `beforeinstallprompt` event so `App.tsx` can surface a native **Install** button when the browser deems the PWA installable. In development (`import.meta.env.DEV`) it also dynamically imports `@axe-core/react`, which runs axe accessibility checks after each render and logs any WCAG violations to the browser console.
 
 ### `apps/electron`
 
-Electron main process. Not bundled by Vite — compiled by `tsc` to `dist/`, then loaded by electron-builder.
+Electron main process. Not bundled by Vite; compiled by `tsc` to `dist/`, then loaded by electron-builder.
 
 | File | Responsibility |
 | ---- | -------------- |
 | `src/main.ts` | App lifecycle, BrowserWindow, IPC handlers, auto-updater, digest scheduler |
-| `src/preload.ts` | `contextBridge` — the only bridge between renderer and main |
+| `src/preload.ts` | `contextBridge`: the only bridge between renderer and main |
 | `src/scanner-server.ts` | Self-signed HTTPS server (port 45678), Open Food Facts lookup, IPC notification |
 | `src/scanner-html.ts` | HTML/JS for the phone's camera + product review card page |
 | `src/scanner-middleware.ts` | Request routing for the scanner server |
@@ -135,7 +135,7 @@ Renderer (React)
 | `email:send` | R→M | Send an email via the configured provider |
 | `email:digest-fire` | M→R | Trigger renderer to build and send the digest |
 
-The renderer always guards IPC calls: `if (window.beforeItsGone?.startScanner)` — so the web-only build (no Electron) degrades gracefully without throwing.
+The renderer always guards IPC calls: `if (window.beforeItsGone?.startScanner)`; the web-only build (no Electron) degrades gracefully without throwing.
 
 ---
 
@@ -173,13 +173,13 @@ DigestScheduler (main process, setInterval 60s)
                                             └─► Resend SDK or nodemailer (SMTP)
 ```
 
-Email credentials are stored in `{userData}/email-settings.json` — never in localStorage or IndexedDB. The file is written only by the Electron main process and is not accessible from the renderer directly.
+Email credentials are stored in `{userData}/email-settings.json`; never in localStorage or IndexedDB. The file is written only by the Electron main process and is not accessible from the renderer directly.
 
 ---
 
 ## Cloud sync
 
-Supabase sync is handled entirely in the renderer (no IPC required — `@supabase/supabase-js` is a browser-compatible library):
+Supabase sync is handled entirely in the renderer (no IPC required; `@supabase/supabase-js` is a browser-compatible library):
 
 ```bash
 SyncService.sync(localItems)
@@ -191,7 +191,7 @@ SyncService.sync(localItems)
 
 The full `InventoryItem` is stored as a JSONB `data` column. This avoids camelCase→snake_case column mapping and means schema changes to `InventoryItem` don't require SQL migrations (only the SQL migration for the table itself is needed, run once at setup).
 
-Deletions are not propagated — deleted items reappear after sync from another device. This is a known limitation documented in `docs/cloud-sync.md`.
+Deletions are not propagated; deleted items reappear after sync from another device. This is a known limitation documented in `docs/cloud-sync.md`.
 
 ---
 
@@ -216,6 +216,8 @@ Auto-release (`.github/workflows/release.yml`):
 - Matrix build across ubuntu/macos/windows runners
 - Each runner calls `electron-builder --publish always`
 - Artifacts and update manifests (`latest-linux.yml`, `latest-mac.yml`, `latest.yml`) are attached to the GitHub release automatically
+- A post-build job downloads the Linux AppImages, computes their SHA-256 checksums, fills them into the `PKGBUILD` template, and attaches the resulting `PKGBUILD` to the release for Arch Linux users
+- npm packages (`@aetherAssembly/core`, `@aetherAssembly/ui`) are published to GitHub Packages on every tagged release
 
 ---
 
@@ -225,7 +227,7 @@ Auto-release (`.github/workflows/release.yml`):
 `BrowserLocalStorageAdapter` from `packages/core` already handles all key-value persistence in the renderer. Adding `electron-store` would require IPC round-trips for settings that don't need main-process access. The only file that legitimately needs to live outside the renderer's storage is `email-settings.json` (credentials shouldn't be in IndexedDB, which is easier to inspect).
 
 **Why JSONB for cloud sync instead of column-per-field?**
-Mapping every `InventoryItem` field to a typed SQL column requires a migration every time the model changes. Storing the item as `data jsonb` means the schema is stable — only `id`, `user_id`, and `updated_at` need to be indexed SQL columns.
+Mapping every `InventoryItem` field to a typed SQL column requires a migration every time the model changes. Storing the item as `data jsonb` means the schema is stable; only `id`, `user_id`, and `updated_at` need to be indexed SQL columns.
 
 **Why does the digest scheduler live in main instead of a renderer `setInterval`?**
 The renderer can be hidden or garbage-collected on some platforms when the window is minimized. The main process runs for the lifetime of the app, making it reliable for background scheduling.

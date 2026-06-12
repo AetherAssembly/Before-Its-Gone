@@ -1,6 +1,6 @@
 # Cloud Sync
 
-Before It's Gone supports optional sync to a **Supabase** project you own. The app remains fully offline-first — sync is opt-in and disabled by default.
+Before It's Gone supports optional sync to a **Supabase** project you own. The app remains fully offline-first; sync is opt-in and disabled by default.
 
 ---
 
@@ -10,7 +10,7 @@ Before It's Gone supports optional sync to a **Supabase** project you own. The a
 - When you tap **Sync now**, the app pushes all local items to Supabase, then pulls any remote items that are newer than the local copy.
 - **Conflict resolution is last-write-wins** by the `updatedAt` timestamp on each item. The most-recently-modified version of any item always wins.
 - On launch, if you have saved credentials and a valid session, the app syncs automatically.
-- Deleted items are not propagated — deletions are local-only. Items deleted on one device will reappear after the next sync from another device.
+- Deleted items are not propagated; deletions are local-only. Items deleted on one device will reappear after the next sync from another device.
 
 ---
 
@@ -84,7 +84,7 @@ Your Supabase URL and anon key are stored in `before-its-gone.sync` in the brows
 
 ## Disabling sync
 
-Click **Sign out** in **Settings → Cloud sync**. The app will stop syncing. Your local inventory is unaffected. Data already in your Supabase project is not deleted — use the Supabase dashboard to remove rows if desired.
+Click **Sign out** in **Settings → Cloud sync**. The app will stop syncing. Your local inventory is unaffected. Data already in your Supabase project is not deleted; use the Supabase dashboard to remove rows if desired.
 
 ---
 

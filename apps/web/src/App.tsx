@@ -938,14 +938,14 @@ function App() {
   return (
     <>
     {updateBanner && (
-      <div className="update-banner" data-state={updateBanner.state}>
+      <div className="update-banner" role="status" aria-live="polite" data-state={updateBanner.state}>
         <span>
           {updateBanner.state === 'downloading' && `Downloading update v${updateBanner.version}…`}
           {updateBanner.state === 'ready' && (
-            <>Update v{updateBanner.version} ready &mdash; <button onClick={() => { void window.beforeItsGone?.installUpdate?.(); }}>Restart to install</button></>
+            <>Update v{updateBanner.version} ready: <button type="button" onClick={() => { void window.beforeItsGone?.installUpdate?.(); }}>Restart to install</button></>
           )}
           {updateBanner.state === 'linux-link' && (
-            <>Update v{updateBanner.version} available &mdash; <a href="https://github.com/AetherAssembly/Before-Its-Gone/releases/latest" target="_blank" rel="noopener noreferrer">Download</a></>
+            <>Update v{updateBanner.version} available: <a href="https://github.com/AetherAssembly/Before-Its-Gone/releases/latest" target="_blank" rel="noopener noreferrer">Download</a></>
           )}
         </span>
         <button className="update-banner-dismiss" onClick={() => setUpdateBanner(null)} aria-label="Dismiss">&times;</button>
@@ -992,7 +992,8 @@ function App() {
         </div>
       </div>
     )}
-    <main className="app-shell">
+    <a href="#main-content" className="skip-link">Skip to main content</a>
+    <main className="app-shell" id="main-content">
       <header className="app-header">
         <div className="app-brand">
           <img src={`${import.meta.env.BASE_URL}icons/icon-192.svg`} className="brand-logo" width="40" height="40" alt="" aria-hidden="true" />
@@ -1040,9 +1041,13 @@ function App() {
       </header>
       <AboutDialog open={aboutOpen} onClose={() => setAboutOpen(false)} version={appVersion} />
 
-      <nav className="tab-nav">
+      <nav className="tab-nav" role="tablist" aria-label="Main navigation">
         <button
           type="button"
+          role="tab"
+          id="tab-inventory"
+          aria-selected={activeTab === 'inventory'}
+          aria-controls="panel-inventory"
           className="tab-btn"
           data-active={activeTab === 'inventory' ? 'true' : undefined}
           onClick={() => setActiveTab('inventory')}
@@ -1051,22 +1056,34 @@ function App() {
         </button>
         <button
           type="button"
+          role="tab"
+          id="tab-shopping"
+          aria-selected={activeTab === 'shopping'}
+          aria-controls="panel-shopping"
           className="tab-btn"
           data-active={activeTab === 'shopping' ? 'true' : undefined}
           onClick={() => setActiveTab('shopping')}
         >
-          {t('tabs.shoppingList')}{shoppingListItems.length > 0 && <span className="tab-badge">{shoppingListItems.length}</span>}
+          {t('tabs.shoppingList')}{shoppingListItems.length > 0 && <span className="tab-badge" aria-hidden="true">{shoppingListItems.length}</span>}{shoppingListItems.length > 0 && <span className="sr-only">, {shoppingListItems.length} items</span>}
         </button>
         <button
           type="button"
+          role="tab"
+          id="tab-waste"
+          aria-selected={activeTab === 'waste'}
+          aria-controls="panel-waste"
           className="tab-btn"
           data-active={activeTab === 'waste' ? 'true' : undefined}
           onClick={() => setActiveTab('waste')}
         >
-          {t('tabs.wasteLog')}{wasteLog.length > 0 && <span className="tab-badge">{wasteLog.length}</span>}
+          {t('tabs.wasteLog')}{wasteLog.length > 0 && <span className="tab-badge" aria-hidden="true">{wasteLog.length}</span>}{wasteLog.length > 0 && <span className="sr-only">, {wasteLog.length} items</span>}
         </button>
         <button
           type="button"
+          role="tab"
+          id="tab-settings"
+          aria-selected={activeTab === 'settings'}
+          aria-controls="panel-settings"
           className="tab-btn"
           data-active={activeTab === 'settings' ? 'true' : undefined}
           onClick={() => setActiveTab('settings')}
@@ -1076,7 +1093,7 @@ function App() {
       </nav>
 
       {activeTab === 'shopping' && (
-        <section className="panel">
+        <section className="panel" role="tabpanel" id="panel-shopping" aria-labelledby="tab-shopping" tabIndex={0}>
           <h2>Shopping List</h2>
           {shoppingListItems.length === 0 ? (
             <p className="status-msg">No items are below their low-stock threshold. Set a &ldquo;Low stock alert at&rdquo; value on an item to track it here.</p>
@@ -1108,7 +1125,7 @@ function App() {
       )}
 
       {activeTab === 'waste' && (
-        <section className="panel">
+        <section className="panel" role="tabpanel" id="panel-waste" aria-labelledby="tab-waste" tabIndex={0}>
           <h2>Waste Log</h2>
           {wasteLog.length === 0 ? (
             <p className="status-msg">No wasted items recorded yet. Expired items are logged here when deleted.</p>
@@ -1154,6 +1171,7 @@ function App() {
       )}
 
       {activeTab === 'settings' && (
+        <section role="tabpanel" id="panel-settings" aria-labelledby="tab-settings" tabIndex={0}>
         <Suspense fallback={<div className="skeleton-card" aria-label="Loading settings" style={{ height: '200px' }} />}>
         <SettingsPanel
           settings={settings}
@@ -1163,9 +1181,10 @@ function App() {
           onSyncComplete={onSyncComplete}
         />
         </Suspense>
+        </section>
       )}
 
-      {activeTab === 'inventory' && <>
+      {activeTab === 'inventory' && <section role="tabpanel" id="panel-inventory" aria-labelledby="tab-inventory" tabIndex={0}>
       <section className="summary">
         <div className="summary-header">
           <div className="summary-grid" role="region" aria-label="Inventory statistics">
@@ -1207,8 +1226,8 @@ function App() {
       </section>
 
       {frequentItems.length > 0 && (
-        <section className="panel">
-          <h2>Quick add</h2>
+        <section className="panel" aria-labelledby="section-quick-add">
+          <h2 id="section-quick-add">Quick add</h2>
           <div className="quick-add-row">
             {frequentItems.map((entry) => (
               <button
@@ -1226,8 +1245,8 @@ function App() {
         </section>
       )}
 
-      <section className="panel">
-        <h2>Add item</h2>
+      <section className="panel" aria-labelledby="section-add-item">
+        <h2 id="section-add-item">Add item</h2>
         <form onSubmit={onSubmit} className="inventory-form">
           <label>
             Barcode (optional)
@@ -1402,9 +1421,9 @@ function App() {
         </form>
       </section>
 
-      <section className="panel">
+      <section className="panel" aria-labelledby="section-inventory">
         <div className="inventory-section-header">
-          <h2>Inventory</h2>
+          <h2 id="section-inventory">Inventory</h2>
           <div className="view-toggle" role="group" aria-label="Inventory view">
             <button
               type="button"
@@ -1460,7 +1479,7 @@ function App() {
             type="button"
             className="btn-ghost"
             onClick={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-            aria-label={`Sort ${sortDirection === 'asc' ? 'ascending' : 'descending'} — click to toggle`}
+            aria-label={`Sort ${sortDirection === 'asc' ? 'ascending' : 'descending'} , click to toggle`}
           >
             {sortDirection === 'asc' ? '↑ Asc' : '↓ Desc'}
           </button>
@@ -1481,10 +1500,12 @@ function App() {
             <button type="button" className="btn-danger" onClick={() => void onDeleteSelected()}>
               Delete selected
             </button>
-            <span>Move to:</span>
-            <button type="button" className="btn-sm" onClick={() => void onMoveSelected('fridge')}>Fridge</button>
-            <button type="button" className="btn-sm" onClick={() => void onMoveSelected('freezer')}>Freezer</button>
-            <button type="button" className="btn-sm" onClick={() => void onMoveSelected('pantry')}>Pantry</button>
+            <div role="group" aria-label="Move selected to">
+              <span aria-hidden="true">Move to:</span>
+              <button type="button" className="btn-sm" onClick={() => void onMoveSelected('fridge')}>Fridge</button>
+              <button type="button" className="btn-sm" onClick={() => void onMoveSelected('freezer')}>Freezer</button>
+              <button type="button" className="btn-sm" onClick={() => void onMoveSelected('pantry')}>Pantry</button>
+            </div>
           </div>
         )}
 
@@ -1496,8 +1517,9 @@ function App() {
                 className={`tag tag--filter${activeTags.includes(tag) ? ' tag--active' : ''}`}
                 role="button"
                 tabIndex={0}
+                aria-pressed={activeTags.includes(tag)}
                 onClick={() => onToggleTag(tag)}
-                onKeyDown={(e) => e.key === 'Enter' && onToggleTag(tag)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggleTag(tag)}
               >
                 {tag}
               </span>
@@ -1577,8 +1599,8 @@ function App() {
         )}
       </section>
 
-      <section className="panel">
-        <h2>Data</h2>
+      <section className="panel" aria-labelledby="section-data">
+        <h2 id="section-data">Data</h2>
         <div className="data-actions">
           <button type="button" onClick={() => void onExportJSON()}>
             Export JSON
@@ -1643,7 +1665,7 @@ function App() {
           )}
         </div>
       </section>
-      </>}
+      </section>}
     </main>
 
     <ErrorBoundary>

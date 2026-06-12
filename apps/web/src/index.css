@@ -387,6 +387,36 @@ button:focus-visible {
   align-items: center;
 }
 
+/* ---- Accessibility utilities ---- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 0 0 4px 0;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
 .file-label {
   display: inline-block;
   cursor: pointer;

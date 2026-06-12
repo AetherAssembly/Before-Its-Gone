@@ -8,7 +8,7 @@ By downloading, building, running, or distributing Before It's Gone, you agree t
 
 ## Who We Are
 
-Before It's Gone is developed and maintained by AetherAssembly — a small team consisting of Aster and Milo. For questions or support, contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org).
+Before It's Gone is developed and maintained by AetherAssembly, a small team consisting of Aster and Milo. For questions or support, contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org).
 
 ## License
 
@@ -17,7 +17,7 @@ Before It's Gone is currently licensed under the GNU Affero General Public Licen
 Under the AGPLv3 and in line with AetherAssembly's intended licensing direction:
 
 - **Personal use** is free and unrestricted.
-- **Commercial use** — including using this software as part of a paid product or service, offering it as a hosted service, or using it to generate revenue — requires a written commercial agreement with AetherAssembly. Contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org) to discuss commercial licensing.
+- **Commercial use**, including using this software as part of a paid product or service, offering it as a hosted service, or using it to generate revenue, requires a written commercial agreement with AetherAssembly. Contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org) to discuss commercial licensing.
 - **Forks and modifications** must remain publicly available under the same license. You may not privatize, relicense, or distribute a fork under more restrictive terms.
 - **Attribution** to AetherAssembly must be maintained in all copies, forks, and derivative works.
 
@@ -44,9 +44,9 @@ AetherAssembly provides support under the following terms:
 
 **Deprecated support** applies to the major version immediately outside the active window. Deprecated versions are acknowledged but no longer actively patched. Users are strongly encouraged to update.
 
-**Cold storage retrieval** — versions beyond the deprecated window are archived. Retrieval for any purpose is available as a paid service. Contact [support@aetherassembly.org](mailto:support@aetherassembly.org) for pricing and terms.
+**Cold storage retrieval:** versions beyond the deprecated window are archived. Retrieval for any purpose is available as a paid service. Contact [support@aetherassembly.org](mailto:support@aetherassembly.org) for pricing and terms.
 
-**Update guarantee** — AetherAssembly validates all updates to ensure they function without data corruption or overwriting of existing user data before being pushed to production.
+**Update guarantee:** AetherAssembly validates all updates to ensure they function without data corruption or overwriting of existing user data before being pushed to production.
 
 Support requests can be directed to:
 

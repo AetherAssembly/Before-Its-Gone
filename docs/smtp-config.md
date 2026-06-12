@@ -55,7 +55,7 @@ Google does not allow SMTP access with your regular login password. You must gen
 | Password | the 16-character app password (not your login password) |
 | Use TLS | On |
 
-> If you see "Username and Password not accepted", double-check that you are using the app password, not your Gmail login password. App passwords are only shown once — generate a new one if you lose it.
+> If you see "Username and Password not accepted", double-check that you are using the app password, not your Gmail login password. App passwords are only shown once; generate a new one if you lose it.
 
 ---
 
@@ -166,7 +166,7 @@ Settings vary by server configuration. Common setups:
 
 If your server uses a self-signed certificate, TLS negotiation may fail. In that case:
 
-- Use port 587 with TLS off (STARTTLS without certificate verification) — note this is only acceptable for local/private networks.
+- Use port 587 with TLS off (STARTTLS without certificate verification); note this is only acceptable for local/private networks.
 - Or configure your server with a valid certificate (Let's Encrypt recommended).
 
 ---
@@ -181,7 +181,7 @@ If your server uses a self-signed certificate, TLS negotiation may fail. In that
 
 ### "Authentication failed" or "535"
 
-- Wrong password. For Gmail, Yahoo, Fastmail, and iCloud — you must use an **app password**, not your login password.
+- Wrong password. For Gmail, Yahoo, Fastmail, and iCloud: use an **app password**, not your login password.
 - Your account may require 2-factor authentication to be enabled before app passwords are available.
 - Username must be your full email address, not just the local part (e.g. `you@gmail.com`, not `you`).
 
@@ -201,4 +201,4 @@ If your server uses a self-signed certificate, TLS negotiation may fail. In that
 
 - Confirm the **Digest frequency** is set to Daily or Weekly (not Never).
 - The digest fires at the configured **Send time** only if the app is running and the system clock reaches that time.
-- The digest does not fire if all items are fresh and no items are low-stock — nothing is sent when there is nothing to report.
+- The digest does not fire if all items are fresh and no items are low-stock; nothing is sent when there is nothing to report.

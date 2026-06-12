@@ -41,9 +41,9 @@ jobs:
           stale-pr-message: >
             This PR has been open for 30 days with no recent activity.
             It will be closed in 7 days unless there's a new review, push,
-            or comment — or the `stale` label is removed.
+            or comment, or the `stale` label is removed.
           close-pr-message: >
-            Closing due to inactivity. The branch is still there — feel free
+            Closing due to inactivity. The branch is still there; feel free
             to re-open when ready.
 
           # PRs with these labels will never be marked stale

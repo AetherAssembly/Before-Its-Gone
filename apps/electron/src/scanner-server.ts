@@ -180,7 +180,7 @@ async function loadOrGenerateCert(userDataPath: string): Promise<{ private: stri
       return { private: stored.private, cert: stored.cert };
     }
   } catch {
-    // File missing or malformed — fall through to generate
+    // File missing or malformed; fall through to generate
   }
 
   const pems = await selfsigned.generate(
@@ -195,7 +195,7 @@ async function loadOrGenerateCert(userDataPath: string): Promise<{ private: stri
   try {
     fs.writeFileSync(certPath, JSON.stringify(stored), 'utf-8');
   } catch {
-    // Non-fatal — cert will just regenerate next session
+    // Non-fatal; cert will just regenerate next session
   }
 
   return { private: pems.private, cert: pems.cert };

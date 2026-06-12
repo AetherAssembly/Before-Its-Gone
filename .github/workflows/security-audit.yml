@@ -62,7 +62,7 @@ jobs:
 
             const alreadyOpen = issues.some(i => i.title === title);
             if (alreadyOpen) {
-              console.log('Security issue already open — skipping.');
+              console.log('Security issue already open; skipping.');
               return;
             }
 

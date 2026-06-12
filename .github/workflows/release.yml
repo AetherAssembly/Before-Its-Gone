@@ -105,9 +105,91 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  attach-pkgbuild:
+    name: Generate & attach PKGBUILD
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download all AppImages from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release download "$TAG" --pattern "*.AppImage" --dir ./appimages
+
+      - name: Generate PKGBUILD from template
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VER="${TAG#v}"
+          # pacman pkgver can't contain hyphens; replace with dots
+          PKGVER="${VER//-/.}"
+
+          # Map electron-builder arch suffixes to pacman arch names
+          declare -A ARCH_MAP=(
+            [x64]=x86_64
+            [arm64]=aarch64
+            [ia32]=i686
+            [armv7l]=armv7h
+          )
+
+          ARCH_LIST=()
+          SOURCE_LINES=()
+          SUM_LINES=()
+
+          for appimage in ./appimages/*.AppImage; do
+            filename="$(basename "$appimage")"
+            # Filename format: before-its-gone-<ver>-<eb-arch>.AppImage
+            eb_arch="${filename%.AppImage}"
+            eb_arch="${eb_arch##*-}"
+            pacman_arch="${ARCH_MAP[$eb_arch]}"
+
+            if [[ -z "$pacman_arch" ]]; then
+              echo "Warning: unknown arch suffix '$eb_arch' in $filename; skipping"
+              continue
+            fi
+
+            sha=$(sha256sum "$appimage" | awk '{print $1}')
+            ARCH_LIST+=("'$pacman_arch'")
+            SOURCE_LINES+=("source_${pacman_arch}=(\"\\${pkgname}-\\${pkgver}-${pacman_arch}.AppImage::https://github.com/AetherAssembly/Before-Its-Gone/releases/download/\\${_tag}/before-its-gone-${VER}-${eb_arch}.AppImage\")")
+            SUM_LINES+=("sha256sums_${pacman_arch}=('${sha}')")
+          done
+
+          if [[ ${#ARCH_LIST[@]} -eq 0 ]]; then
+            echo "Error: no AppImages found in release" && exit 1
+          fi
+
+          ARCH_LIST_STR="${ARCH_LIST[*]}"
+          SOURCES_STR="$(printf '%s\n' "${SOURCE_LINES[@]}")"$'\n'"$(printf '%s\n' "${SUM_LINES[@]}")"
+
+          # Use awk to replace multi-line placeholder without sed range issues
+          awk \
+            -v pkgver="$PKGVER" \
+            -v tag="$TAG" \
+            -v arch_list="$ARCH_LIST_STR" \
+            -v arch_sources="$SOURCES_STR" \
+            '{
+              gsub(/PKGVER_PLACEHOLDER/, pkgver)
+              gsub(/TAG_PLACEHOLDER/, tag)
+              gsub(/ARCH_LIST_PLACEHOLDER/, arch_list)
+              gsub(/ARCH_SOURCES_PLACEHOLDER/, arch_sources)
+              print
+            }' PKGBUILD > PKGBUILD.release
+
+          echo "--- Generated PKGBUILD ---"
+          head -20 PKGBUILD.release
+
+      - name: Upload PKGBUILD to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${GITHUB_REF#refs/tags/}" PKGBUILD.release#PKGBUILD --clobber
+
   publish-release:
     name: Publish release
-    needs: [build, publish-packages]
+    needs: [build, publish-packages, attach-pkgbuild]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

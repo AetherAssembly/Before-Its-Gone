@@ -421,7 +421,7 @@ describe('calculateExpiryDateISO', () => {
 });
 
 // ---------------------------------------------------------------------------
-// getFilteredInventory — additional sort coverage
+// getFilteredInventory: additional sort coverage
 // ---------------------------------------------------------------------------
 
 describe('getFilteredInventory (sort by createdAt)', () => {
@@ -668,7 +668,7 @@ describe('waste log functions', () => {
 });
 
 // ---------------------------------------------------------------------------
-// createInventoryItem — recordItemHistory branch (existing history)
+// createInventoryItem: recordItemHistory branch (existing history)
 // ---------------------------------------------------------------------------
 
 describe('createInventoryItem with existing item history', () => {

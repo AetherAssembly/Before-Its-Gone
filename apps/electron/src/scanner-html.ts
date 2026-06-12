@@ -323,7 +323,7 @@ export function buildScannerHtml(token: string): string {
     </div>
 
     <div>
-      <div class="field-label">Expiry date (optional — overrides shelf life)</div>
+      <div class="field-label">Expiry date (optional; overrides shelf life)</div>
       <input type="date" id="expiry-input" />
     </div>
 
@@ -495,7 +495,7 @@ export function buildScannerHtml(token: string): string {
         setTimeout(resetToScanning, 1500);
       } else {
         show(resultView);
-        scanStatus.textContent = 'Save failed — please try again.';
+        scanStatus.textContent = 'Save failed; please try again.';
       }
     }).catch(function() {
       show(resultView);
@@ -658,7 +658,7 @@ export function buildScannerHtml(token: string): string {
     }).catch(function(err) {
       var name = err && err.name ? err.name : '';
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-        scanStatus.textContent = 'Camera permission denied — please allow access and reload.';
+        scanStatus.textContent = 'Camera permission denied; please allow access and reload.';
       } else if (name === 'NotFoundError') {
         scanStatus.textContent = 'No camera found on this device.';
       } else {

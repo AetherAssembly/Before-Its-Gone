@@ -71,7 +71,7 @@ function EmailSettingsForm() {
     setStatus('');
     try {
       await save();
-      await api.sendEmail!({ subject: "Before It's Gone — test email", html: '<p>Your email notifications are working correctly.</p>' });
+      await api.sendEmail!({ subject: "Before It's Gone: test email", html: '<p>Your email notifications are working correctly.</p>' });
       setStatus('Test email sent! Check your inbox.');
     } catch (e) {
       setStatus(`Error: ${e instanceof Error ? e.message : String(e)}`);
@@ -279,7 +279,7 @@ function SyncPanel({ onSyncComplete }: SyncPanelProps) {
       for (const item of merged) await upsertInventoryItem(item);
       const now = new Date().toISOString();
       save({ lastSyncedAt: now });
-      setStatus(`Synced — ${pushed} pushed, ${pulled} pulled.`);
+      setStatus(`Synced: ${pushed} pushed, ${pulled} pulled.`);
       onSyncComplete();
     } catch (e) { setStatus(`Sync failed: ${e instanceof Error ? e.message : String(e)}`); }
     finally { setBusy(false); }

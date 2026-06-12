@@ -145,7 +145,7 @@ class BrowserLocalStorageAdapter implements KeyValueStorage {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {
-      // QuotaExceededError — notification state is best-effort
+      // QuotaExceededError; notification state is best-effort
     }
   }
 

@@ -32,7 +32,7 @@ export class SyncService {
   }
 
   async signIn(email: string, password: string): Promise<User> {
-    if (!this.client) throw new Error('Not connected — configure Supabase URL and anon key first.');
+    if (!this.client) throw new Error('Not connected; configure Supabase URL and anon key first.');
     const { data, error } = await this.client.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     if (!data.user) throw new Error('Sign-in succeeded but no user returned.');

@@ -1,4 +1,4 @@
-## Before It's Gone — vX.Y.Z
+## Before It's Gone: vX.Y.Z
 
 ### What's new
 
@@ -41,7 +41,7 @@ BIG_LINUX_DISPLAY_BACKEND=wayland ./before-its-gone-X.Y.Z-x64.AppImage
 BIG_LINUX_DISPLAY_BACKEND=x11    ./before-its-gone-X.Y.Z-x64.AppImage
 ```
 
-> **deb/rpm updates:** the app will notify you when a new version is available but cannot update itself automatically. Download the new package from this page and run the usual upgrade command — no uninstall needed:
+> **deb/rpm updates:** the app will notify you when a new version is available but cannot update itself automatically. Download the new package from this page and run the usual upgrade command; no uninstall needed:
 
 - **Debian/Ubuntu:** `sudo apt install ./before-its-gone_X.Y.Z_amd64.deb`
 - **Fedora/RHEL:** `sudo dnf upgrade ./before-its-gone-X.Y.Z.x86_64.rpm`

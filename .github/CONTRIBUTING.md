@@ -6,20 +6,20 @@ Thanks for wanting to help! Here's everything you need to know to get started.
 
 ## Ways to contribute
 
-- **Bug reports** — open a [bug report](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=bug_report.yml)
-- **Feature requests** — open a [feature request](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=feature_request.yml)
-- **Code** — fork the repo, make your changes, and open a pull request against `main`
-- **Questions / support** — email [support@aetherassembly.org](mailto:support@aetherassembly.org)
+- **Bug reports:** open a [bug report](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=bug_report.yml)
+- **Feature requests:** open a [feature request](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=feature_request.yml)
+- **Code:** fork the repo, make your changes, and open a pull request against `main`
+- **Questions / support:** email [support@aetherassembly.org](mailto:support@aetherassembly.org)
 
 ---
 
 ## Ground rules
 
 - Be respectful and constructive in all discussion.
-- Keep changes focused — one logical change per PR.
+- Keep changes focused; one logical change per PR.
 - Update `CHANGELOG.md` for any user-visible fix or feature (under the current unreleased version).
-- Bump the version in all five `package.json` files (root, `apps/electron`, `apps/web`, `packages/core`, `packages/ui`) if your change warrants a release — they must stay in sync.
-- Don't introduce new dependencies without a clear reason — explain the choice in your PR.
+- Bump the version in all five `package.json` files (root, `apps/electron`, `apps/web`, `packages/core`, `packages/ui`) if your change warrants a release; they must stay in sync.
+- Don't introduce new dependencies without a clear reason; explain the choice in your PR.
 
 ---
 
@@ -39,9 +39,9 @@ The repo is an npm workspaces monorepo with four packages:
 | Package | Path | Purpose |
 | ------- | ---- | ------- |
 | `before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
-| `before-its-gone-web` | `apps/web` | React renderer (Vite) |
-| `@before-its-gone/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/` — avoid calling storage functions directly. |
-| `@before-its-gone/ui` | `packages/ui` | Shared React components (InventoryCard) |
+| `@before-its-gone/web` | `apps/web` | React renderer (Vite) |
+| `@aetherAssembly/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/`; avoid calling storage functions directly. |
+| `@aetherAssembly/ui` | `packages/ui` | Shared React components (InventoryCard) |
 
 **Run in development (from repo root):**
 
@@ -85,7 +85,7 @@ All three must pass before opening a PR.
    ```
 
 2. Make your changes. Test on the platform(s) your change affects.
-3. Run `npm run lint`, `npm run build`, and `npm run test` — fix anything that fails.
+3. Run `npm run lint`, `npm run build`, and `npm run test`; fix anything that fails.
 4. Update `CHANGELOG.md` under the current unreleased version heading.
 5. Open a PR against `main` using the pull request template. Fill in every section.
 
@@ -104,7 +104,9 @@ npm run package:linux     # AppImage, .deb, .rpm (all architectures)
 npm run package:appimage  # AppImage only
 ```
 
-Artifacts are written to `release/` (gitignored — local output only, not committed to the repo).
+Artifacts are written to `release/` (gitignored; local output only, not committed to the repo).
+
+The `PKGBUILD` for Arch Linux is generated automatically by the release workflow; it is not meant to be built locally. If you need to test it, download it from a published GitHub release and run `makepkg -si`.
 
 ---
 
@@ -117,7 +119,7 @@ Before adding a feature, identify which layer it belongs to:
 | A new data field on an inventory item | `packages/core/src/models.ts` |
 | A new filter or query | `packages/core/src/inventory.ts` |
 | A new storage key (localStorage) | `packages/core/src/storage.ts`, key constant in `models.ts` |
-| A new IndexedDB object store | `packages/core/src/storage.ts` — increment DB version, add upgrade branch |
+| A new IndexedDB object store | `packages/core/src/storage.ts`: increment DB version, add upgrade branch |
 | A new UI component (reusable) | `packages/ui/src/` |
 | A new UI panel or tab | `apps/web/src/App.tsx` or a new `*Panel.tsx` sibling |
 | Something that needs Node.js (file system, native modules, sending email) | `apps/electron/src/` behind an IPC handler |
@@ -171,7 +173,7 @@ If your feature needs persistent structured storage beyond key-value pairs:
 4. Add CRUD functions (`list*`, `upsert*`, `remove*`) below the existing ones.
 5. Export the new functions from `packages/core/src/index.ts`.
 
-Never remove or modify existing upgrade branches — they run for users upgrading from older versions.
+Never remove or modify existing upgrade branches; they run for users upgrading from older versions.
 
 ---
 
@@ -186,7 +188,7 @@ npm run test           # run all tests (packages/core)
 npm run test:coverage  # run with branch coverage report
 ```
 
-Tests live in `packages/core/src/__tests__/inventory.test.ts`. When adding or changing pure functions in `packages/core`, add corresponding tests. The storage layer is mocked via `vi.mock('../storage', ...)` — no IndexedDB or DOM required.
+Tests live in `packages/core/src/__tests__/inventory.test.ts`. When adding or changing pure functions in `packages/core`, add corresponding tests. The storage layer is mocked via `vi.mock('../storage', ...)`; no IndexedDB or DOM required.
 
 ### Manual testing
 
@@ -200,7 +202,7 @@ Tests live in `packages/core/src/__tests__/inventory.test.ts`. When adding or ch
 
 ## Import & export formats
 
-Full documentation for the JSON and CSV import/export formats — including field reference tables, date format rules, and examples — is in [`docs/import-export-format.md`](../docs/import-export-format.md).
+Full documentation for the JSON and CSV import/export formats, including field reference tables, date format rules, and examples; see [`docs/import-export-format.md`](../docs/import-export-format.md).
 
 ---
 
@@ -218,7 +220,7 @@ The app integrates with four external services. Open Food Facts and TheMealDB re
 | `feature` | New capability or user-visible behaviour |
 | `enhancement` | Improvement to an existing feature |
 | `docs` | Documentation only |
-| `good first issue` | Small, well-scoped, low risk — good for first contributions |
+| `good first issue` | Small, well-scoped, low risk; good for first contributions |
 | `electron` | Affects the Electron main process or packaging |
 | `core` | Affects `packages/core` business logic |
 
@@ -226,9 +228,9 @@ The app integrates with four external services. Open Food Facts and TheMealDB re
 
 ## Code style
 
-- TypeScript everywhere — no plain `.js` source files.
+- TypeScript everywhere; no plain `.js` source files.
 - ESLint enforces style; don't disable rules without a comment explaining why.
-- No comments that describe *what* the code does — only *why*, when the reason isn't obvious from the code itself.
+- No comments that describe *what* the code does; only *why*, when the reason isn't obvious from the code itself.
 - React components live in `apps/web/src` or `packages/ui/src`; shared business logic lives in `packages/core/src`.
 
 ---

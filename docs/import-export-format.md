@@ -28,7 +28,7 @@ The app exports a single JSON object with three top-level keys:
 
 | Field | Type | Notes |
 | ----- | ---- | ----- |
-| `id` | `string` | UUID. Preserved on re-import — re-importing the same export will overwrite the existing record rather than duplicate it. |
+| `id` | `string` | UUID. Preserved on re-import; re-importing the same export will overwrite the existing record rather than duplicate it. |
 | `name` | `string` | Display name of the item. |
 | `quantity` | `number` | Must be a positive integer ≥ 1. |
 | `location` | `string` | One of `"fridge"`, `"freezer"`, `"pantry"`. |
@@ -117,7 +117,7 @@ Penne,3,pantry,,2027-12-31T23:59:59.000Z,pasta,2026-05-10T10:00:00.000Z
 
 ### Importing
 
-The CSV importer is more flexible than the exporter — it accepts any column order and a wider set of column names. Column headers are **case-insensitive** and matched after lowercasing.
+The CSV importer is more flexible than the exporter; it accepts any column order and a wider set of column names. Column headers are **case-insensitive** and matched after lowercasing.
 
 #### Column reference
 
@@ -125,7 +125,7 @@ The CSV importer is more flexible than the exporter — it accepts any column or
 | ----------- | -------- | ---- | ----- |
 | `name` | **Yes** | `string` | Item display name. Rows with an empty name are skipped. |
 | `expires_at` | **Yes** | `string` | Expiry date. See [date formats](#date-formats) below. Also accepted as `expiresat` (no underscore). |
-| `location` | **Yes** | `string` | Must be exactly `fridge`, `freezer`, or `pantry` (case-sensitive). Rows with any other value — including custom locations defined in Settings — are skipped. |
+| `location` | **Yes** | `string` | Must be exactly `fridge`, `freezer`, or `pantry` (case-sensitive). Rows with any other value, including custom locations defined in Settings, are skipped. |
 | `quantity` | No | `number` | Defaults to `1` if missing or non-numeric. Always at least `1`. |
 | `barcode` | No | `string` | Leave empty if none. |
 | `category` | No | `string` | Free-text category label. |
@@ -143,7 +143,7 @@ The CSV importer is more flexible than the exporter — it accepts any column or
 | `YYYY-MM-DDTHH:MM:SS` | `2026-06-01T23:59:59` | Full ISO local time. |
 | `YYYY-MM-DDTHH:MM:SSZ` | `2026-06-01T23:59:59Z` | ISO UTC. |
 
-Locale-specific formats such as `06/01/2026` or `1 Jun 2026` may parse correctly on most systems but are not guaranteed — use `YYYY-MM-DD` whenever possible.
+Locale-specific formats such as `06/01/2026` or `1 Jun 2026` may parse correctly on most systems but are not guaranteed; use `YYYY-MM-DD` whenever possible.
 
 #### Rows that are skipped
 
@@ -154,9 +154,9 @@ A row is skipped (counted in the "X rows skipped" status message) if:
 - `location` is not one of `fridge`, `freezer`, `pantry`
 - The entire row throws an unexpected parse error
 
-Skipped rows do not cause the import to fail — the rest of the file continues to be processed.
+Skipped rows do not cause the import to fail; the rest of the file continues to be processed.
 
-> **Custom locations:** The CSV importer only accepts the three built-in location values. Items stored in custom locations (e.g. `garage`, `wine rack`) are exported to CSV correctly but cannot be re-imported from CSV — those rows will be skipped. Use JSON export/import for a lossless round-trip that preserves custom locations.
+> **Custom locations:** The CSV importer only accepts the three built-in location values. Items stored in custom locations (e.g. `garage`, `wine rack`) are exported to CSV correctly but cannot be re-imported from CSV; those rows will be skipped. Use JSON export/import for a lossless round-trip that preserves custom locations.
 
 #### Column order
 
@@ -172,7 +172,7 @@ Penne,3,pantry,2027-12-31,,pasta,730,,
 Frozen Peas,4,freezer,2027-03-01,,vegetables,365,bulk,
 ```
 
-> **Tip:** When creating a CSV by hand or from a spreadsheet, use `YYYY-MM-DD` for `expires_at` and separate multiple tags with semicolons — not commas.
+> **Tip:** When creating a CSV by hand or from a spreadsheet, use `YYYY-MM-DD` for `expires_at` and separate multiple tags with semicolons, not commas.
 
 ---
 

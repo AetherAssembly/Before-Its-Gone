@@ -27,7 +27,7 @@ function base(title: string, bodyHtml: string): string {
         </td></tr>
         <tr><td style="padding:24px 28px;">${bodyHtml}</td></tr>
         <tr><td style="padding:16px 28px;border-top:1px solid ${BORDER};font-size:12px;color:${MUTED};">
-          Sent by Before It&rsquo;s Gone &mdash; your local food expiry tracker. To stop these emails, open the app and go to Settings &rarr; Email Notifications.
+          Sent by Before It&rsquo;s Gone , your local food expiry tracker. To stop these emails, open the app and go to Settings &rarr; Email Notifications.
         </td></tr>
       </table>
     </td></tr>
@@ -134,7 +134,7 @@ export function renderDigest(options: {
   }
 
   const intro = sections.length === 0
-    ? `<p style="color:${MUTED};font-size:14px;">Everything looks good &mdash; no expiring or low-stock items right now.</p>`
+    ? `<p style="color:${MUTED};font-size:14px;">Everything looks good; no expiring or low-stock items right now.</p>`
     : `<p style="margin:0 0 20px;font-size:15px;color:${TEXT};">Here&rsquo;s your ${digestType} inventory summary.</p>`;
 
   return base(`${digestType.charAt(0).toUpperCase() + digestType.slice(1)} Digest`, intro + sections.join(''));
