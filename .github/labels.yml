@@ -63,15 +63,15 @@
 
 - name: 'area: core'
   color: 'EAF3DE'
-  description: packages/core: inventory logic, storage, barcode profiles
+  description: 'packages/core: inventory logic, storage, barcode profiles'
 
 - name: 'area: ui'
   color: 'FAEEDA'
-  description: packages/ui: shared React components
+  description: 'packages/ui: shared React components'
 
 - name: 'area: packaging'
   color: 'F1EFE8'
-  description: Linux packaging: AppImage, .deb, electron-builder config
+  description: 'Linux packaging: AppImage, .deb, electron-builder config'
 
 - name: 'area: wayland'
   color: 'E6F1FB'
