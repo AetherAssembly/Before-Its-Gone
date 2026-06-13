@@ -29,8 +29,8 @@ jobs:
         run: |
           gh release create "${{ steps.tag.outputs.tag }}" \
             --draft \
-            --title "${{ steps.tag.outputs.tag }}" \
-            --generate-notes
+            --title "Before It's Gone ${{ steps.tag.outputs.tag }}" \
+            --notes "Release in progress..."
 
   build:
     name: Build & upload (${{ matrix.os }})
@@ -127,12 +127,14 @@ jobs:
           # pacman pkgver can't contain hyphens; replace with dots
           PKGVER="${VER//-/.}"
 
-          # Map electron-builder arch suffixes to pacman arch names
+          # Map electron-builder ${arch} suffixes (as they appear in filenames) to pacman arch names.
+          # electron-builder expands ${arch} as: x86_64, arm64, armv7l, ia32 on Linux.
           declare -A ARCH_MAP=(
-            [x64]=x86_64
+            [x86_64]=x86_64
             [arm64]=aarch64
-            [ia32]=i686
+            [aarch64]=aarch64
             [armv7l]=armv7h
+            [ia32]=i686
           )
 
           ARCH_LIST=()
@@ -142,9 +144,10 @@ jobs:
           for appimage in ./appimages/*.AppImage; do
             filename="$(basename "$appimage")"
             # Filename format: before-its-gone-<ver>-<eb-arch>.AppImage
+            # Extract the arch suffix (last dash-separated component before .AppImage)
             eb_arch="${filename%.AppImage}"
             eb_arch="${eb_arch##*-}"
-            pacman_arch="${ARCH_MAP[$eb_arch]}"
+            pacman_arch="${ARCH_MAP[$eb_arch]:-}"
 
             if [[ -z "$pacman_arch" ]]; then
               echo "Warning: unknown arch suffix '$eb_arch' in $filename; skipping"
@@ -153,7 +156,9 @@ jobs:
 
             sha=$(sha256sum "$appimage" | awk '{print $1}')
             ARCH_LIST+=("'$pacman_arch'")
-            SOURCE_LINES+=("source_${pacman_arch}=(\"\\${pkgname}-\\${pkgver}-${pacman_arch}.AppImage::https://github.com/AetherAssembly/Before-Its-Gone/releases/download/\\${_tag}/before-its-gone-${VER}-${eb_arch}.AppImage\")")
+            # Use \$ (not \\$) so bash writes a literal $, which makepkg then expands
+            # Use $filename directly for the URL so it matches the actual release asset name
+            SOURCE_LINES+=("source_${pacman_arch}=(\"\${pkgname}-\${pkgver}-${pacman_arch}.AppImage::https://github.com/AetherAssembly/Before-Its-Gone/releases/download/\${_tag}/${filename}\")")
             SUM_LINES+=("sha256sums_${pacman_arch}=('${sha}')")
           done
 
@@ -194,9 +199,145 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Publish draft
+      - name: Download release artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release edit "${GITHUB_REF#refs/tags/}" --draft=false
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release download "$TAG" --dir ./artifacts
+
+      - name: Build release notes
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VER="${TAG#v}"
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${TAG}$" | head -1 || true)
+          export TAG VER PREV_TAG
+          python3 << 'PYEOF'
+          import os, re, hashlib, glob
+          from pathlib import Path
+
+          tag      = os.environ['TAG']
+          ver      = os.environ['VER']
+          prev_tag = os.environ.get('PREV_TAG', '').strip()
+          artifacts_dir = Path('./artifacts')
+          base_url = f"https://github.com/AetherAssembly/Before-Its-Gone/releases/download/{tag}"
+
+          # --- Parse CHANGELOG for this version ---
+          changelog = Path('CHANGELOG.md').read_text()
+          section_m = re.search(
+              r'## \[' + re.escape(ver) + r'\].*?\n(.*?)(?=\n---\n|\n## \[|\Z)',
+              changelog, re.DOTALL
+          )
+          section = section_m.group(1).strip() if section_m else ''
+
+          def subsection(text, heading):
+              m = re.search(r'### ' + heading + r'\n(.*?)(?=\n### |\Z)', text, re.DOTALL)
+              return m.group(1).strip() if m else ''
+
+          added   = subsection(section, 'Added')
+          fixed   = subsection(section, 'Fixed')
+          changed = subsection(section, 'Changed')
+
+          # --- SHA256 helpers ---
+          def sha256(path):
+              h = hashlib.sha256()
+              with open(path, 'rb') as f:
+                  for chunk in iter(lambda: f.read(65536), b''):
+                      h.update(chunk)
+              return h.hexdigest()
+
+          def find_one(*patterns):
+              for pat in patterns:
+                  matches = sorted(glob.glob(str(artifacts_dir / pat)))
+                  if matches:
+                      return Path(matches[0])
+              return None
+
+          def row(label, path):
+              if not path or not path.exists():
+                  return None
+              url = f"{base_url}/{path.name}"
+              return f"| {label} | [{path.name}]({url}) | `{sha256(path)}` |"
+
+          table_rows = list(filter(None, [
+              row("Linux (x64) AppImage",   find_one("*x64.AppImage")),
+              row("Linux (x64) .deb",       find_one("*amd64.deb")),
+              row("Linux (x64) .rpm",       find_one("*x86_64.rpm")),
+              row("Linux (arm64) AppImage", find_one("*arm64.AppImage")),
+              row("Linux (arm64) .deb",     find_one("*arm64.deb")),
+              row("macOS DMG",              find_one("*.dmg")),
+              row("Windows installer",      find_one("*Setup*.exe", "*-installer.exe")),
+              row("Windows portable",       find_one("*portable*.exe", "*Portable*.exe")),
+          ]))
+
+          pkgbuild = find_one("PKGBUILD")
+          if pkgbuild:
+              table_rows.append(
+                  f"| Linux (x64) Arch PKGBUILD | [PKGBUILD]({base_url}/PKGBUILD) | - |"
+              )
+
+          compare_link = (
+              f"https://github.com/AetherAssembly/Before-Its-Gone/compare/{prev_tag}...{tag}"
+              if prev_tag else
+              f"https://github.com/AetherAssembly/Before-Its-Gone/releases/tag/{tag}"
+          )
+
+          # --- Assemble body ---
+          parts = [f"## Before It's Gone: {tag}", ""]
+
+          if added:
+              parts += ["### What's new", "", added, ""]
+          if fixed:
+              parts += ["### Bug fixes", "", fixed, ""]
+          if changed:
+              parts += ["### Changes", "", changed, ""]
+
+          parts += [
+              "---", "",
+              "### Downloads", "",
+              "| Platform | Format | SHA256 |",
+              "|---|---|---|",
+              *table_rows, "",
+              "#### Verify a download", "",
+              "```bash",
+              f'sha256sum "before-its-gone-{ver}-x64.AppImage"',
+              "```", "",
+              "---", "",
+              "### Linux notes", "",
+              "The app auto-detects Wayland. To override:", "",
+              "```bash",
+              f"BIG_LINUX_DISPLAY_BACKEND=wayland ./before-its-gone-{ver}-x64.AppImage",
+              f"BIG_LINUX_DISPLAY_BACKEND=x11    ./before-its-gone-{ver}-x64.AppImage",
+              "```", "",
+              "> **deb/rpm updates:** the app will notify you when a new version is available"
+              " but cannot update itself automatically. Download the new package from this page"
+              " and run the usual upgrade command; no uninstall needed:",
+              "",
+              f"- **Debian/Ubuntu:** `sudo apt install ./before-its-gone_{ver}_amd64.deb`",
+              f"- **Fedora/RHEL:** `sudo dnf upgrade ./before-its-gone-{ver}.x86_64.rpm`",
+              f"- **openSUSE:** `sudo zypper update ./before-its-gone-{ver}-x86_64.rpm`",
+              "",
+              "### macOS notes", "",
+              "If macOS blocks the app on first launch, right-click and select Open to bypass Gatekeeper.", "",
+              "### Windows notes", "",
+              "If SmartScreen warns on the installer, click **More info** then **Run anyway**."
+              " The app is not yet code-signed.", "",
+              "---", "",
+              "### Full changelog", "",
+              f"<!-- {compare_link} -->",
+          ]
+
+          Path('release-body.md').write_text('\n'.join(parts))
+          print("release-body.md written")
+          PYEOF
+
+      - name: Publish release with notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "${GITHUB_REF#refs/tags/}" \
+            --notes-file release-body.md \
+            --draft=false

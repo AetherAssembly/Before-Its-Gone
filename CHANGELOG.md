@@ -10,7 +10,6 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 - **WCAG 2.1 AA accessibility (I08):** Full sweep of interactive elements. Tab navigation now uses the correct ARIA `tablist`/`tab`/`tabpanel` pattern with `aria-selected` and `aria-controls`. Tag filter chips have `aria-pressed`. Tab count badges include visually-hidden context text. Bulk "Move to" buttons are wrapped in a labelled `role="group"`. Skip-to-main-content link added. All named `<section>` elements have `aria-labelledby` pointing to their headings. Update banner carries `role="status"` and `aria-live="polite"`. `AboutDialog` now places `role="dialog"` on the inner dialog element (not the overlay) with `aria-labelledby`. Space bar now also activates tag filter chips alongside Enter. `@axe-core/react` wired into dev builds to surface remaining violations in the browser console.
 - **Arch Linux PKGBUILD:** A `PKGBUILD` is now generated and attached to every GitHub release automatically. Arch users can download it and run `makepkg -si` to install directly from the release AppImage. Checksums and version strings are filled in by the release workflow.
-- **Flatpak manifest:** `flatpak/org.aetherassembly.BeforeItsGone.yml` and AppStream metainfo added. A `.flatpak` bundle will be attached to releases in a future update once CI integration is validated locally.
 
 ### Internal
 
