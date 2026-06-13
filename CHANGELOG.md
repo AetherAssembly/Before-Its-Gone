@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.0.0] - 2026-06-13
+
+### Changed
+
+- Promoted from release candidate to stable. No functional changes from rc.4.
+
+### Removed
+
+- Removed Flatpak plan. (not viable for Flathub submission) [a2d77b4](https://github.com/AetherAssembly/Before-Its-Gone/commit/a2d77b4059796426151f83e2465a56c1a0c3414a)
+
+---
+
 ## [1.0.0-rc.4] - 2026-06-12
 
 ### Added

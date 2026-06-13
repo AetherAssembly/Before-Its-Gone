@@ -38,7 +38,7 @@ The repo is an npm workspaces monorepo with four packages:
 
 | Package | Path | Purpose |
 | ------- | ---- | ------- |
-| `before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
+| `@before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
 | `@before-its-gone/web` | `apps/web` | React renderer (Vite) |
 | `@aetherAssembly/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/`; avoid calling storage functions directly. |
 | `@aetherAssembly/ui` | `packages/ui` | Shared React components (InventoryCard) |

@@ -16,8 +16,6 @@
 
 Offline-first desktop app, no account required; all data stays on your machine.
 
-> **v1.0.0 Release Candidate:** All planned features are complete. This build has full test coverage, React error boundaries, lazy-loaded charts, full WCAG 2.1 AA accessibility, Web Worker storage, PWA install support, i18n foundation, and a ~45% smaller initial JS bundle. Please [report any issues](https://github.com/AetherAssembly/Before-Its-Gone/issues/new?template=bug_report.yml) before the stable release.
-
 ---
 
 ## Features

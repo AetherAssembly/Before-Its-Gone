@@ -1,7 +1,7 @@
 {
   "name": "before-its-gone-electron",
   "private": true,
-  "version": "1.0.0-rc.4",
+  "version": "1.0.0",
   "description": "Electron desktop shell for Before It's Gone",
   "author": {
     "name": "Before-Its-Gone",
@@ -11,6 +11,7 @@
     "type": "git",
     "url": "https://github.com/AetherAssembly/Before-Its-Gone"
   },
+  "desktopName": "before-its-gone",
   "main": "dist/main.js",
   "type": "commonjs",
   "scripts": {

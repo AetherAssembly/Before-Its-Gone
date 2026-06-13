@@ -18,6 +18,7 @@ linux:
     - rpm
   category: Utility
   executableName: before-its-gone
+  syncDesktopName: true
   desktop:
     entry:
       Name: "Before It's Gone"
