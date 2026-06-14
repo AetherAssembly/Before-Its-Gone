@@ -31,7 +31,7 @@ Everything runs locally; the only outbound requests are Open Food Facts (barcode
 **Linux & macOS:**
 
 ```bash
-bash <(curl -fsSL https://aetherassembly.org/install.sh)
+curl -fsSL https://aetherassembly.org/install.sh | bash
 ```
 
 **Windows** (PowerShell):
