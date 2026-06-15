@@ -263,13 +263,14 @@ jobs:
               return f"| {label} | [{path.name}]({url}) | `{sha256(path)}` |"
 
           table_rows = list(filter(None, [
-              row("Linux (x64) AppImage",   find_one("*x64.AppImage")),
+              row("Linux (x64) AppImage",   find_one("*x86_64.AppImage")),
               row("Linux (x64) .deb",       find_one("*amd64.deb")),
               row("Linux (x64) .rpm",       find_one("*x86_64.rpm")),
               row("Linux (arm64) AppImage", find_one("*arm64.AppImage")),
               row("Linux (arm64) .deb",     find_one("*arm64.deb")),
+              row("Linux (arm64) .rpm",     find_one("*aarch64.rpm")),
               row("macOS DMG",              find_one("*.dmg")),
-              row("Windows installer",      find_one("*Setup*.exe", "*-installer.exe")),
+              row("Windows installer",      find_one("*setup*.exe", "*-installer.exe")),
               row("Windows portable",       find_one("*portable*.exe", "*Portable*.exe")),
           ]))
 
@@ -303,14 +304,14 @@ jobs:
               *table_rows, "",
               "#### Verify a download", "",
               "```bash",
-              f'sha256sum "before-its-gone-{ver}-x64.AppImage"',
+              f'sha256sum "before-its-gone-{ver}-x86_64.AppImage"',
               "```", "",
               "---", "",
               "### Linux notes", "",
               "The app auto-detects Wayland. To override:", "",
               "```bash",
-              f"BIG_LINUX_DISPLAY_BACKEND=wayland ./before-its-gone-{ver}-x64.AppImage",
-              f"BIG_LINUX_DISPLAY_BACKEND=x11    ./before-its-gone-{ver}-x64.AppImage",
+              f"ELECTRON_OZONE_PLATFORM_HINT=wayland ./before-its-gone-{ver}-x86_64.AppImage",
+              f"ELECTRON_OZONE_PLATFORM_HINT=x11    ./before-its-gone-{ver}-x86_64.AppImage",
               "```", "",
               "> **deb/rpm updates:** the app will notify you when a new version is available"
               " but cannot update itself automatically. Download the new package from this page"
