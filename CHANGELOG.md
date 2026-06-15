@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.0.1] - 2026-06-15
+
+### Changed
+
+- chore(deps-dev): bump `electron` from 42.3.3 to 42.4.0, bump `@types/node` from 25.9.2 to 25.9.3, bump `nodemailer` from 8.0.10 to 9.0.0, bump `@typescript-eslint/parser` from 8.60.1 to 8.61.0, bump `@supabase/supabase-js` from 2.108.0 to 2.108.2 bump `vitest` from 4.1.8 to 4.1.9, bump `prettier` from 3.8.3 to 3.8.4, bump `electron-builder` from 26.15.2 to 26.15.3, bump `@typescript-eslint/eslint-plugin` from 8.60.1 to 8.61.0.
+
+---
+
 ## [1.0.0] - 2026-06-13
 
 ### Changed
