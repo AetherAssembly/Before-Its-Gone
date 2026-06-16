@@ -79,28 +79,43 @@ download() {
 }
 
 if command -v apt &>/dev/null; then
-  URL="$(pick_asset "\-${DEB_ARCH}\.deb$")"
-  [[ -z "$URL" ]] && die "No .deb found for $DEB_ARCH in $VERSION. Download manually: $RELEASES_URL"
-  FILE="$WORK/$(basename "$URL")"
-  download "$URL" "$FILE"
+  if [[ ! -f /etc/apt/sources.list.d/beforeitsgone.list ]]; then
+    info "Adding apt.aetherassembly.org repo (sudo required)..."
+    curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
+    echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \
+      | sudo tee /etc/apt/sources.list.d/beforeitsgone.list >/dev/null
+  fi
   info "Installing with apt (sudo required)..."
-  sudo apt install -y "$FILE"
+  sudo apt update
+  sudo apt install -y before-its-gone-electron
 
 elif command -v dnf &>/dev/null; then
-  URL="$(pick_asset "\-${RPM_ARCH}\.rpm$")"
-  [[ -z "$URL" ]] && die "No .rpm found for $RPM_ARCH in $VERSION. Download manually: $RELEASES_URL"
-  FILE="$WORK/$(basename "$URL")"
-  download "$URL" "$FILE"
-  info "Installing with dnf (sudo required)..."
-  sudo dnf install -y "$FILE"
+  if dnf copr enable -y aster1630/before-its-gone &>/dev/null && sudo dnf install -y before-its-gone; then
+    :
+  else
+    URL="$(pick_asset "\-${RPM_ARCH}\.rpm$")"
+    [[ -z "$URL" ]] && die "No .rpm found for $RPM_ARCH in $VERSION. Download manually: $RELEASES_URL"
+    FILE="$WORK/$(basename "$URL")"
+    download "$URL" "$FILE"
+    info "Installing with dnf (sudo required)..."
+    sudo dnf install -y "$FILE"
+  fi
 
 elif command -v zypper &>/dev/null; then
-  URL="$(pick_asset "\-${RPM_ARCH}\.rpm$")"
-  [[ -z "$URL" ]] && die "No .rpm found for $RPM_ARCH in $VERSION. Download manually: $RELEASES_URL"
-  FILE="$WORK/$(basename "$URL")"
-  download "$URL" "$FILE"
-  info "Installing with zypper (sudo required)..."
-  sudo zypper --non-interactive install "$FILE"
+  if zypper lr 2>/dev/null | grep -q 'home:aster1630' \
+    || sudo zypper --non-interactive addrepo https://download.opensuse.org/repositories/home:aster1630/openSUSE_Tumbleweed/home:aster1630.repo &>/dev/null; then
+    sudo zypper --non-interactive refresh &>/dev/null || true
+  fi
+  if zypper lr 2>/dev/null | grep -q 'home:aster1630' && sudo zypper --non-interactive install before-its-gone; then
+    :
+  else
+    URL="$(pick_asset "\-${RPM_ARCH}\.rpm$")"
+    [[ -z "$URL" ]] && die "No .rpm found for $RPM_ARCH in $VERSION. Download manually: $RELEASES_URL"
+    FILE="$WORK/$(basename "$URL")"
+    download "$URL" "$FILE"
+    info "Installing with zypper (sudo required)..."
+    sudo zypper --non-interactive install "$FILE"
+  fi
 
 elif command -v rpm &>/dev/null && ! command -v pacman &>/dev/null; then
   URL="$(pick_asset "\-${RPM_ARCH}\.rpm$")"

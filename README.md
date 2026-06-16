@@ -8,7 +8,6 @@
 
 [![Copr build status](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/)
 [![OBS build status](https://build.opensuse.org/projects/home:aster1630/packages/before-its-gone/badge.svg?type=default)](https://build.opensuse.org/package/show/home:aster1630/before-its-gone)
-[![apt version](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version.json)](https://apt.aetherassembly.org)
 [![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://aetherassembly.org/wiki/before-its-gone)
 
 Offline-first app — desktop (Electron) or self-hosted PWA. No account required; all data stays on your device.
