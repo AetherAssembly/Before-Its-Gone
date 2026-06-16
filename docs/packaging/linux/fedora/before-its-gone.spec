@@ -1,4 +1,8 @@
 %global debug_package %{nil}
+# No debug package, so the build-id symlinks under /usr/lib/.build-id serve
+# no purpose -- disable their generation to avoid "file listed twice"
+# warnings against the /usr/* glob below.
+%global _build_id_links none
 
 # The app under /opt is a self-contained Electron/Chromium bundle, same as
 # upstream ships it. Don't let rpmbuild scan its private .so files for
