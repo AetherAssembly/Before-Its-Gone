@@ -5,13 +5,9 @@
 [![CI](https://github.com/AetherAssembly/Before-Its-Gone/actions/workflows/ci.yml/badge.svg)](https://github.com/AetherAssembly/Before-Its-Gone/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?include_prereleases&label=release)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![Electron](https://img.shields.io/badge/electron-42-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
-[![TypeScript](https://img.shields.io/badge/typescript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D22.12-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 
-[![Linux](https://img.shields.io/badge/Linux-AppImage%20%C2%B7%20.deb%20%C2%B7%20.rpm-FCC624?logo=linux&logoColor=black)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
-[![macOS](https://img.shields.io/badge/macOS-DMG-000000?logo=apple&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
-[![Windows](https://img.shields.io/badge/Windows-Installer%20%C2%B7%20Portable-0078D4?logo=windows&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
+[![Copr build status](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/)
+[![OBS build status](https://build.opensuse.org/projects/home:aster1630/packages/before-its-gone/badge.svg?type=default)](https://build.opensuse.org/package/show/home:aster1630/before-its-gone)
 [![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://aetherassembly.org/wiki/before-its-gone)
 
 Offline-first app — desktop (Electron) or self-hosted PWA. No account required; all data stays on your device.
@@ -50,6 +46,20 @@ Or grab a specific build from the [Releases](https://github.com/AetherAssembly/B
 | Linux (arm64) | AppImage · `.deb` (Raspberry Pi 4/5) |
 | macOS | DMG |
 | Windows | NSIS installer · Portable `.exe` |
+
+**Fedora / RHEL / CentOS Stream / Rocky / Alma** ([COPR](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/)):
+
+```bash
+sudo dnf copr enable aster1630/before-its-gone
+sudo dnf install before-its-gone
+```
+
+**openSUSE** ([OBS](https://build.opensuse.org/package/show/home:aster1630/before-its-gone)):
+
+```bash
+sudo zypper addrepo https://download.opensuse.org/repositories/home:aster1630/openSUSE_Tumbleweed/home:aster1630.repo
+sudo zypper refresh && sudo zypper install before-its-gone
+```
 
 ### Platform notes
 

@@ -18,14 +18,17 @@ sudo zypper remove before-its-gone
 
 ## OBS (Open Build Service)
 
+Published at [build.opensuse.org/package/show/home:aster1630/before-its-gone](https://build.opensuse.org/package/show/home:aster1630/before-its-gone).
+
 ```bash
-sudo zypper addrepo https://download.opensuse.org/repositories/home:aetherassembly/openSUSE_Tumbleweed/home:aetherassembly.repo
+sudo zypper addrepo https://download.opensuse.org/repositories/home:aster1630/openSUSE_Tumbleweed/home:aster1630.repo
 sudo zypper refresh && sudo zypper install before-its-gone
 ```
 
 ## Supported versions
 
 - openSUSE Tumbleweed — supported (rolling release)
+- openSUSE Leap 16.0 — supported
 - openSUSE Leap 15.6 — supported
 
 ## Maintainers

@@ -18,16 +18,12 @@ sudo dnf remove before-its-gone
 
 ## COPR (Fedora community repo)
 
-To let users install and upgrade via `dnf` automatically, publish to [COPR](https://copr.fedorainfracloud.org/):
-
-1. Create a COPR project at `copr.fedorainfracloud.org` (e.g. `aetherassembly/before-its-gone`).
-2. Upload the `.spec` from this directory and the source RPM, or point COPR at a Srpm URL.
-3. COPR will build it for each enabled Fedora/RHEL release.
+Published at [copr.fedorainfracloud.org/coprs/aster1630/before-its-gone](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/). The package source is configured via SCM/Git (rpkg build method) pointing at this repo's `docs/packaging/linux/fedora` subdirectory, so a Copr rebuild re-imports the `.spec` directly — no manual SRPM upload needed.
 
 Users add the repo:
 
 ```bash
-sudo dnf copr enable aetherassembly/before-its-gone
+sudo dnf copr enable aster1630/before-its-gone
 sudo dnf install before-its-gone
 ```
 
