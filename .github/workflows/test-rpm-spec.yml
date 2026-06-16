@@ -1,12 +1,6 @@
 name: Test RPM spec (Linux distros)
 
 on:
-  push:
-    paths:
-      - docs/packaging/linux/fedora/before-its-gone.spec
-  pull_request:
-    paths:
-      - docs/packaging/linux/fedora/before-its-gone.spec
   workflow_dispatch:
 
 permissions:
