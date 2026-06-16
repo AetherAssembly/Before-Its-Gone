@@ -47,7 +47,7 @@ jobs:
       - name: Install build tools
         run: |
           if command -v dnf >/dev/null; then
-            dnf install -y rpm-build curl cpio
+            dnf install -y --allowerasing rpm-build curl cpio
           elif command -v zypper >/dev/null; then
             zypper --non-interactive install rpm-build curl cpio
           elif command -v urpmi >/dev/null; then
