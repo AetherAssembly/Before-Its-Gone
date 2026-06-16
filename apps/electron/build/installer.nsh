@@ -1,5 +1,14 @@
 ; Before It's Gone - custom NSIS installer pages
 
+; Pre-install information page shown before the license.
+!macro customWelcomePage
+  !define MUI_PAGE_HEADER_TEXT "Welcome to Before It's Gone"
+  !define MUI_PAGE_HEADER_SUBTEXT "Please read the following information before installing."
+  !insertmacro MUI_PAGE_README "${BUILD_RESOURCES_DIR}\pre-install.txt"
+  !undef MUI_PAGE_HEADER_TEXT
+  !undef MUI_PAGE_HEADER_SUBTEXT
+!macroend
+
 ; Two license pages: EULA first, then the AGPL source license.
 ; customLicensePage replaces the single automatic page from electron-builder.
 !macro customLicensePage
@@ -15,4 +24,11 @@
 
   !undef MUI_PAGE_HEADER_TEXT
   !undef MUI_PAGE_HEADER_SUBTEXT
+!macroend
+
+; Post-install finish page with getting-started notes.
+!macro customFinishPage
+  !define MUI_FINISHPAGE_SHOWREADME "${BUILD_RESOURCES_DIR}\post-install.txt"
+  !define MUI_FINISHPAGE_SHOWREADME_TEXT "View getting started notes"
+  !insertmacro MUI_PAGE_FINISH
 !macroend

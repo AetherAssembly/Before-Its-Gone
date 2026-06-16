@@ -1,0 +1,29 @@
+Before It's Gone has been installed successfully!
+=================================================
+
+GETTING STARTED
+---------------
+Launch the app from your Start Menu or Desktop shortcut.
+
+On first launch you can:
+- Add items manually or scan barcodes with your phone
+- Set expiry dates and categories
+- Configure notification timing (e.g. 3 days before expiry)
+
+BARCODE SCANNER
+---------------
+The phone barcode scanner works from any browser on your local network.
+Open the scanner URL shown in the app on your phone to start scanning.
+
+OPTIONAL CLOUD SYNC
+-------------------
+By default everything stays local. If you want to sync across devices,
+you can connect your own Supabase project in Settings > Sync.
+
+LINKS
+-----
+Wiki / Documentation:  https://aetherassembly.org/wiki/before-its-gone
+GitHub:                https://github.com/AetherAssembly/Before-Its-Gone
+Report a bug:          https://github.com/AetherAssembly/Before-Its-Gone/issues
+
+Thank you for using Before It's Gone!

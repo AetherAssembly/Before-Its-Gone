@@ -1,5 +1,6 @@
 import { type ChangeEvent, type FormEvent, lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ScanModal } from './ScanModal.js';
+import { BarcodeScannerModal } from './BarcodeScannerModal.js';
 import { AboutDialog } from './AboutDialog.js';
 const SettingsPanel = lazy(() => import('./SettingsPanel.js').then(m => ({ default: m.SettingsPanel })));
 import {
@@ -214,6 +215,7 @@ function App() {
     status: 'waiting' | 'received';
   } | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
+  const [pwaScanOpen, setPwaScanOpen] = useState(false);
   const [platform, setPlatform] = useState<string | undefined>(undefined);
 
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -552,6 +554,14 @@ function App() {
   };
 
   const onCloseScanModal = () => { setScanModal(null); };
+
+  const onPwaBarcodeDetected = useCallback((barcode: string) => {
+    setField('barcode', barcode);
+    void doBarcodeLookup(barcode);
+    setPwaScanOpen(false);
+  }, []);
+
+  const onClosePwaScan = useCallback(() => setPwaScanOpen(false), []);
 
   const onBarcodeLookup = async () => {
     const barcode = form.barcode.trim();
@@ -1274,6 +1284,12 @@ function App() {
             )
           )}
 
+          {!window.beforeItsGone && (
+            <button type="button" onClick={() => setPwaScanOpen(true)} disabled={loading}>
+              Scan barcode
+            </button>
+          )}
+
           <label>
             Name
             <input
@@ -1695,6 +1711,13 @@ function App() {
         status={scanModal.status}
         platform={platform}
         onClose={onCloseScanModal}
+      />
+    )}
+
+    {pwaScanOpen && (
+      <BarcodeScannerModal
+        onDetected={onPwaBarcodeDetected}
+        onClose={onClosePwaScan}
       />
     )}
 

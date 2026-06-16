@@ -310,8 +310,8 @@ jobs:
               "### Linux notes", "",
               "The app auto-detects Wayland. To override:", "",
               "```bash",
-              f"ELECTRON_OZONE_PLATFORM_HINT=wayland ./before-its-gone-{ver}-x86_64.AppImage",
-              f"ELECTRON_OZONE_PLATFORM_HINT=x11    ./before-its-gone-{ver}-x86_64.AppImage",
+              f"BIG_LINUX_DISPLAY_BACKEND=wayland ./before-its-gone-{ver}-x86_64.AppImage",
+              f"BIG_LINUX_DISPLAY_BACKEND=x11    ./before-its-gone-{ver}-x86_64.AppImage",
               "```", "",
               "> **deb/rpm updates:** the app will notify you when a new version is available"
               " but cannot update itself automatically. Download the new package from this page"

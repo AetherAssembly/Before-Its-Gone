@@ -1,0 +1,37 @@
+Before It's Gone - Pantry & Expiry Tracker
+==========================================
+
+Version 1.0.1
+
+This app tracks what's in your fridge, freezer, and pantry so nothing
+expires without you noticing. Scan barcodes with your phone, set expiry
+dates, and get notified before things go off.
+
+WHAT THIS INSTALLER DOES
+-------------------------
+- Installs Before It's Gone on your computer
+- Creates a Start Menu shortcut
+- Optionally creates a Desktop shortcut
+- All your data stays on your machine; no account required
+
+SYSTEM REQUIREMENTS
+-------------------
+- Windows 10 or later (64-bit)
+- ~200 MB of disk space
+
+PRIVACY
+-------
+This app is offline-first. The only outbound requests it makes are:
+- Open Food Facts (barcode lookups)
+- TheMealDB (recipe suggestions)
+- Your own Supabase project, only if you enable optional cloud sync
+
+No data is sent to the developer. Full privacy policy:
+https://github.com/AetherAssembly/Before-Its-Gone/blob/main/PRIVACY_POLICY.md
+
+LICENSE
+-------
+Before It's Gone is licensed under the GNU Affero General Public License
+v3.0 (AGPL-3.0). The full license text will be shown on the next screen.
+
+Click Next to review the license and continue installation.

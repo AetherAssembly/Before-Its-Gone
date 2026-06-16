@@ -5,7 +5,6 @@ node_modules/
 dist/
 release/
 *.tsbuildinfo
-packaging/
 
 # Vite cache
 .vite/
@@ -21,6 +20,9 @@ yarn-debug.log*
 yarn-error.log*
 ROADMAP.md
 
+# Docker
+docker/certs/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -32,3 +34,6 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+/docs/packaging/linux/snap
+/docs/packaging/macos
+/docs/packaging/windows

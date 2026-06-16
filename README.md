@@ -14,13 +14,13 @@
 [![Windows](https://img.shields.io/badge/Windows-Installer%20%C2%B7%20Portable-0078D4?logo=windows&logoColor=white)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://aetherassembly.org/wiki/before-its-gone)
 
-Offline-first desktop app, no account required; all data stays on your machine.
+Offline-first app — desktop (Electron) or self-hosted PWA. No account required; all data stays on your device.
 
 ---
 
 ## Features
 
-Scan barcodes with your phone, track expiry dates, and get notified before things go off. Includes a shopping list, waste log, recipe suggestions, optional email digests, and opt-in Supabase cloud sync. Dark/light mode, drag-and-drop, keyboard shortcuts, and a phone barcode scanner that works on any browser.
+Track expiry dates and get notified before things go off. Includes a shopping list, waste log, recipe suggestions, optional email digests, and opt-in Supabase cloud sync. Dark/light mode, drag-and-drop, and keyboard shortcuts. Barcode scanning works in both modes: in-browser camera on the PWA, phone-relay on the desktop.
 
 Everything runs locally; the only outbound requests are Open Food Facts (barcode lookup), TheMealDB (recipe suggestions), and your own Supabase project if you enable sync.
 
@@ -66,6 +66,50 @@ BIG_LINUX_DISPLAY_BACKEND=x11    npm run dev
 
 **Raspberry Pi:** Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://aetherassembly.org/wiki/before-its-gone/installation) to fix it permanently.
 
+**Debian/Ubuntu/Raspberry Pi OS:** add the apt repo for automatic updates via `apt upgrade`:
+
+```bash
+curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
+echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
+sudo apt update && sudo apt install before-its-gone-electron
+```
+
+See [docs/packaging/linux/debian](docs/packaging/linux/debian/README.md) for details and the key fingerprint to verify.
+
+---
+
+## Self-Hosted PWA
+
+Run Before It's Gone as an installable Progressive Web App on any device on your LAN or Tailscale network — no Electron required.
+
+**Prerequisites:** Docker, a self-signed cert (generated once), and the repo cloned.
+
+```bash
+# Generate a self-signed certificate (run once)
+mkdir -p docker/certs
+openssl req -x509 -newkey rsa:4096 -keyout docker/certs/key.pem \
+  -out docker/certs/cert.pem -days 3650 -nodes \
+  -subj "/CN=before-its-gone-local"
+
+# Build and start
+npm run docker:pwa:up
+```
+
+Then open `https://<your-server-ip>` from any device on the same network. Accept the self-signed cert warning once per device. Use the browser's **Add to Home Screen** prompt to install it as an app.
+
+**Tailscale:** once the container is running, any device on your tailnet can reach it at `https://<tailscale-hostname>`. To avoid the cert warning entirely, use `tailscale cert <hostname>` to provision a Let's Encrypt cert and point nginx at it instead.
+
+**Barcode scanning:** when accessing from a phone or tablet, a **Scan barcode** button in the add-item form opens the device camera directly via `@zxing/browser`. No phone-relay server or QR code needed.
+
+**Data:** all inventory data is stored in the browser's IndexedDB, per device. Optional Supabase sync works the same as in the desktop app if you want to share state across devices.
+
+| Script | What it does |
+| --- | --- |
+| `npm run docker:pwa:up` | Build image and start the container in the background |
+| `npm run docker:pwa:down` | Stop and remove the container |
+| `npm run docker:pwa:build` | Rebuild the image without starting |
+| `npm run build:pwa` | Build the web bundle only (alias for `build:web`) |
+
 ---
 
 ## npm Packages
@@ -108,7 +152,7 @@ npm install
 
 ```bash
 npm run dev              # Electron app with hot reload
-npm run dev:web          # Web only at localhost:5173
+npm run dev:web          # Web only (binds to LAN at 0.0.0.0:5173)
 npm run build            # Full build
 npm run test             # Unit tests (packages/core)
 npm run test:coverage    # With branch coverage report (target: ≥ 80%)
@@ -116,6 +160,8 @@ npm run package:linux        # AppImage + .deb + .rpm (x86_64)
 npm run package:linux:arm64  # AppImage + .deb + .rpm (arm64, cross-compiled)
 npm run package:macos        # .dmg  (run on macOS)
 npm run package:windows      # .exe  (run on Windows)
+npm run docker:pwa:up    # Build and start the self-hosted PWA container
+npm run docker:pwa:down  # Stop the container
 ```
 
 ---
