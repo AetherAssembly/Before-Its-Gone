@@ -1,0 +1,11 @@
+services:
+  big-pwa:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: before-its-gone
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    # Optional: serve on a non-443 port if something else uses 443
+    # - "8443:443"

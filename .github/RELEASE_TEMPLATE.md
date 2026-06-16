@@ -13,7 +13,7 @@
 ### Downloads
 
 | Platform | Format | SHA256 |
-|---|---|---|
+| - | - | - |
 | Linux (x64) | [AppImage](#) | `APPIMAGE_X64_SHA256` |
 | Linux (x64) | [.deb](#) | `DEB_X64_SHA256` |
 | Linux (x64) | [.rpm](#) | `RPM_X64_SHA256` |
@@ -27,7 +27,7 @@
 #### Verify a download
 
 ```bash
-sha256sum "before-its-gone-X.Y.Z-x64.AppImage"
+sha256sum "before-its-gone-X.Y.Z-x86_64.AppImage"
 ```
 
 ---
@@ -37,8 +37,8 @@ sha256sum "before-its-gone-X.Y.Z-x64.AppImage"
 The app auto-detects Wayland. To override:
 
 ```bash
-BIG_LINUX_DISPLAY_BACKEND=wayland ./before-its-gone-X.Y.Z-x64.AppImage
-BIG_LINUX_DISPLAY_BACKEND=x11    ./before-its-gone-X.Y.Z-x64.AppImage
+BIG_LINUX_DISPLAY_BACKEND=wayland ./before-its-gone-X.Y.Z-x86_64.AppImage
+BIG_LINUX_DISPLAY_BACKEND=x11    ./before-its-gone-X.Y.Z-x86_64.AppImage
 ```
 
 > **deb/rpm updates:** the app will notify you when a new version is available but cannot update itself automatically. Download the new package from this page and run the usual upgrade command; no uninstall needed:
