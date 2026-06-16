@@ -12,15 +12,19 @@
 
 Name:           before-its-gone
 Version:        1.1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
 License:        AGPL-3.0-only
 URL:            https://github.com/AetherAssembly/Before-Its-Gone
 # electron-builder's rpm filenames already use rpm's own arch names
-# (x86_64 / aarch64), so %%{_arch} maps directly -- no translation needed
-# here (unlike the AppImage/deb assets, which use "arm64").
-Source0:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}/before-its-gone-%{version}-%{_arch}.rpm
+# (x86_64 / aarch64). Both are listed as separate static Sources (rather
+# than templated on %%{_arch}) because Copr's rpkg/dist-git lookaside cache
+# fetches sources once at import time, not per build-chroot -- a single
+# %%{_arch}-templated Source0 only ever caches the importer's own arch and
+# breaks every other chroot's build.
+Source0:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}/before-its-gone-%{version}-x86_64.rpm
+Source1:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}/before-its-gone-%{version}-aarch64.rpm
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -35,7 +39,12 @@ since OBS/COPR build chroots have no network access and can't fetch the
 prebuilt Electron/Chromium binaries needed to build from source.
 
 %prep
+%ifarch x86_64
 rpm2cpio %{SOURCE0} | cpio -idm
+%endif
+%ifarch aarch64
+rpm2cpio %{SOURCE1} | cpio -idm
+%endif
 
 %build
 # Nothing to build; the upstream .rpm's payload is extracted in %%prep and
@@ -51,6 +60,11 @@ cp -a usr %{buildroot}/
 /usr/*
 
 %changelog
+* Tue Jun 16 2026 Aster <support@aetherassembly.org> - 1.1.0-2
+- Fetch x86_64 and aarch64 sources as separate static Sources instead of
+  a %%{_arch}-templated Source0, since Copr's dist-git cache only fetches
+  sources once at import time and broke non-importer-arch chroots.
+
 * Tue Jun 16 2026 Aster <support@aetherassembly.org> - 1.1.0-1
 - Update to upstream release 1.1.0.
 
