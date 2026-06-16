@@ -1,0 +1,58 @@
+name: Test RPM spec (Linux distros)
+
+on:
+  push:
+    paths:
+      - docs/packaging/linux/fedora/before-its-gone.spec
+  pull_request:
+    paths:
+      - docs/packaging/linux/fedora/before-its-gone.spec
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-rpm:
+    name: ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - fedora:42
+          - centos:stream9
+          - opensuse/leap:15.6
+          - mageia:9
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install build tools
+        run: |
+          if command -v dnf >/dev/null; then
+            dnf install -y rpm-build curl cpio
+          elif command -v zypper >/dev/null; then
+            zypper --non-interactive install rpm-build curl cpio
+          elif command -v urpmi >/dev/null; then
+            urpmi --auto rpm-build curl cpio
+          else
+            echo "No supported package manager found" >&2
+            exit 1
+          fi
+
+      - name: Fetch upstream source rpm
+        run: |
+          mkdir -p ~/rpmbuild/SOURCES
+          spec=docs/packaging/linux/fedora/before-its-gone.spec
+          version=$(grep -m1 '^Version:' "$spec" | awk '{print $2}')
+          arch=$(uname -m)
+          curl -fsSL \
+            -o ~/rpmbuild/SOURCES/before-its-gone-${version}-${arch}.rpm \
+            "https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v${version}/before-its-gone-${version}-${arch}.rpm"
+
+      - name: Build rpm
+        run: rpmbuild -ba docs/packaging/linux/fedora/before-its-gone.spec

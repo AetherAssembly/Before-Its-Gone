@@ -34,3 +34,6 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+/docs/packaging/linux/snap
+/docs/packaging/macos
+/docs/packaging/windows

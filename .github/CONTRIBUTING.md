@@ -38,8 +38,8 @@ The repo is an npm workspaces monorepo with four packages:
 
 | Package | Path | Purpose |
 | ------- | ---- | ------- |
-| `@before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
-| `@before-its-gone/web` | `apps/web` | React renderer (Vite) |
+| `before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
+| `before-its-gone-web` | `apps/web` | React renderer (Vite); also built as the self-hosted PWA |
 | `@aetherAssembly/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/`; avoid calling storage functions directly. |
 | `@aetherAssembly/ui` | `packages/ui` | Shared React components (InventoryCard) |
 
@@ -52,7 +52,7 @@ npm run dev
 This starts the Vite dev server and Electron concurrently. On Linux the app auto-detects Wayland; to override:
 
 ```bash
-BIG_LINUX_DISPLAY_BACKEND=x11 npm run dev
+BIG_LINUX_DISPLAY_BACKEND=x11    npm run dev
 BIG_LINUX_DISPLAY_BACKEND=wayland npm run dev
 ```
 
@@ -192,8 +192,18 @@ Tests live in `packages/core/src/__tests__/inventory.test.ts`. When adding or ch
 
 ### Manual testing
 
-- **Renderer logic** (UI, interactions): run `npm run dev:web` and exercise the feature in the browser. Check the browser DevTools console for errors.
+- **Renderer logic** (UI, interactions): run `npm run dev:web` and exercise the feature in the browser. The dev server binds to `0.0.0.0:5173`, so you can also open it from a phone on the same network. Check the browser DevTools console for errors.
 - **Electron-specific features** (IPC, scanner, email, auto-updater): run `npm run dev` and test in the full Electron app.
+- **PWA / Docker:** Generate a self-signed cert:
+
+```bash
+mkdir -p docker/certs 
+
+openssl req -x509 -newkey rsa:4096 -keyout docker/certs/key.pem -out docker/certs/cert.pem -days 3650 -nodes -subj "/CN=localhost"
+```
+
+Then run `npm run docker:pwa:up` and open `https://localhost` in a browser. Verify the install prompt, service worker, and barcode scanner.
+
 - **Platform packaging**: run `npm run package:<your-platform>` and install the output artifact. Verify the auto-updater manifest path matches the GitHub release URL pattern if your change touches update files.
 - **Email**: use the "Send test email" button in Settings. For SMTP, a local SMTP catcher such as Mailpit on `localhost:1025` is useful for development.
 - **Cloud sync**: create a Supabase project, run the SQL migration from `docs/cloud-sync.md`, and test sign-in + Sync now.

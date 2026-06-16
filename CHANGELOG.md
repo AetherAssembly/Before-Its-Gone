@@ -4,11 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.1.0] - Unreleased
+
+### Added
+
+- **Self-hosted PWA:** `apps/web` is now deployable as a Progressive Web App via Docker + nginx. A `docker/` folder at the repo root contains a multi-stage `Dockerfile` (node:22-alpine builder + nginx:alpine serve), `nginx.conf` (HTTPS on 443, SPA routing, aggressive static asset caching, `no-store` for the service worker), and `docker-compose.yml`. Four convenience scripts added to the root `package.json`: `docker:pwa:up`, `docker:pwa:down`, `docker:pwa:build`, and `build:pwa`. Access the app from any device on the same LAN or Tailscale network.
+- **In-browser barcode scanner (`BarcodeScannerModal`):** new `apps/web/src/BarcodeScannerModal.tsx` uses `@zxing/browser` to open the device camera directly in the browser. A **Scan barcode** button appears in the add-item form when not running inside Electron; detected barcodes feed into the existing Open Food Facts lookup flow.
+- **vite-plugin-pwa:** the manual `public/sw.js` and `public/manifest.webmanifest` are replaced by `vite-plugin-pwa` (`autoUpdate` mode), which generates a precache manifest covering all hashed build assets and adds a `NetworkFirst` runtime cache for Open Food Facts API calls. The web manifest is now configured in `vite.config.ts`.
+- **LAN dev server binding:** `vite.config.ts` now sets `server.host: true`, so `npm run dev:web` binds to `0.0.0.0:5173` and is reachable from other devices on the local network during development.
+- **Packaging Docs:** Provides a more detailed developer experience.
+- **Self-hosted apt repository:** Debian, Ubuntu, and Raspberry Pi OS users can now install via `apt.aetherassembly.org` for automatic updates through `apt upgrade`, instead of manually re-downloading a `.deb` for every release. Documented in [docs/packaging/linux/debian](docs/packaging/linux/debian/README.md), [docs/packaging/linux/ubuntu](docs/packaging/linux/ubuntu/README.md), and [docs/packaging/linux/raspbian](docs/packaging/linux/raspbian/README.md), with a quick-start snippet in the top-level README.
+- **RPM `.spec` for Fedora COPR / openSUSE OBS:** added `docs/packaging/linux/fedora/before-its-gone.spec`, repackaging the upstream electron-builder `.rpm` for distribution via COPR and OBS, referenced from the Fedora and openSUSE packaging docs.
+- **CI: RPM spec build test (`.github/workflows/test-rpm-spec.yml`):** verifies `before-its-gone.spec` builds cleanly across Fedora, CentOS Stream, openSUSE Leap, and Mageia containers whenever the spec file changes, catching distro-specific packaging breakage before it reaches COPR/OBS.
+
+---
+
 ## [1.0.1] - 2026-06-15
 
 ### Changed
 
 - chore(deps-dev): bump `electron` from 42.3.3 to 42.4.0, bump `@types/node` from 25.9.2 to 25.9.3, bump `nodemailer` from 8.0.10 to 9.0.0, bump `@typescript-eslint/parser` from 8.60.1 to 8.61.0, bump `@supabase/supabase-js` from 2.108.0 to 2.108.2 bump `vitest` from 4.1.8 to 4.1.9, bump `prettier` from 3.8.3 to 3.8.4, bump `electron-builder` from 26.15.2 to 26.15.3, bump `@typescript-eslint/eslint-plugin` from 8.60.1 to 8.61.0.
+
+### Fixed
+
+- Release notes script: glob `*x64.AppImage` did not match electron-builder's `*x86_64.AppImage` output, omitting the x86_64 AppImage from the download table. Fixed to `*x86_64.AppImage`.
+- Release notes script: glob `*Setup*.exe` (capital S) did not match `*setup*.exe`, omitting the Windows NSIS installer from the download table. Fixed to lowercase.
+- Release notes script: no row existed for the arm64 `.rpm` artifact (`*aarch64.rpm`). Row added.
+- Release notes script: verify-download command showed `x64.AppImage`; corrected to `x86_64.AppImage`.
+- Release notes: Linux Wayland override examples referenced `x64.AppImage`; corrected to `x86_64.AppImage` to match the actual electron-builder output filename.
 
 ---
 

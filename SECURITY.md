@@ -6,8 +6,8 @@ Security fixes are applied to the current release and the two most recent major 
 
 | Version | Supported |
 |---------|-----------|
-| 1.0.0   | ✅ Active support (current) |
-| 0.9.x   | ⚠️ deprecated; acknowledged, no longer actively patched |
+| 1.1.0   | ✅ Active support (current) |
+| 1.0.x   | ⚠️ deprecated; acknowledged, no longer actively patched |
 | < 0.9.0 | ❌ Not supported |
 
 As new versions are released, this table will be updated to reflect the current support window. Versions that fall outside the two-major-version window enter deprecated status and are acknowledged but no longer actively patched. Versions older than that are archived to cold storage. Retrieval of archived versions is available as a paid service; contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org) for details.
@@ -35,13 +35,14 @@ After validation, the maintainers will work on a fix and coordinate disclosure t
 
 ## Scope
 
-Before-Its-Gone is a local-first desktop application (Linux, macOS, Windows). The most relevant security areas are:
+Before-Its-Gone is a local-first desktop application (Linux, macOS, Windows) with published npm packages. The most relevant security areas are:
 
 - Electron main/preload boundary and IPC usage
 - Dependency vulnerabilities in the Electron and React toolchain
 - Local data handling and unsafe filesystem or shell execution
 - The LAN-accessible phone scanner server (HTTPS, token-gated, localhost-only by default)
 - Packaged artifacts distributed through project releases (AppImage, .deb, .rpm, .dmg, .exe)
+- Published npm packages (`@aetherAssembly/core`, `@aetherAssembly/ui`) and any vulnerabilities in their public API or dependencies that could affect downstream consumers
 
 ## Non-Security Issues
 
