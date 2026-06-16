@@ -26,6 +26,10 @@
     "package:appimage": "npm run build:electron && npm --workspace apps/electron run package:appimage",
     "checksum:linux": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>['.AppImage','.deb','.rpm'].some(e=>f.endsWith(e)));if(!files.length){console.log('No Linux artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",
     "checksum:windows": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>f.endsWith('.exe'));if(!files.length){console.log('No Windows artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",
+    "build:pwa": "npm run build:web",
+    "docker:pwa:build": "cd docker && docker compose build",
+    "docker:pwa:up": "cd docker && docker compose up -d",
+    "docker:pwa:down": "cd docker && docker compose down",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "npm --workspace packages/core run test",
     "test:coverage": "npm --workspace packages/core run test:coverage"
