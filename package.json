@@ -54,5 +54,8 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.9",
     "wait-on": "^9.0.1"
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true
   }
 }
