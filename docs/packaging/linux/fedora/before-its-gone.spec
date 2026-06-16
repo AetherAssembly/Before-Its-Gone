@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/%{name}/.*$
 
 Name:           before-its-gone
-Version:        1.0.1
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -51,6 +51,9 @@ cp -a usr %{buildroot}/
 /usr/*
 
 %changelog
+* Tue Jun 16 2026 Aster <support@aetherassembly.org> - 1.1.0-1
+- Update to upstream release 1.1.0.
+
 * Tue Jun 16 2026 Aster <support@aetherassembly.org> - 1.0.1-1
 - Initial COPR/OBS packaging, repackaging the upstream electron-builder .rpm.
 - Builds for both x86_64 and aarch64.
