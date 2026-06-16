@@ -4,7 +4,7 @@
 !macro customWelcomePage
   !define MUI_PAGE_HEADER_TEXT "Welcome to Before It's Gone"
   !define MUI_PAGE_HEADER_SUBTEXT "Please read the following information before installing."
-  !insertmacro MUI_PAGE_README "${BUILD_RESOURCES_DIR}\pre-install.txt"
+  !insertmacro MUI_PAGE_LICENSE "${BUILD_RESOURCES_DIR}\pre-install.txt"
   !undef MUI_PAGE_HEADER_TEXT
   !undef MUI_PAGE_HEADER_SUBTEXT
 !macroend
