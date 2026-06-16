@@ -67,10 +67,14 @@ jobs:
           mkdir -p "$topdir/SOURCES"
           spec=docs/packaging/linux/fedora/before-its-gone.spec
           version=$(grep -m1 '^Version:' "$spec" | awk '{print $2}')
-          arch=$(uname -m)
-          curl -fsSL \
-            -o "$topdir/SOURCES/before-its-gone-${version}-${arch}.rpm" \
-            "https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v${version}/before-its-gone-${version}-${arch}.rpm"
+          # The spec declares Source0/Source1 unconditionally (x86_64 and
+          # aarch64), so rpmbuild needs both present regardless of which
+          # arch is actually being built here.
+          for arch in x86_64 aarch64; do
+            curl -fsSL \
+              -o "$topdir/SOURCES/before-its-gone-${version}-${arch}.rpm" \
+              "https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v${version}/before-its-gone-${version}-${arch}.rpm"
+          done
 
       - name: Build rpm
         run: rpmbuild -ba docs/packaging/linux/fedora/before-its-gone.spec
