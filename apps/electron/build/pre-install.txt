@@ -1,7 +1,7 @@
 Before It's Gone - Pantry & Expiry Tracker
 ==========================================
 
-Version 1.0.1
+Version 1.1.0
 
 This app tracks what's in your fridge, freezer, and pantry so nothing
 expires without you noticing. Scan barcodes with your phone, set expiry

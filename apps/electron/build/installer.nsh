@@ -12,7 +12,7 @@
 !macro customLicensePage
   !define MUI_PAGE_HEADER_TEXT "End-User License Agreement"
   !define MUI_PAGE_HEADER_SUBTEXT "Please read this agreement before installing Before It's Gone."
-  !insertmacro MUI_PAGE_LICENSE "$PLUGINSDIR\license.rtf"
+  !insertmacro MUI_PAGE_LICENSE "$PLUGINSDIR\eula.rtf"
 
   !define MUI_PAGE_HEADER_TEXT "Open Source License"
   !define MUI_PAGE_HEADER_SUBTEXT "Before It's Gone is open source under the GNU Affero General Public License v3."
