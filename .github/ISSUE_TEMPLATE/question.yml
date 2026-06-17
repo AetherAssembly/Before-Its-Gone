@@ -1,0 +1,25 @@
+name: Question / Support
+description: Ask a question or get help with Before It's Gone
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before posting, check the [docs](../docs) and open [Discussions](../../discussions) for general questions.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you need help with?
+      description: Describe your question or what you're trying to figure out.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Any relevant setup info, OS, version, etc.
+    validations:
+      required: false
