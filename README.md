@@ -79,9 +79,13 @@ BIG_LINUX_DISPLAY_BACKEND=x11    npm run dev
 **Debian/Ubuntu/Raspberry Pi OS:** add the apt repo for automatic updates via `apt upgrade`:
 
 ```bash
+
 curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
+
 echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
-sudo apt update && sudo apt install before-its-gone-electron
+
+sudo apt update && sudo apt install before-its-gone
+
 ```
 
 See [docs/packaging/linux/debian](docs/packaging/linux/debian/README.md) for details and the key fingerprint to verify.

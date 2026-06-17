@@ -55,10 +55,13 @@ Requires `qemu-user-static` installed on the build host.
 **Via the apt repository (recommended)** — picks up new releases automatically with `apt upgrade`:
 
 ```bash
+
 curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
-echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \
-  | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
-sudo apt update && sudo apt install before-its-gone-electron
+
+echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \ | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
+
+sudo apt update && sudo apt install before-its-gone
+
 ```
 
 The repo is signed with the `AetherAssembly (apt package signing)` GPG key
@@ -67,7 +70,7 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 **Manual install** — once you have an `arm64` `.deb`:
 
 ```bash
-sudo apt install ./before-its-gone-1.1.0-arm64.deb
+sudo apt install ./before-its-gone-1.1.1-arm64.deb
 ```
 
 ## Performance note

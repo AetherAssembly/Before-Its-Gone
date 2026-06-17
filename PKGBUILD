@@ -5,7 +5,7 @@ pkgrel=1
 pkgdesc="A food inventory tracker that helps you use items before they expire"
 arch=(ARCH_LIST_PLACEHOLDER)
 url="https://github.com/AetherAssembly/Before-Its-Gone"
-license=('MIT')
+license=('AGPL-3.0-only')
 depends=('fuse2' 'hicolor-icon-theme')
 options=('!strip')
 

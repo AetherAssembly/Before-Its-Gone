@@ -11,8 +11,8 @@
 %global __provides_exclude_from ^/opt/%{name}/.*$
 
 Name:           before-its-gone
-Version:        1.1.0
-Release:        2%{?dist}
+Version:        1.1.1
+Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
 License:        AGPL-3.0-only
@@ -56,10 +56,16 @@ cp -a opt %{buildroot}/
 cp -a usr %{buildroot}/
 
 %files
-/opt/*
-/usr/*
+/opt/%{name}
+/usr/bin/%{name}
+/usr/share/applications/%{name}.desktop
+/usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Wed Jun 17 2026 Aster <support@aetherassembly.org> - 1.1.1-1
+- Fix /usr/* glob in %%files conflicting with filesystem package on Fedora.
+  Replace with explicit paths to avoid claiming ownership of system directories.
+
 * Tue Jun 16 2026 Aster <support@aetherassembly.org> - 1.1.0-2
 - Fetch x86_64 and aarch64 sources as separate static Sources instead of
   a %%{_arch}-templated Source0, since Copr's dist-git cache only fetches

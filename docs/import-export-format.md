@@ -6,7 +6,7 @@ Before It's Gone can export your inventory to **JSON** or **CSV**, and import fr
 
 ## JSON
 
-### Exporting
+### JSON-Exporting
 
 The app exports a single JSON object with three top-level keys:
 
@@ -82,7 +82,7 @@ The app exports a single JSON object with three top-level keys:
 }
 ```
 
-### Importing
+### JSON-Importing
 
 The importer reads the `items` array from inside the `{ version, exportedAt, items }` envelope. Items missing an `id` or `name` are silently skipped. If you re-import a file that was previously exported, existing items with matching `id` values are overwritten in place rather than duplicated.
 
@@ -92,7 +92,7 @@ The importer reads the `items` array from inside the `{ version, exportedAt, ite
 
 ## CSV
 
-### Exporting
+### CSV-Exporting
 
 The exported CSV uses the following fixed column order:
 
@@ -115,7 +115,7 @@ Penne,3,pantry,,2027-12-31T23:59:59.000Z,pasta,2026-05-10T10:00:00.000Z
 
 > **Note:** The CSV export does not include `shelfLifeDays`, `tags`, or `depletionThreshold`. Use JSON export if you need a complete, round-trippable backup.
 
-### Importing
+### CSV-Importing
 
 The CSV importer is more flexible than the exporter; it accepts any column order and a wider set of column names. Column headers are **case-insensitive** and matched after lowercasing.
 

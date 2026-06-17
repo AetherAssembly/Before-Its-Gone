@@ -7,10 +7,13 @@ Before It's Gone ships a `.deb` package built by electron-builder on every tagge
 Before It's Gone hosts its own apt repository, so `apt upgrade` picks up new releases automatically — no need to manually re-download a `.deb` for every version:
 
 ```bash
+
 curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
-echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \
-  | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
+
+echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \ | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
+
 sudo apt update && sudo apt install before-its-gone-electron
+
 ```
 
 The repo is signed with the `AetherAssembly (apt package signing)` GPG key
@@ -21,7 +24,7 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 Download `before-its-gone-<version>-amd64.deb` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo apt install ./before-its-gone-1.1.0-amd64.deb
+sudo apt install ./before-its-gone-1.1.1-amd64.deb
 ```
 
 Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.

@@ -7,7 +7,7 @@ Before It's Gone integrates with several external services. Most are free and re
 ## Overview
 
 | Service | Purpose | Account required | API key required |
-|---------|---------|-----------------|-----------------|
+| ------- | ------- | --------------- | --------------- |
 | [Open Food Facts](#open-food-facts) | Barcode lookup, nutritional info | No | No |
 | [TheMealDB](#themealdb) | Recipe suggestions | No | No |
 | [Resend](#resend) | Email notifications | Yes (free tier available) | Yes |
@@ -18,6 +18,7 @@ Before It's Gone integrates with several external services. Most are free and re
 ## Open Food Facts
 
 **What it does:** Looks up barcodes to retrieve product names, categories, kcal per 100g, and allergen tags. Used by:
+
 - The phone scanner's product review card
 - Barcode field lookup in the Add Item form
 - Batch barcode import
@@ -28,7 +29,7 @@ Before It's Gone integrates with several external services. Most are free and re
 
 **Endpoints used:**
 
-```
+```bash
 GET https://world.openfoodfacts.org/api/v2/product/{barcode}.json
 GET https://world.openfoodfacts.org/api/v2/product/{barcode}.json  (batch import, per barcode)
 ```
@@ -51,7 +52,7 @@ GET https://world.openfoodfacts.org/api/v2/product/{barcode}.json  (batch import
 
 **Endpoint used:**
 
-```
+```bash
 GET https://www.themealdb.com/api/json/v1/1/filter.php?i={ingredient}
 ```
 
@@ -100,7 +101,7 @@ Resend routes mail through their own sending infrastructure. Deliverability depe
 **API key required:** No: the app uses the project's public **anon key**, which is safe to store in localStorage  
 **Cost:** Free tier includes 500 MB database, unlimited auth users
 
-### Setup
+### Cloud Setup
 
 See [docs/cloud-sync.md](cloud-sync.md) for the complete walkthrough including the required SQL migration.
 

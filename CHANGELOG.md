@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.1.1] - 2026-06-17
+
+### Added
+
+- **Self-hosting documentation:** `docs/self-hosting.md` covers deploying the PWA via Docker and nginx, configuring a custom port, serving over HTTPS with Tailscale, updating the container, and installing as a PWA once running.
+- **`.github/CODEOWNERS`:** Aster owns all files by default; Milo (`@EvilLickCompany`) co-owns `docs/` and `.github/CONTRIBUTING.md` for automatic review requests on relevant PRs.
+- **`.editorconfig`:** enforces consistent indentation (2 spaces), `lf` line endings, UTF-8 charset, and trailing whitespace trimming across all editors and contributors. Markdown files are exempt from trailing whitespace trimming.
+- **Support issue template:** `.github/ISSUE_TEMPLATE/question.yml` adds a dedicated "Question / Support" template, keeping non-bug traffic out of the bug report queue.
+
+### Changed
+
+- **EULA governing law:** section 8 now specifies the Commonwealth of Pennsylvania as the governing jurisdiction rather than the previous vague "applicable law" wording.
+- **EULA section 7 (Updates):** added a forward-looking note that future PWA versions handle updates via service workers; the GitHub Releases auto-update description now applies explicitly to the current Electron build only.
+- **EULA section 3 (Third-Party Services):** tightened wording to clarify AetherAssembly is not responsible for the availability or conduct of third-party services.
+- **`PKGBUILD` license field:** corrected from `MIT` to `AGPL-3.0-only`.
+
+### Fixed
+
+- **NSIS installer:** `customLicensePage` macro now references `eula.rtf` and `license.rtf` from `${BUILD_RESOURCES_DIR}` instead of `$PLUGINSDIR`, ensuring both files are sourced from the correct `build/` directory.
+- **Linux package naming:** added `deb.packageName` and `rpm.packageName` to `electron-builder.linux.yml` to prevent the Debian and RPM package names from inheriting the internal `before-its-gone-electron` workspace name. Binary name (`executableName`) was already correct.
+- **RPM spec `%files` conflict with `filesystem` package:** replaced the `/usr/*` glob with explicit paths (`/usr/bin/before-its-gone`, `/usr/share/applications/before-its-gone.desktop`, `/usr/share/icons/hicolor/*/apps/before-its-gone.png`), resolving the COPR install conflict where the package claimed ownership of system directories already owned by `filesystem`.
+- Miscellaneous Markdown lint fixes across documentation files.
+
 ## [1.1.0] - 2026-06-16
 
 ### Added

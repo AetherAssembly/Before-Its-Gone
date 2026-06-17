@@ -22,6 +22,10 @@ linux:
   desktop:
     entry:
       Name: "Before It's Gone"
+deb:
+  packageName: before-its-gone
+rpm:
+  packageName: before-its-gone
 publish:
   provider: github
   owner: AetherAssembly
