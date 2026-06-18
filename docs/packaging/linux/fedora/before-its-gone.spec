@@ -7,8 +7,8 @@
 # The app under /opt is a self-contained Electron/Chromium bundle, same as
 # upstream ships it. Don't let rpmbuild scan its private .so files for
 # auto-Requires/Provides -- that produces noisy and sometimes wrong deps.
-%global __requires_exclude_from ^/opt/%{name}/.*$
-%global __provides_exclude_from ^/opt/%{name}/.*$
+%global __requires_exclude_from ^/opt/Before-Its-Gone/.*$
+%global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
 Version:        1.1.1
@@ -56,12 +56,17 @@ cp -a opt %{buildroot}/
 cp -a usr %{buildroot}/
 
 %files
-/opt/%{name}
+/opt/Before-Its-Gone
 /usr/bin/%{name}
 /usr/share/applications/%{name}.desktop
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Wed Jun 17 2026 Aster <support@aetherassembly.org> - 1.1.1-2
+- Fix /opt path casing in %%files and __requires/provides_exclude_from macros.
+  %%{name} expands to lowercase but electron-builder installs to /opt/Before-Its-Gone
+  (productName casing), causing rpmbuild to fail with "File not found" on all distros.
+
 * Wed Jun 17 2026 Aster <support@aetherassembly.org> - 1.1.1-1
 - Fix /usr/* glob in %%files conflicting with filesystem package on Fedora.
   Replace with explicit paths to avoid claiming ownership of system directories.
