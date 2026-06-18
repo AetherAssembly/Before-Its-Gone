@@ -6,7 +6,7 @@ Security fixes are applied to the current release and the two most recent major 
 
 | Version | Supported |
 |---------|-----------|
-| 1.1.0   | ✅ Active support (current) |
+| 1.1.x   | ✅ Active support (current) |
 | 1.0.x   | ⚠️ deprecated; acknowledged, no longer actively patched |
 | < 0.9.0 | ❌ Not supported |
 
