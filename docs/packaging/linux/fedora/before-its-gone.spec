@@ -1,7 +1,7 @@
 %global debug_package %{nil}
-# No debug package, so the build-id symlinks under /usr/lib/.build-id serve
-# no purpose -- disable their generation to avoid "file listed twice"
-# warnings against the /usr/* glob below.
+# Prevent rpmbuild from generating new build-id symlinks for the Electron/Chromium
+# ELF binaries. The upstream RPM carries its own build-id entries; we strip those
+# from BUILDROOT in %%install so they don't trigger "unpackaged files" errors.
 %global _build_id_links none
 
 # The app under /opt is a self-contained Electron/Chromium bundle, same as
@@ -12,7 +12,7 @@
 
 Name:           before-its-gone
 Version:        1.1.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
 License:        AGPL-3.0-only
@@ -54,10 +54,10 @@ rpm2cpio %{SOURCE1} | cpio -idm
 mkdir -p %{buildroot}
 cp -a opt %{buildroot}/
 cp -a usr %{buildroot}/
+rm -rf %{buildroot}/usr/lib/.build-id
 
 %files
 /opt/Before-Its-Gone
-/usr/bin/%{name}
 /usr/share/applications/%{name}.desktop
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
@@ -66,6 +66,10 @@ cp -a usr %{buildroot}/
 - Fix /opt path casing in %%files and __requires/provides_exclude_from macros.
   %%{name} expands to lowercase but electron-builder installs to /opt/Before-Its-Gone
   (productName casing), causing rpmbuild to fail with "File not found" on all distros.
+- Remove /usr/bin/%%{name} from %%files: electron-builder's RPM does not install a
+  wrapper script there.
+- Strip /usr/lib/.build-id from BUILDROOT in %%install: the upstream RPM carries
+  build-id symlinks that would otherwise cause "unpackaged files" errors.
 
 * Wed Jun 17 2026 Aster <support@aetherassembly.org> - 1.1.1-1
 - Fix /usr/* glob in %%files conflicting with filesystem package on Fedora.
