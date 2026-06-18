@@ -63,7 +63,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
-* Wed Jun 18 2026 Aster <support@aetherassembly.org> - 1.1.1-3
+* Wed Jun 17 2026 Aster <support@aetherassembly.org> - 1.1.1-3
 - Add Requires: hicolor-icon-theme so openSUSE's check-filelist accepts
   the /usr/share/icons/hicolor/ directories as owned by a declared dependency.
   Fedora/RHEL found this transitively; OBS requires it to be explicit.
