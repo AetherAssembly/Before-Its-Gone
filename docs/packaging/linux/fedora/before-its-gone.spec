@@ -12,7 +12,7 @@
 
 Name:           before-its-gone
 Version:        1.1.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
 License:        AGPL-3.0-only
@@ -26,6 +26,7 @@ URL:            https://github.com/AetherAssembly/Before-Its-Gone
 Source0:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}/before-its-gone-%{version}-x86_64.rpm
 Source1:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}/before-its-gone-%{version}-aarch64.rpm
 
+Requires:       hicolor-icon-theme
 ExclusiveArch:  x86_64 aarch64
 
 %description
@@ -62,6 +63,11 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Wed Jun 18 2026 Aster <support@aetherassembly.org> - 1.1.1-3
+- Add Requires: hicolor-icon-theme so openSUSE's check-filelist accepts
+  the /usr/share/icons/hicolor/ directories as owned by a declared dependency.
+  Fedora/RHEL found this transitively; OBS requires it to be explicit.
+
 * Wed Jun 17 2026 Aster <support@aetherassembly.org> - 1.1.1-2
 - Fix /opt path casing in %%files and __requires/provides_exclude_from macros.
   %%{name} expands to lowercase but electron-builder installs to /opt/Before-Its-Gone
