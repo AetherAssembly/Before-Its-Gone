@@ -734,7 +734,7 @@ function App() {
     shelfLifeDays: item.shelfLifeDays ?? Math.max(1, Math.round(
       (new Date(item.expiresAt).getTime() - Date.now()) / 86400000
     )),
-    expiryDate: new Date(item.expiresAt).toISOString().slice(0, 10),
+    expiryDate: (() => { const d = new Date(item.expiresAt); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(),
     category: item.category ?? '',
     depletionThreshold: item.depletionThreshold != null ? String(item.depletionThreshold) : '',
     tags: item.tags?.join(', ') ?? '',
@@ -766,6 +766,7 @@ function App() {
     if (!editingItemId || !editForm) return;
     const name = editForm.name.trim();
     if (!name) return;
+    setUndoPending((prev) => { if (prev) clearTimeout(prev.timer); return null; });
     setLoading(true);
     try {
       const updated = await inventoryService.update(editingItemId, {

@@ -16,6 +16,7 @@ import {
   importInventoryItemsFromCSV,
   incrementItemQuantity,
   logWastedItem,
+  normalizeDate,
   parseInventoryCSV,
   parseInventoryJSON,
   updateInventoryItem,
@@ -527,6 +528,43 @@ describe('parseInventoryJSON', () => {
   it('throws on invalid JSON', () => {
     expect(() => parseInventoryJSON('not json')).toThrow();
   });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeDate
+// ---------------------------------------------------------------------------
+
+describe('normalizeDate', () => {
+  const expectDate = (input: string, expectedDate: string) => {
+    const result = normalizeDate(input);
+    expect(result).not.toBeNull();
+    expect(result!.slice(0, 10)).toBe(expectedDate);
+    expect(result).toMatch(/T23:59:59\.000Z$/);
+  };
+
+  it('accepts YYYY-MM-DD', () => expectDate('2026-06-01', '2026-06-01'));
+  it('accepts YYYY/MM/DD', () => expectDate('2026/06/01', '2026-06-01'));
+  it('accepts YYYY.MM.DD', () => expectDate('2026.06.01', '2026-06-01'));
+  it('accepts MM/DD/YYYY', () => expectDate('06/01/2026', '2026-06-01'));
+  it('accepts M/D/YYYY',   () => expectDate('6/1/2026',   '2026-06-01'));
+  it('accepts MM-DD-YYYY', () => expectDate('06-01-2026', '2026-06-01'));
+  it('accepts M-D-YYYY',   () => expectDate('6-1-2026',   '2026-06-01'));
+  it('accepts full ISO timestamp',        () => expectDate('2026-06-01T23:59:59.000Z', '2026-06-01'));
+  it('accepts ISO timestamp with offset', () => expectDate('2026-06-01T00:00:00+05:00', '2026-06-01'));
+  it('accepts "June 1, 2026"',  () => expectDate('June 1, 2026',  '2026-06-01'));
+  it('accepts "Jun 1, 2026"',   () => expectDate('Jun 1, 2026',   '2026-06-01'));
+  it('accepts "June 01 2026"',  () => expectDate('June 01 2026',  '2026-06-01'));
+  it('accepts "1 June 2026"',   () => expectDate('1 June 2026',   '2026-06-01'));
+  it('accepts "1 Jun 2026"',    () => expectDate('1 Jun 2026',    '2026-06-01'));
+  it('accepts "September" (full name)', () => expectDate('September 15, 2026', '2026-09-15'));
+  it('accepts "Sept" abbreviation',     () => expectDate('15 Sept 2026',       '2026-09-15'));
+
+  it('returns null for empty string', () => expect(normalizeDate('')).toBeNull());
+  it('returns null for whitespace',   () => expect(normalizeDate('   ')).toBeNull());
+  it('returns null for free text',    () => expect(normalizeDate('next tuesday')).toBeNull());
+  it('returns null for invalid day',  () => expect(normalizeDate('2026-02-30')).toBeNull());
+  it('returns null for invalid month',() => expect(normalizeDate('2026-13-01')).toBeNull());
+  it('returns null for 2-digit year', () => expect(normalizeDate('06/01/26')).toBeNull());
 });
 
 // ---------------------------------------------------------------------------

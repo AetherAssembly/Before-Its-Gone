@@ -116,9 +116,14 @@ export async function updateInventoryItem(
     return null;
   }
 
+  // Strip undefined values from patch so absent optional fields don't overwrite stored data
+  const cleanPatch = Object.fromEntries(
+    Object.entries(patch).filter(([, v]) => v !== undefined)
+  ) as typeof patch;
+
   const nextItem: InventoryItem = {
     ...existing,
-    ...patch,
+    ...cleanPatch,
     updatedAt: new Date().toISOString()
   };
 
@@ -307,15 +312,18 @@ export function exportInventoryAsJSON(items: InventoryItem[]): string {
 }
 
 export function exportInventoryAsCSV(items: InventoryItem[]): string {
-  const header = 'name,quantity,location,barcode,expiresAt,category,createdAt';
+  const header = 'name,quantity,location,barcode,expiresAt,category,tags,shelf_life_days,depletion_threshold,createdAt';
   const rows = items.map((item) =>
     [
       `"${item.name.replace(/"/g, '""')}"`,
       item.quantity,
       item.location,
       item.barcode ?? '',
-      item.expiresAt,
+      item.expiresAt.slice(0, 10),
       item.category ?? '',
+      (item.tags ?? []).join(';'),
+      item.shelfLifeDays ?? '',
+      item.depletionThreshold ?? '',
       item.createdAt
     ].join(',')
   );
@@ -335,6 +343,93 @@ export function parseInventoryJSON(json: string): InventoryItem[] {
       typeof (item as Record<string, unknown>).id === 'string' &&
       typeof (item as Record<string, unknown>).name === 'string'
   );
+}
+
+const MONTH_MAP: Record<string, string> = {
+  jan: '01', january: '01',
+  feb: '02', february: '02',
+  mar: '03', march: '03',
+  apr: '04', april: '04',
+  may: '05',
+  jun: '06', june: '06',
+  jul: '07', july: '07',
+  aug: '08', august: '08',
+  sep: '09', sept: '09', september: '09',
+  oct: '10', october: '10',
+  nov: '11', november: '11',
+  dec: '12', december: '12',
+};
+
+function toExpiryISO(yyyy: string, mm: string, dd: string): string | null {
+  const y = Number(yyyy);
+  const m = Number(mm);
+  const d = Number(dd);
+  const iso = `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T23:59:59.000Z`;
+  const date = new Date(iso);
+  // JS silently overflows invalid dates (e.g. Feb 30 → Mar 2); round-trip to catch them
+  if (
+    isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== y ||
+    date.getUTCMonth() + 1 !== m ||
+    date.getUTCDate() !== d
+  ) return null;
+  return iso;
+}
+
+/**
+ * Accepts a date string in any common human-written format and returns a
+ * canonical `YYYY-MM-DDT23:59:59.000Z` string, or null if unrecognised.
+ * Called automatically during CSV import so users don't need to know ISO format.
+ *
+ * Supported formats:
+ *   YYYY-MM-DD · YYYY/MM/DD · YYYY.MM.DD
+ *   MM/DD/YYYY · M/D/YYYY (American slash)
+ *   MM-DD-YYYY · M-D-YYYY (American dash, 4-digit year at end)
+ *   Full ISO timestamp (time portion is discarded)
+ *   "June 1, 2026" · "Jun 1 2026" · "1 June 2026" · "1 Jun 2026"
+ *
+ * Ambiguous formats like DD/MM/YYYY are interpreted as MM/DD/YYYY (American).
+ * Use YYYY-MM-DD to avoid ambiguity.
+ */
+export function normalizeDate(input: string): string | null {
+  const s = input.trim();
+  if (!s) return null;
+
+  // Full ISO timestamp — discard time portion, re-canonicalize
+  const isoFull = s.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+  if (isoFull) return toExpiryISO(isoFull[1], isoFull[2], isoFull[3]);
+
+  // YYYY-MM-DD
+  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) return toExpiryISO(ymd[1], ymd[2], ymd[3]);
+
+  // YYYY/MM/DD or YYYY.MM.DD
+  const ymdAlt = s.match(/^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/);
+  if (ymdAlt) return toExpiryISO(ymdAlt[1], ymdAlt[2], ymdAlt[3]);
+
+  // MM/DD/YYYY or M/D/YYYY (American slash)
+  const mdySlash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdySlash) return toExpiryISO(mdySlash[3], mdySlash[1], mdySlash[2]);
+
+  // MM-DD-YYYY or M-D-YYYY (4-digit year at end)
+  const mdyDash = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (mdyDash) return toExpiryISO(mdyDash[3], mdyDash[1], mdyDash[2]);
+
+  // "Month DD, YYYY" or "Month DD YYYY" — "June 1, 2026"
+  const monthFirst = s.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
+  if (monthFirst) {
+    const m = MONTH_MAP[monthFirst[1].toLowerCase()];
+    if (m) return toExpiryISO(monthFirst[3], m, monthFirst[2]);
+  }
+
+  // "DD Month YYYY" — "1 June 2026"
+  const dayFirst = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+  if (dayFirst) {
+    const m = MONTH_MAP[dayFirst[2].toLowerCase()];
+    if (m) return toExpiryISO(dayFirst[3], m, dayFirst[1]);
+  }
+
+  return null;
 }
 
 function parseCSVLine(line: string): string[] {
@@ -380,8 +475,8 @@ export function parseInventoryCSV(csv: string): { items: NewInventoryItem[]; ski
       const location = get('location');
       if (!['fridge', 'freezer', 'pantry'].includes(location)) { skipped++; continue; }
 
-      const expiresAt = new Date(`${rawExpiry}T23:59:59`).toISOString();
-      if (isNaN(new Date(expiresAt).getTime())) { skipped++; continue; }
+      const expiresAt = normalizeDate(rawExpiry);
+      if (!expiresAt) { skipped++; continue; }
 
       const rawThreshold = get('depletion_threshold');
       const rawShelf = get('shelf_life_days');

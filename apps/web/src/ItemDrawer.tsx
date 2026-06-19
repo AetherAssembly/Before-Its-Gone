@@ -2,9 +2,13 @@ import { useRef } from 'react';
 import { type InventoryItem, type StorageLocation } from '@aetherAssembly/core';
 
 export function resizeImage(file: File): Promise<string> {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not load image file'));
+    };
     img.onload = () => {
       const MAX = 200;
       let { width, height } = img;
