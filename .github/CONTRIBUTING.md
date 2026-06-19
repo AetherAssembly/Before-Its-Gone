@@ -40,8 +40,8 @@ The repo is an npm workspaces monorepo with four packages:
 | ------- | ---- | ------- |
 | `before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
 | `before-its-gone-web` | `apps/web` | React renderer (Vite); also built as the self-hosted PWA |
-| `@aetherAssembly/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/`; avoid calling storage functions directly. |
-| `@aetherAssembly/ui` | `packages/ui` | Shared React components (InventoryCard) |
+| `@before-its-gone/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/`; avoid calling storage functions directly. |
+| `@before-its-gone/ui` | `packages/ui` | Shared React components (InventoryCard). Uses components from `@aetherAssembly/ui` for shared styling. |
 
 **Run in development (from repo root):**
 
@@ -118,7 +118,7 @@ Before adding a feature, identify which layer it belongs to:
 | ------------------ | ------------- |
 | A new data field on an inventory item | `packages/core/src/models.ts` |
 | A new filter or query | `packages/core/src/inventory.ts` |
-| A new storage key (localStorage) | `packages/core/src/storage.ts`, key constant in `models.ts` |
+| A new storage key (localStorage) | `packages/core/src/storage.ts` using `LocalStorageAdapter` (re-exported from `@aetherAssembly/core`), key constant in `models.ts` |
 | A new IndexedDB object store | `packages/core/src/storage.ts`: increment DB version, add upgrade branch |
 | A new UI component (reusable) | `packages/ui/src/` |
 | A new UI panel or tab | `apps/web/src/App.tsx` or a new `*Panel.tsx` sibling |

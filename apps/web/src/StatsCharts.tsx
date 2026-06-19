@@ -3,7 +3,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer
 } from 'recharts';
-import { calculateExpiryStatus, type InventoryItem } from '@aetherAssembly/core';
+import { calculateExpiryStatus, type InventoryItem } from '@before-its-gone/core';
 
 type Props = { items: InventoryItem[]; warningWindowDays: number };
 

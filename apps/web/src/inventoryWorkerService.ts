@@ -1,5 +1,5 @@
 import { wrap, type Remote } from 'comlink';
-import type { InventoryService } from '@aetherAssembly/core';
+import type { InventoryService } from '@before-its-gone/core';
 
 let _service: Remote<InventoryService> | null = null;
 

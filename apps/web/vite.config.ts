@@ -49,8 +49,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@aetherAssembly/core': path.resolve(rootDir, '../../packages/core/src'),
-      '@aetherAssembly/ui': path.resolve(rootDir, '../../packages/ui/src')
+      '@before-its-gone/core': path.resolve(rootDir, '../../packages/core/src'),
+      '@before-its-gone/ui': path.resolve(rootDir, '../../packages/ui/src')
     }
   },
   server: {

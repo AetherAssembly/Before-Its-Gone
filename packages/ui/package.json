@@ -1,6 +1,6 @@
 {
-  "name": "@aetherAssembly/ui",
-  "version": "1.1.2",
+  "name": "@before-its-gone/ui",
+  "version": "1.2.0",
   "type": "module",
   "author": {
     "name": "AetherAssembly",
@@ -24,7 +24,8 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@aetherAssembly/core": "*"
+    "@aetherAssembly/ui": "*",
+    "@before-its-gone/core": "*"
   },
   "peerDependencies": {
     "react": "^19.0.0"

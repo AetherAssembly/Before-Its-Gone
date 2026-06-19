@@ -1,7 +1,7 @@
 {
   "name": "before-its-gone",
   "private": true,
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Before It's Gone: cross-platform food expiry tracker for Linux, macOS, and Windows",
   "workspaces": [
     "apps/*",
@@ -38,6 +38,10 @@
   },
   "overrides": {
     "tmp": "^0.2.7"
+  },
+  "dependencies": {
+    "@aetherAssembly/core": "^1.0.0",
+    "@aetherAssembly/ui": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",

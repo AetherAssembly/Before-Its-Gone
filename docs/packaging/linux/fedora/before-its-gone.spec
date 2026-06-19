@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.1.2
+Version:        1.2.0
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -64,6 +64,12 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.0-1
+- Added `.npmrc`: scopes `@aetherAssembly` to the GitHub Package Registry (`https://npm.pkg.github.com`) so `npm install` resolves the shared packages without a global registry override.
+- Local package names: BIG's own workspace packages renamed from `@aetherAssembly/core` and `@aetherAssembly/ui` to `@before-its-gone/core` and `@before-its-gone/ui` to avoid name collision with the published shared packages now installed at the root.
+- `packages/core` storage: the local `KeyValueStorage` interface and `BrowserLocalStorageAdapter` class have been removed. `packages/core` now re-exports `LocalStorageAdapter` and `StorageAdapter` directly from `@aetherAssembly/core`, keeping the public API identical for all callers.
+- `apps/web` Vite aliases: `@aetherAssembly/core` and `@aetherAssembly/ui` aliases updated to resolve to the renamed `@before-its-gone/*` local workspace packages.
+
 * Thu Jun 18 2026 Aster <support@aetherassembly.org> - 1.1.2-1
 - Add BuildRequires: hicolor-icon-theme so OBS check-filelist finds the
   icon directories present in the build root (Requires: alone is runtime-only

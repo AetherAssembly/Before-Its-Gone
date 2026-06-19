@@ -1,7 +1,7 @@
 import {
   calculateExpiryStatus,
   type InventoryItem
-} from '@aetherAssembly/core';
+} from '@before-its-gone/core';
 
 type InventoryCardProps = {
   item: InventoryItem;

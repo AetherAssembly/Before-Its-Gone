@@ -26,12 +26,12 @@ import {
   type SortField,
   type StorageLocation,
   type WasteLogEntry
-} from '@aetherAssembly/core';
+} from '@before-its-gone/core';
 import { getWorkerInventoryService } from './inventoryWorkerService.js';
 import { useTranslation } from 'react-i18next';
 
 const inventoryService = getWorkerInventoryService();
-import { InventoryCard } from '@aetherAssembly/ui';
+import { InventoryCard } from '@before-its-gone/ui';
 import { useToast } from './Toast.js';
 import { ItemDrawer, type FormState, resizeImage } from './ItemDrawer.js';
 const StatsCharts = lazy(() => import('./StatsCharts.js').then(m => ({ default: m.StatsCharts })));

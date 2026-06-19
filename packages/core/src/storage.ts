@@ -1,4 +1,70 @@
 import { openDB } from 'idb';
+
+export interface StorageAdapter {
+  get<T>(key: string): Promise<T | null>;
+  set<T>(key: string, value: T): Promise<void>;
+  delete(key: string): Promise<void>;
+  clear(): Promise<void>;
+  keys(): Promise<string[]>;
+}
+
+export class LocalStorageAdapter implements StorageAdapter {
+  constructor(private readonly prefix = '') {}
+
+  private key(k: string): string {
+    return this.prefix ? `${this.prefix}.${k}` : k;
+  }
+
+  async get<T>(key: string): Promise<T | null> {
+    if (typeof localStorage === 'undefined') return null;
+    const raw = localStorage.getItem(this.key(key));
+    if (raw === null) return null;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  async set<T>(key: string, value: T): Promise<void> {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(this.key(key), JSON.stringify(value));
+    } catch {
+      // QuotaExceededError — best-effort
+    }
+  }
+
+  async delete(key: string): Promise<void> {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.removeItem(this.key(key));
+  }
+
+  async clear(): Promise<void> {
+    if (typeof localStorage === 'undefined') return;
+    for (const k of await this.keys()) {
+      localStorage.removeItem(this.key(k));
+    }
+  }
+
+  async keys(): Promise<string[]> {
+    if (typeof localStorage === 'undefined') return [];
+    const prefixDot = this.prefix ? `${this.prefix}.` : '';
+    const result: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k !== null) {
+        if (prefixDot) {
+          if (k.startsWith(prefixDot)) result.push(k.slice(prefixDot.length));
+        } else {
+          result.push(k);
+        }
+      }
+    }
+    return result;
+  }
+}
+
 import type { DBSchema } from 'idb';
 import type { BarcodeProfile, InventoryItem, ItemHistory, WasteLogEntry } from './models';
 
@@ -113,51 +179,8 @@ export async function clearWasteLogEntries(): Promise<void> {
   await database.clear('wasteLog');
 }
 
-export interface KeyValueStorage {
-  get<T>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T): Promise<void>;
-  remove(key: string): Promise<void>;
-}
+export type { StorageAdapter as KeyValueStorage };
 
-class BrowserLocalStorageAdapter implements KeyValueStorage {
-  async get<T>(key: string): Promise<T | null> {
-    if (typeof localStorage === 'undefined') {
-      return null;
-    }
-
-    const value = localStorage.getItem(key);
-    if (!value) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(value) as T;
-    } catch {
-      return null;
-    }
-  }
-
-  async set<T>(key: string, value: T): Promise<void> {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      // QuotaExceededError; notification state is best-effort
-    }
-  }
-
-  async remove(key: string): Promise<void> {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-
-    localStorage.removeItem(key);
-  }
-}
-
-export function createLocalStorageAdapter(): KeyValueStorage {
-  return new BrowserLocalStorageAdapter();
+export function createLocalStorageAdapter(): LocalStorageAdapter {
+  return new LocalStorageAdapter();
 }

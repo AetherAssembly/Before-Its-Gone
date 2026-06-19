@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.2.0] - Unreleased
+
+### Added
+
+- **`.npmrc`:** scopes `@aetherAssembly` to the GitHub Package Registry (`https://npm.pkg.github.com`) so `npm install` resolves the shared packages without a global registry override.
+
+### Changed
+
+- **Shared package dependencies:** `@aetherAssembly/core` and `@aetherAssembly/ui` are now consumed from the GitHub Package Registry (`^1.0.0`) rather than a `file:` path, making the repo self-contained for any contributor.
+- **Local package names:** BIG's own workspace packages renamed from `@aetherAssembly/core` and `@aetherAssembly/ui` to `@before-its-gone/core` and `@before-its-gone/ui` to avoid name collision with the published shared packages now installed at the root.
+- **`packages/core` storage:** the local `KeyValueStorage` interface and `BrowserLocalStorageAdapter` class have been removed. `packages/core` now re-exports `LocalStorageAdapter` and `StorageAdapter` directly from `@aetherAssembly/core`, keeping the public API identical for all callers.
+- **`apps/web` Vite aliases:** `@aetherAssembly/core` and `@aetherAssembly/ui` aliases updated to resolve to the renamed `@before-its-gone/*` local workspace packages.
+
 ## [1.1.2] - 2026-06-18
 
 ### Fixed
