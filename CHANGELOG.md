@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.1.2] - 2026-06-18
+
+### Fixed
+
+- **OBS packaging:** Added `BuildRequires: hicolor-icon-theme` to the RPM spec. OBS `check-filelist` runs at build time and requires the package to be present in the build chroot to confirm ownership of the `/usr/share/icons/hicolor/` directories. `Requires:` is runtime-only and does not install the package into the build chroot, causing Tumbleweed and Leap builds to fail. Fedora/COPR found it transitively.
+- **Image upload hang:** `resizeImage` in `ItemDrawer.tsx` had no `img.onerror` handler. Uploading a corrupt or unsupported image file caused the returned `Promise` to never settle, freezing the photo upload UI indefinitely. Added rejection with cleanup of the object URL.
+- **CSV date timezone shift:** Expiry dates in CSV import were constructed as `new Date('YYYY-MM-DDT23:59:59').toISOString()`, which treats the time as local time. In UTC− timezones this shifted the stored date forward by one day. Dates are now stored as explicit UTC (`T23:59:59.000Z`) and the display code in `buildEditForm` now extracts the local date using `getFullYear/getMonth/getDate` rather than `.toISOString().slice(0, 10)`.
+- **Photo field cleared on edit:** Passing `photo: undefined` in a patch to `updateInventoryItem` caused the spread to overwrite the stored photo with `undefined`, silently clearing it. The function now strips `undefined` values from the patch before spreading; `null` still explicitly clears the field.
+- **Tags lost on CSV round-trip:** The CSV export did not include a `tags` column, so tags were silently dropped on export and could not survive a re-import. Tags are now exported (semicolon-separated) and survive a full export → re-import cycle.
+- **Scanner save race condition:** The phone scanner stored the active save's `resolve`/`reject` callbacks in module-level globals. A second scan arriving while a save was in flight would overwrite them, causing the wrong promise to settle. Added `scannerSaveLock` in `main.ts` to reject concurrent saves until the first completes or times out.
+- **Email digest double-fire after restart:** `DigestScheduler` used an in-memory `lastFiredDate` guard that reset on restart, allowing the digest to fire again within the same day if the app restarted during the target minute. Added a disk-backed guard that checks `lastSentAt` from `email-settings.json` for daily digests.
+- **Orphaned undo timer on edit:** Editing an item while the "Use one" undo toast was pending left the undo `setTimeout` running. The timer now fires against stale state once it expires. `onEditSave` now clears the pending undo before proceeding.
+
+### Added
+
+- **`normalizeDate` utility** (`packages/core/src/inventory.ts`): accepts expiry dates in any common human-written format (ISO date, ISO timestamp, `MM/DD/YYYY`, `M/D/YYYY`, `YYYY/MM/DD`, `DD-MM-YYYY`, `"June 1, 2026"`, `"1 Jun 2026"`, etc.) and returns a canonical `YYYY-MM-DDT23:59:59.000Z` string. Called automatically during CSV import so users do not need to know ISO format. Invalid dates (including JS-overflowed values like `Feb 30`) return `null` and cause the row to be skipped. 26 unit tests added in `packages/core/src/__tests__/inventory.test.ts`.
+- **`npm run package:linux:rpm`:** builds only the `.rpm` artifact via electron-builder, skipping AppImage and `.deb`.
+- **`npm run test:rpm-spec`:** builds the x86_64 RPM if not already present, stages it as both sources for rpmbuild, and runs `rpmbuild -bb` against `docs/packaging/linux/fedora/before-its-gone.spec` with output isolated to `.rpmbuild/` (gitignored). Prints install instructions if `rpmbuild` is not found. Pass `--skip-build` to reuse an existing `release/` artifact.
+
+### Changed
+
+- **CSV export** now includes `tags` (semicolon-separated), `shelf_life_days`, and `depletion_threshold` columns. `expiresAt` is now exported as a date-only string (`YYYY-MM-DD`) rather than a full ISO timestamp, matching what the importer expects and making the file human-readable.
+- **Packaging docs:** Standardised "Supported versions" sections across all Linux packaging READMEs to prose style. AUR, Raspberry Pi OS, and Snap docs gained the section for the first time.
+- **CONTRIBUTING.md:** Added "Gotchas and non-obvious behaviour" section documenting date storage rules, `undefined` vs `null` patch semantics, scanner save lock, digest deduplication layers, image upload error handling, and the CSV tag separator convention.
+
 ## [1.1.1] - 2026-06-17
 
 ### Added

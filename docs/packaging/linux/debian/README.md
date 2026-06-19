@@ -12,7 +12,7 @@ curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dea
 
 echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \ | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
 
-sudo apt update && sudo apt install before-its-gone-electron
+sudo apt update && sudo apt install before-its-gone
 
 ```
 
@@ -24,7 +24,7 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 Download `before-its-gone-<version>-amd64.deb` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo apt install ./before-its-gone-1.1.1-amd64.deb
+sudo apt install ./before-its-gone-1.1.2-amd64.deb
 ```
 
 Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -43,7 +43,7 @@ sudo rm /etc/apt/sources.list.d/beforeitsgone.list /usr/share/keyrings/beforeits
 
 ## Supported versions
 
-Tested against Debian 12 (Bookworm) and later. Debian 11 (Bullseye) should work but is not officially tested.
+Tested against Debian 13 (Trixie). Debian 12 (Bookworm) should work but is not officially tested.
 
 ## Maintainers
 

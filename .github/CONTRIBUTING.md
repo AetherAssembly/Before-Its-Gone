@@ -236,6 +236,71 @@ The app integrates with four external services. Open Food Facts and TheMealDB re
 
 ---
 
+## Gotchas and non-obvious behaviour
+
+Things that have caused bugs in the past and will trip you up if you don't know about them.
+
+### Date storage and display
+
+Expiry dates are stored as UTC ISO strings (`2026-06-01T23:59:59.000Z`). When displaying a date back to the user in a form input, always extract the **local** date:
+
+```typescript
+// Correct — local date, matches what the user entered
+const d = new Date(item.expiresAt);
+const display = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+// Wrong — UTC date, off by one day for users in UTC- timezones
+const display = new Date(item.expiresAt).toISOString().slice(0, 10);
+```
+
+When storing a date entered by the user (from a `<input type="date">` that returns `YYYY-MM-DD`), use explicit UTC end-of-day:
+
+```typescript
+// Correct — timezone-independent, round-trips cleanly
+const expiresAt = `${form.expiryDate}T23:59:59.000Z`;
+
+// Wrong — interpreted as local time, stores a different UTC timestamp per timezone
+const expiresAt = new Date(`${form.expiryDate}T23:59:59`).toISOString();
+```
+
+### Patches to `updateInventoryItem`
+
+`updateInventoryItem` spreads the patch over the existing item. If you pass `photo: undefined` in the patch (e.g. via `photo: someVar || undefined`), the spread **does** write `undefined` over the stored photo, clearing it. The function strips `undefined` values from the patch before spreading, so passing `undefined` means "leave this field alone", and passing `null` means "clear it".
+
+```typescript
+// Leaves the existing photo in place
+await inventoryService.update(id, { name: 'New name' });
+
+// Also leaves photo in place (undefined is stripped)
+await inventoryService.update(id, { name: 'New name', photo: undefined });
+
+// Clears the photo (null is kept)
+await inventoryService.update(id, { name: 'New name', photo: null });
+```
+
+### Scanner IPC save flow
+
+The phone scanner server calls back into the renderer via IPC when an item needs saving. Only one save can be in flight at a time; a second scan while a save is pending receives a `"A save is already in progress"` error from the server. If you add new save paths (e.g. bulk scan mode), check `scannerSaveLock` in `apps/electron/src/main.ts` first or wait for the existing promise to settle.
+
+### Email digest scheduler
+
+`DigestScheduler` runs a `setInterval` in the Electron main process. It uses two layers of deduplication:
+
+- **In-memory `lastFiredDate`:** prevents firing twice in the same minute during a running session.
+- **Disk-backed `lastSentAt`:** read from `email-settings.json`; prevents re-firing after the app restarts within the same UTC day.
+
+The `lastSentAt` field must be written to disk by `fireDigest` (the callback passed to `DigestScheduler.start`) after a successful send. If you add a new digest trigger path, make sure it updates `lastSentAt`.
+
+### Image upload in `resizeImage`
+
+`resizeImage` in `apps/web/src/ItemDrawer.tsx` returns a `Promise<string>`. It rejects if the file fails to load (corrupt file, wrong MIME type, etc.). Always `await` it inside a `try/catch` and surface the error to the user; silently swallowing the rejection will leave the photo field empty without explanation.
+
+### CSV tags separator
+
+Tags in CSV files use **semicolons** as the separator (not commas), because items can be exported and re-imported and commas inside a CSV field would require extra quoting. The UI form accepts comma-separated tags from the user; these are stored as `string[]` internally. The CSV importer and exporter both use semicolons. Keep these two conventions separate.
+
+---
+
 ## Code style
 
 - TypeScript everywhere; no plain `.js` source files.

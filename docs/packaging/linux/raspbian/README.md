@@ -70,12 +70,16 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 **Manual install** — once you have an `arm64` `.deb`:
 
 ```bash
-sudo apt install ./before-its-gone-1.1.1-arm64.deb
+sudo apt install ./before-its-gone-1.1.2-arm64.deb
 ```
 
 ## Performance note
 
 Electron on Raspberry Pi is usable on Pi 4/5 but sluggish on Pi 3 and earlier. The app itself is lightweight (IndexedDB + React), so most of the overhead is Electron/Chromium startup, not the app's own logic.
+
+## Supported versions
+
+Tested against Raspberry Pi OS 13 (Trixie) arm64 on Pi 4 and Pi 5. Raspberry Pi OS 12 (Bookworm) should work but is not officially tested.
 
 ## Maintainers
 

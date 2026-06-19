@@ -19,7 +19,7 @@ sudo zypper refresh && sudo zypper install before-its-gone
 Download `before-its-gone-<version>-x86_64.rpm` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo zypper install ./before-its-gone-1.1.1-x86_64.rpm
+sudo zypper install ./before-its-gone-1.1.2-x86_64.rpm
 ```
 
 ## Uninstall
@@ -30,9 +30,7 @@ sudo zypper remove before-its-gone
 
 ## Supported versions
 
-- openSUSE Tumbleweed — supported (rolling release)
-- openSUSE Leap 16.0 — supported
-- openSUSE Leap 15.6 — supported
+Tested against openSUSE Tumbleweed (rolling) and Leap 15.6 / 16.0. Older Leap versions may work but are not officially tested.
 
 ## Maintainers
 

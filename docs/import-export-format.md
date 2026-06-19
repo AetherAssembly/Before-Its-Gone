@@ -97,23 +97,25 @@ The importer reads the `items` array from inside the `{ version, exportedAt, ite
 The exported CSV uses the following fixed column order:
 
 ```csv
-name,quantity,location,barcode,expiresAt,category,createdAt
+name,quantity,location,barcode,expiresAt,category,tags,shelf_life_days,depletion_threshold,createdAt
 ```
 
 - Values that contain commas are double-quoted.
 - `barcode` and `category` are empty strings when not set.
-- `expiresAt` and `createdAt` are full ISO 8601 timestamps.
+- `expiresAt` is a date-only string (`YYYY-MM-DD`); `createdAt` is a full ISO 8601 timestamp.
+- `tags` is a semicolon-separated list (e.g. `organic;bulk`); empty string if none.
+- `shelf_life_days` and `depletion_threshold` are empty strings when not set.
 
 #### Example export
 
 ```csv
-name,quantity,location,barcode,expiresAt,category,createdAt
-"Whole Milk",2,fridge,5000112637922,2026-05-25T23:59:59.000Z,dairy,2026-05-15T08:00:00.000Z
-Penne,3,pantry,,2027-12-31T23:59:59.000Z,pasta,2026-05-10T10:00:00.000Z
-"Free-range Eggs, 6pk",6,fridge,5010029005120,2026-06-01T23:59:59.000Z,eggs,2026-05-18T09:00:00.000Z
+name,quantity,location,barcode,expiresAt,category,tags,shelf_life_days,depletion_threshold,createdAt
+"Whole Milk",2,fridge,5000112637922,2026-05-25,dairy,organic;fridge-door,10,1,2026-05-15T08:00:00.000Z
+Penne,3,pantry,,2027-12-31,pasta,,730,,2026-05-10T10:00:00.000Z
+"Free-range Eggs, 6pk",6,fridge,5010029005120,2026-06-01,eggs,,21,2,2026-05-18T09:00:00.000Z
 ```
 
-> **Note:** The CSV export does not include `shelfLifeDays`, `tags`, or `depletionThreshold`. Use JSON export if you need a complete, round-trippable backup.
+> **Note:** CSV export omits `id`, `recurring`, `restockQuantity`, and per-item photo data. Use JSON export for a complete, lossless backup.
 
 ### CSV-Importing
 
@@ -135,15 +137,14 @@ The CSV importer is more flexible than the exporter; it accepts any column order
 
 #### Date formats
 
-`expires_at` accepts any date string that JavaScript's `Date` constructor can parse. The most reliable formats are:
+`expires_at` accepts the following formats:
 
 | Format | Example | Notes |
 | ------ | ------- | ----- |
-| `YYYY-MM-DD` | `2026-06-01` | Recommended. Time is set to `23:59:59` automatically. |
-| `YYYY-MM-DDTHH:MM:SS` | `2026-06-01T23:59:59` | Full ISO local time. |
-| `YYYY-MM-DDTHH:MM:SSZ` | `2026-06-01T23:59:59Z` | ISO UTC. |
+| `YYYY-MM-DD` | `2026-06-01` | Recommended. Stored as `2026-06-01T23:59:59.000Z`. |
+| Full ISO timestamp | `2026-06-01T23:59:59.000Z` | Date portion extracted; the time component is discarded. |
 
-Locale-specific formats such as `06/01/2026` or `1 Jun 2026` may parse correctly on most systems but are not guaranteed; use `YYYY-MM-DD` whenever possible.
+This means re-importing a file that was previously exported (which uses date-only `expiresAt`) works correctly. Locale-specific formats such as `06/01/2026` are not accepted; use `YYYY-MM-DD`.
 
 #### Rows that are skipped
 
@@ -185,15 +186,17 @@ Frozen Peas,4,freezer,2027-03-01,,vegetables,365,bulk,
 | `quantity` | ✅ | ✅ | ✅ | ✅ |
 | `location` | ✅ | ✅ | ✅ | ✅ |
 | `barcode` | ✅ | ✅ | ✅ | ✅ |
-| `expiresAt` / `expires_at` | ✅ | ✅ | ✅ | ✅ |
-| `shelfLifeDays` | ✅ | ❌ | ✅ | ✅ (`shelf_life_days`) |
+| `expiresAt` / `expires_at` | ✅ full ISO | ✅ date only | ✅ | ✅ |
+| `shelfLifeDays` | ✅ | ✅ (`shelf_life_days`) | ✅ | ✅ (`shelf_life_days`) |
 | `category` | ✅ | ✅ | ✅ | ✅ |
-| `tags` | ✅ | ❌ | ✅ | ✅ (semicolon-separated) |
-| `depletionThreshold` | ✅ | ❌ | ✅ | ✅ (`depletion_threshold`) |
+| `tags` | ✅ | ✅ semicolon-separated | ✅ | ✅ semicolon-separated |
+| `depletionThreshold` | ✅ | ✅ (`depletion_threshold`) | ✅ | ✅ (`depletion_threshold`) |
+| `recurring` / `restockQuantity` | ✅ | ❌ | ✅ | ❌ |
+| `photo` | ✅ | ❌ | ✅ | ❌ |
 | `createdAt` / `updatedAt` | ✅ | `createdAt` only | ✅ preserved | ❌ set to import time |
 
 **For a lossless round-trip (export → edit → re-import), always use JSON.**  
-CSV export omits shelf life, tags, and depletion threshold. CSV import creates new item IDs and timestamps.
+CSV export omits `id`, `recurring`, `restockQuantity`, and per-item photos. CSV import creates new item IDs and timestamps.
 
 ---
 

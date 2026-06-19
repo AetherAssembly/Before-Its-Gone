@@ -18,7 +18,7 @@ sudo dnf install before-its-gone
 Download `before-its-gone-<version>-x86_64.rpm` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo dnf install ./before-its-gone-1.1.1-x86_64.rpm
+sudo dnf install ./before-its-gone-1.1.2-x86_64.rpm
 ```
 
 ## Uninstall
@@ -29,9 +29,7 @@ sudo dnf remove before-its-gone
 
 ## Supported versions
 
-- Fedora 40 / 41 / 42 / 43 / 44 — supported
-- Mageia 8 / 9 — supported
-- CentOS Stream 8 / 9 / 10 — supported
+Tested against Fedora 42 and later, CentOS Stream 9/10, and Mageia 9. Fedora 40/41 and CentOS Stream 8 should work but are not officially tested.
 
 ## Maintainers
 

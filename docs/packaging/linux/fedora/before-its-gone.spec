@@ -11,8 +11,8 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.1.1
-Release:        3%{?dist}
+Version:        1.1.2
+Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
 License:        AGPL-3.0-only
@@ -27,6 +27,7 @@ Source0:        https://github.com/AetherAssembly/Before-Its-Gone/releases/downl
 Source1:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}/before-its-gone-%{version}-aarch64.rpm
 
 Requires:       hicolor-icon-theme
+BuildRequires:  hicolor-icon-theme
 ExclusiveArch:  x86_64 aarch64
 
 %description
@@ -63,6 +64,14 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Wed Jun 18 2026 Aster <support@aetherassembly.org> - 1.1.2-1
+- Add BuildRequires: hicolor-icon-theme so OBS check-filelist finds the
+  icon directories present in the build root (Requires: alone is runtime-only
+  and does not install the package into the build chroot).
+- Add scripts/test-rpm-spec.sh and npm run test:rpm-spec for local spec
+  validation: stages the electron-builder x86_64 RPM as both sources and
+  runs rpmbuild -bb with output isolated to .rpmbuild/ (gitignored).
+
 * Wed Jun 17 2026 Aster <support@aetherassembly.org> - 1.1.1-3
 - Add Requires: hicolor-icon-theme so openSUSE's check-filelist accepts
   the /usr/share/icons/hicolor/ directories as owned by a declared dependency.

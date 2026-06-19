@@ -1,6 +1,6 @@
 # Ubuntu Packaging
 
-Before It's Gone ships a `.deb` package compatible with Ubuntu 22.04 LTS and later.
+Before It's Gone ships a `.deb` package compatible with Ubuntu 24.04 LTS and later.
 
 ## Install via the apt repository (recommended)
 
@@ -24,7 +24,7 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 Download `before-its-gone-<version>-amd64.deb` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo apt install ./before-its-gone-1.1.1-amd64.deb
+sudo apt install ./before-its-gone-1.1.2-amd64.deb
 ```
 
 ## Uninstall
@@ -41,10 +41,7 @@ sudo rm /etc/apt/sources.list.d/beforeitsgone.list /usr/share/keyrings/beforeits
 
 ## Supported versions
 
-- Ubuntu 26.04 LTS (Resolute) — supported
-- Ubuntu 24.04 LTS (Noble) — supported
-- Ubuntu 22.04 LTS (Jammy) — supported
-- Ubuntu 20.04 LTS (Focal) — may work, not officially tested
+Tested against Ubuntu 24.04 LTS (Noble) and later. Ubuntu 22.04 LTS (Jammy) may work but is not officially tested.
 
 ## Maintainers
 
