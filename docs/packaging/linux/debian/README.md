@@ -24,7 +24,7 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 Download `before-its-gone-<version>-amd64.deb` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo apt install ./before-its-gone-1.1.2-amd64.deb
+sudo apt install ./before-its-gone-1.2.1-amd64.deb
 ```
 
 Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.

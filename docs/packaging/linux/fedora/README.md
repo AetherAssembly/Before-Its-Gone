@@ -18,7 +18,7 @@ sudo dnf install before-its-gone
 Download `before-its-gone-<version>-x86_64.rpm` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo dnf install ./before-its-gone-1.1.2-x86_64.rpm
+sudo dnf install ./before-its-gone-1.2.1-x86_64.rpm
 ```
 
 ## Uninstall

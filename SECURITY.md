@@ -5,10 +5,10 @@
 Security fixes are applied to the current release and the two most recent major versions.
 
 | Version | Supported |
-|---------|-----------|
-| 1.1.x   | ✅ Active support (current) |
-| 1.0.x   | ⚠️ deprecated; acknowledged, no longer actively patched |
-| < 0.9.0 | ❌ Not supported |
+| ------- | --------- |
+| 1.2.x | ✅ Active support (current) |
+| 1.1.x | ⚠️ deprecated; acknowledged, no longer actively patched |
+| < 1.0.0 | ❌ Not supported |
 
 As new versions are released, this table will be updated to reflect the current support window. Versions that fall outside the two-major-version window enter deprecated status and are acknowledged but no longer actively patched. Versions older than that are archived to cold storage. Retrieval of archived versions is available as a paid service; contact us at [support@aetherassembly.org](mailto:support@aetherassembly.org) for details.
 

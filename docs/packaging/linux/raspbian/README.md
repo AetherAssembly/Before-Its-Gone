@@ -70,7 +70,7 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 **Manual install** — once you have an `arm64` `.deb`:
 
 ```bash
-sudo apt install ./before-its-gone-1.1.2-arm64.deb
+sudo apt install ./before-its-gone-1.2.1-arm64.deb
 ```
 
 ## Performance note
