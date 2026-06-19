@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.2.0
+Version:        1.2.1
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -64,6 +64,16 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Thu Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.1-1
+- Rename workspace packages from `@before-its-gone/core` and `@before-its-gone/ui`
+  to `@aetherAssembly/big-core` and `@aetherAssembly/big-ui` so the npm scope
+  matches the AetherAssembly GitHub org and publishing to GitHub Packages succeeds.
+- Add `files` field to `@aetherAssembly/big-core` package.json so coverage
+  reports, source files, and config files are excluded from the published tarball.
+- Inline `StorageAdapter` interface and `LocalStorageAdapter` class directly into
+  `packages/core/src/storage.ts`, removing the fragile symlinked `@aetherAssembly/core`
+  cross-repo dependency that caused `tsc --build` to fail on cold/clean builds.
+
 * Fri Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.0-1
 - Added `.npmrc`: scopes `@aetherAssembly` to the GitHub Package Registry (`https://npm.pkg.github.com`) so `npm install` resolves the shared packages without a global registry override.
 - Local package names: BIG's own workspace packages renamed from `@aetherAssembly/core` and `@aetherAssembly/ui` to `@before-its-gone/core` and `@before-its-gone/ui` to avoid name collision with the published shared packages now installed at the root.

@@ -1,6 +1,6 @@
 {
-  "name": "@before-its-gone/ui",
-  "version": "1.2.0",
+  "name": "@aetherAssembly/big-ui",
+  "version": "1.2.1",
   "type": "module",
   "author": {
     "name": "AetherAssembly",
@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@aetherAssembly/ui": "*",
-    "@before-its-gone/core": "*"
+    "@aetherAssembly/big-core": "*"
   },
   "peerDependencies": {
     "react": "^19.0.0"

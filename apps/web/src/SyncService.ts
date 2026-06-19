@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
-import type { InventoryItem } from '@before-its-gone/core';
+import type { InventoryItem } from '@aetherAssembly/big-core';
 
 // Table name used in Supabase. User must run SETUP_SQL once in their project.
 const TABLE = 'inventory_sync';

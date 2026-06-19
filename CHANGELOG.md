@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
-## [1.2.0] - Unreleased
+## [1.2.1] - 2026-06-19
+
+### Fixed
+
+- **`tsc --build` failure on cold/clean builds:** `packages/core/src/storage.ts` imported `LocalStorageAdapter` and `StorageAdapter` from `@aetherAssembly/core` via a symlinked cross-repo dependency. TypeScript resolved the module through the build cache but failed on clean builds where the cache was absent. Both types are now inlined directly in `storage.ts`, removing the external dependency entirely.
+
+### Changed
+
+- **Workspace package names:** `@before-its-gone/core` and `@before-its-gone/ui` renamed to `@aetherAssembly/big-core` and `@aetherAssembly/big-ui`. The `@before-its-gone` npm scope has no matching GitHub owner, causing `npm publish` to return a 403. The new names use the `@aetherAssembly` org scope, which matches the GitHub organisation.
+- **`@aetherAssembly/big-core` publish tarball:** added a `files` field (`["dist", "LICENSE"]`) to exclude `coverage/`, `src/`, `tsconfig.json`, and `vitest.config.ts` from the published package.
+
+## [1.2.0] - 2026-06-19
 
 ### Added
 

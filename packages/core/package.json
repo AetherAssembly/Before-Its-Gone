@@ -1,6 +1,6 @@
 {
-  "name": "@before-its-gone/core",
-  "version": "1.2.0",
+  "name": "@aetherAssembly/big-core",
+  "version": "1.2.1",
   "type": "module",
   "author": {
     "name": "AetherAssembly",
@@ -20,6 +20,10 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",

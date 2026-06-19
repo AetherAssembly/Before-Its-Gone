@@ -16,7 +16,7 @@ import {
   type RequestWithBody,
 } from './scanner-middleware.js';
 
-// Inline shelf-life prediction (avoids ESM/CJS boundary with @before-its-gone/core)
+// Inline shelf-life prediction (avoids ESM/CJS boundary with @aetherAssembly/big-core)
 type StorageLocation = 'fridge' | 'freezer' | 'pantry';
 
 const CATEGORY_SHELF_LIFE: Record<string, Record<StorageLocation, number>> = {
