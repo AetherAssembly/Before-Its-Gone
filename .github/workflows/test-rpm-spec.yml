@@ -35,7 +35,7 @@ jobs:
         run: npm ci
 
       - name: Build RPM
-        run: npm run package:linux
+        run: npm run package:linux:rpm
 
       - name: Upload RPM artifact
         uses: actions/upload-artifact@v7

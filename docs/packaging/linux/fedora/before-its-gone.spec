@@ -64,7 +64,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
-* Wed Jun 18 2026 Aster <support@aetherassembly.org> - 1.1.2-1
+* Thu Jun 18 2026 Aster <support@aetherassembly.org> - 1.1.2-1
 - Add BuildRequires: hicolor-icon-theme so OBS check-filelist finds the
   icon directories present in the build root (Requires: alone is runtime-only
   and does not install the package into the build chroot).
