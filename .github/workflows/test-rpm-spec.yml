@@ -38,7 +38,7 @@ jobs:
         run: npm run package:linux
 
       - name: Upload RPM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rpm-artifact
           path: release/*.rpm
@@ -90,7 +90,7 @@ jobs:
           fi
 
       - name: Download RPM artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: rpm-artifact
           path: rpm-artifacts/

@@ -22,12 +22,15 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 - **`normalizeDate` utility** (`packages/core/src/inventory.ts`): accepts expiry dates in any common human-written format (ISO date, ISO timestamp, `MM/DD/YYYY`, `M/D/YYYY`, `YYYY/MM/DD`, `DD-MM-YYYY`, `"June 1, 2026"`, `"1 Jun 2026"`, etc.) and returns a canonical `YYYY-MM-DDT23:59:59.000Z` string. Called automatically during CSV import so users do not need to know ISO format. Invalid dates (including JS-overflowed values like `Feb 30`) return `null` and cause the row to be skipped. 26 unit tests added in `packages/core/src/__tests__/inventory.test.ts`.
 - **`npm run package:linux:rpm`:** builds only the `.rpm` artifact via electron-builder, skipping AppImage and `.deb`.
 - **`npm run test:rpm-spec`:** builds the x86_64 RPM if not already present, stages it as both sources for rpmbuild, and runs `rpmbuild -bb` against `docs/packaging/linux/fedora/before-its-gone.spec` with output isolated to `.rpmbuild/` (gitignored). Prints install instructions if `rpmbuild` is not found. Pass `--skip-build` to reuse an existing `release/` artifact.
+- **GHCR Docker image:** the release pipeline now builds and pushes `ghcr.io/aetherAssembly/before-its-gone` on every version tag. Tagged as `{{version}}`, `{{major}}.{{minor}}`, and `latest`. Exposes port 80 (HTTP) for use behind a reverse proxy; the local `docker/Dockerfile` with self-signed certs is unchanged for direct HTTPS setups. Uses `docker/Dockerfile.ghcr` + `docker/nginx-http.conf`.
+- **Version consistency workflow** (`.github/workflows/version-check.yml`): runs on every push and PR; compares the version in `package.json`, `before-its-gone.spec`, and the top `CHANGELOG.md` entry, failing with file-level `::error` annotations if any drift is found.
 
 ### Changed
 
 - **CSV export** now includes `tags` (semicolon-separated), `shelf_life_days`, and `depletion_threshold` columns. `expiresAt` is now exported as a date-only string (`YYYY-MM-DD`) rather than a full ISO timestamp, matching what the importer expects and making the file human-readable.
 - **Packaging docs:** Standardised "Supported versions" sections across all Linux packaging READMEs to prose style. AUR, Raspberry Pi OS, and Snap docs gained the section for the first time.
 - **CONTRIBUTING.md:** Added "Gotchas and non-obvious behaviour" section documenting date storage rules, `undefined` vs `null` patch semantics, scanner save lock, digest deduplication layers, image upload error handling, and the CSV tag separator convention.
+- **CI action versions:** `actions/upload-artifact` and `actions/download-artifact` bumped from `@v4` to `@v7` in the RPM spec test workflow.
 
 ## [1.1.1] - 2026-06-17
 

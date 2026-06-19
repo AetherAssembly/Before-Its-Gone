@@ -1,0 +1,39 @@
+name: Version consistency check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Versions match across files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Compare versions
+        run: |
+          PKG_VER=$(node -p "require('./package.json').version")
+          SPEC_VER=$(grep -m1 '^Version:' docs/packaging/linux/fedora/before-its-gone.spec | awk '{print $2}')
+          CHANGELOG_VER=$(grep -m1 '^## \[' CHANGELOG.md | sed 's/## \[\([^]]*\)\].*/\1/')
+
+          echo "package.json : $PKG_VER"
+          echo "spec file    : $SPEC_VER"
+          echo "CHANGELOG.md : $CHANGELOG_VER"
+
+          FAIL=false
+          if [ "$PKG_VER" != "$SPEC_VER" ]; then
+            echo "::error file=docs/packaging/linux/fedora/before-its-gone.spec::spec Version: ($SPEC_VER) does not match package.json ($PKG_VER)"
+            FAIL=true
+          fi
+          if [ "$PKG_VER" != "$CHANGELOG_VER" ]; then
+            echo "::error file=CHANGELOG.md::CHANGELOG.md top entry ($CHANGELOG_VER) does not match package.json ($PKG_VER)"
+            FAIL=true
+          fi
+
+          if [ "$FAIL" = "true" ]; then exit 1; fi
+          echo "All versions consistent: $PKG_VER"

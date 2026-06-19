@@ -91,7 +91,40 @@ See [docs/packaging/linux/debian](docs/packaging/linux/debian/README.md) for the
 
 Run Before It's Gone as an installable Progressive Web App on any device on your LAN or Tailscale network — no Electron required.
 
-**Prerequisites:** Docker, a self-signed cert (generated once), and the repo cloned.
+**Barcode scanning:** when accessing from a phone or tablet, a **Scan barcode** button in the add-item form opens the device camera directly via `@zxing/browser`. No phone-relay server or QR code needed.
+
+**Data:** all inventory data is stored in the browser's IndexedDB, per device. Optional Supabase sync works the same as in the desktop app if you want to share state across devices.
+
+### Pre-built image (GHCR)
+
+A Docker image is published to the GitHub Container Registry on every release. It exposes port 80 (HTTP) and is designed to run behind a reverse proxy (nginx, Caddy, Traefik) that handles TLS.
+
+```bash
+docker pull ghcr.io/aetherAssembly/before-its-gone:latest
+docker run -d -p 8080:80 --name before-its-gone ghcr.io/aetherAssembly/before-its-gone:latest
+```
+
+Then open `http://localhost:8080` (or your server's IP). Pin a specific release with a version tag:
+
+```bash
+docker pull ghcr.io/aetherAssembly/before-its-gone:1.1.2
+```
+
+**With Caddy** (automatic HTTPS):
+
+```
+before-its-gone.example.com {
+    reverse_proxy localhost:8080
+}
+```
+
+**With Tailscale + Caddy:** run `tailscale cert <hostname>` once and point Caddy at the provisioned cert; any device on your tailnet reaches it at `https://<hostname>` with a trusted cert.
+
+### Building locally (self-signed HTTPS)
+
+Clone the repo if you want to build the image yourself or use the self-signed cert setup for direct HTTPS without a reverse proxy.
+
+**Prerequisites:** Docker and the repo cloned.
 
 ```bash
 # Generate a self-signed certificate (run once)
@@ -105,12 +138,6 @@ npm run docker:pwa:up
 ```
 
 Then open `https://<your-server-ip>` from any device on the same network. Accept the self-signed cert warning once per device. Use the browser's **Add to Home Screen** prompt to install it as an app.
-
-**Tailscale:** once the container is running, any device on your tailnet can reach it at `https://<tailscale-hostname>`. To avoid the cert warning entirely, use `tailscale cert <hostname>` to provision a Let's Encrypt cert and point nginx at it instead.
-
-**Barcode scanning:** when accessing from a phone or tablet, a **Scan barcode** button in the add-item form opens the device camera directly via `@zxing/browser`. No phone-relay server or QR code needed.
-
-**Data:** all inventory data is stored in the browser's IndexedDB, per device. Optional Supabase sync works the same as in the desktop app if you want to share state across devices.
 
 | Script | What it does |
 | --- | --- |
