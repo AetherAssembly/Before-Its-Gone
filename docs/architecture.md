@@ -33,20 +33,20 @@ packages/ui    ──►  packages/core
 
 ## Packages
 
-### `packages/core`
+### `packages/core` (`@before-its-gone/core`)
 
 All inventory logic, storage, and shared types.
 
 | File | Responsibility |
 | ---- | -------------- |
 | `src/models.ts` | TypeScript interfaces: `InventoryItem`, `BarcodeProfile`, `WasteLogEntry`, `AppSettings`, `SyncSettings` |
-| `src/storage.ts` | IndexedDB schema (via `idb`), CRUD operations, `BrowserLocalStorageAdapter` |
+| `src/storage.ts` | IndexedDB schema (via `idb`), CRUD operations, re-exports `LocalStorageAdapter` from `@aetherAssembly/core` |
 | `src/inventory.ts` | `getFilteredInventory()`, `calculateExpiryStatus()`, `parseInventoryCSV()`, `parseInventoryJSON()` |
 | `src/expiry-prediction.ts` | Shelf-life lookup by food category |
 | `src/email-templates.ts` | HTML email template functions (pure, no dependencies) |
 | `src/services/InventoryService.ts` | High-level service wrapping storage calls |
 | `src/services/ImportExportService.ts` | CSV/JSON import-export orchestration |
-| `src/index.ts` | Public API barrel; import from `@aetherAssembly/core` |
+| `src/index.ts` | Public API barrel; import from `@before-its-gone/core` |
 
 **Storage:** The app uses two storage mechanisms:
 
@@ -54,7 +54,7 @@ All inventory logic, storage, and shared types.
   - v2: `inventory`, `barcodeProfiles`
   - v3: `itemHistory`
   - v4: `wasteLog`
-- **localStorage** (via `BrowserLocalStorageAdapter`): user preferences and sync state. Keys:
+- **localStorage** (via `LocalStorageAdapter` from `@aetherAssembly/core`, re-exported as `createLocalStorageAdapter`): user preferences and sync state. Keys:
   - `before-its-gone.settings`: `AppSettings` (expiry window, custom locations, etc.)
   - `before-its-gone.sync`: `SyncSettings` (Supabase URL, anon key, lastSyncedAt)
   - `before-its-gone.recipe-dismiss-{date}`: recipe banner dismiss state
@@ -62,9 +62,9 @@ All inventory logic, storage, and shared types.
 
 No `electron-store` is used anywhere. All renderer-accessible state lives in the browser storage APIs above.
 
-### `packages/ui`
+### `packages/ui` (`@before-its-gone/ui`)
 
-One component: `InventoryCard`. It renders a single inventory item with expiry status, quantity controls, nutrition chips, and tag display. Props are typed from `packages/core/src/models.ts`.
+One component: `InventoryCard`. It renders a single inventory item with expiry status, quantity controls, nutrition chips, and tag display. Props are typed from `packages/core/src/models.ts`. Uses components from `@aetherAssembly/ui` (e.g. `Badge`) for shared styling.
 
 ### `apps/web`
 
@@ -241,7 +241,6 @@ Auto-release (`.github/workflows/release.yml`):
 - Each runner calls `electron-builder --publish always`
 - Artifacts and update manifests (`latest-linux.yml`, `latest-mac.yml`, `latest.yml`) are attached to the GitHub release automatically
 - A post-build job downloads the Linux AppImages, computes their SHA-256 checksums, fills them into the `PKGBUILD` template, and attaches the resulting `PKGBUILD` to the release for Arch Linux users
-- npm packages (`@aetherAssembly/core`, `@aetherAssembly/ui`) are published to GitHub Packages on every tagged release
 
 ---
 

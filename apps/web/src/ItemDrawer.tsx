@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { type InventoryItem, type StorageLocation } from '@aetherAssembly/core';
+import { type InventoryItem, type StorageLocation } from '@before-its-gone/core';
 
 export function resizeImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

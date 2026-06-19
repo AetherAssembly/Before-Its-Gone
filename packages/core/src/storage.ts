@@ -1,3 +1,4 @@
+import { LocalStorageAdapter, type StorageAdapter } from '@aetherAssembly/core';
 import { openDB } from 'idb';
 import type { DBSchema } from 'idb';
 import type { BarcodeProfile, InventoryItem, ItemHistory, WasteLogEntry } from './models';
@@ -113,51 +114,9 @@ export async function clearWasteLogEntries(): Promise<void> {
   await database.clear('wasteLog');
 }
 
-export interface KeyValueStorage {
-  get<T>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T): Promise<void>;
-  remove(key: string): Promise<void>;
-}
+export type { StorageAdapter as KeyValueStorage };
+export { LocalStorageAdapter };
 
-class BrowserLocalStorageAdapter implements KeyValueStorage {
-  async get<T>(key: string): Promise<T | null> {
-    if (typeof localStorage === 'undefined') {
-      return null;
-    }
-
-    const value = localStorage.getItem(key);
-    if (!value) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(value) as T;
-    } catch {
-      return null;
-    }
-  }
-
-  async set<T>(key: string, value: T): Promise<void> {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      // QuotaExceededError; notification state is best-effort
-    }
-  }
-
-  async remove(key: string): Promise<void> {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-
-    localStorage.removeItem(key);
-  }
-}
-
-export function createLocalStorageAdapter(): KeyValueStorage {
-  return new BrowserLocalStorageAdapter();
+export function createLocalStorageAdapter(): LocalStorageAdapter {
+  return new LocalStorageAdapter();
 }
