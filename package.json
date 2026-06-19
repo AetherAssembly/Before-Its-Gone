@@ -39,6 +39,10 @@
   "overrides": {
     "tmp": "^0.2.7"
   },
+  "dependencies": {
+    "@aetherAssembly/core": "^1.0.0",
+    "@aetherAssembly/ui": "^1.0.0"
+  },
   "devDependencies": {
     "@types/node": "^25.9.3",
     "@typescript-eslint/eslint-plugin": "^8.61.0",
