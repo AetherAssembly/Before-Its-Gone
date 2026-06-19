@@ -2,7 +2,7 @@
 
 > Track what's in your fridge, freezer, and pantry before it expires.
 
-[![CI](https://github.com/AetherAssembly/Before-Its-Gone/actions/workflows/ci.yml/badge.svg)](https://github.com/AetherAssembly/Before-Its-Gone/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/AetherAssembly/Before-Its-Gone/ci.yml?label=CI)](https://github.com/AetherAssembly/Before-Its-Gone/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?include_prereleases&label=release)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
@@ -63,32 +63,27 @@ sudo zypper refresh && sudo zypper install before-its-gone
 
 ### Platform notes
 
-**macOS:** if the app is blocked on first launch, go to **System Settings > Privacy & Security** and click **Open Anyway**.
+**macOS:** the app is not notarized, so macOS may show a "damaged" warning. Run this after mounting the DMG:
+
+```sh
+xattr -d com.apple.quarantine "/Applications/Before Its Gone.app"
+```
 
 **Windows:** if SmartScreen warns on the installer, click **More info → Run anyway**. The app is not yet code-signed.
 
-**Linux (Wayland/X11):** the app auto-detects your session. To override:
-
-```bash
-BIG_LINUX_DISPLAY_BACKEND=wayland npm run dev
-BIG_LINUX_DISPLAY_BACKEND=x11    npm run dev
-```
+**Linux (Wayland/X11):** the app auto-detects your session. To override, set `BIG_LINUX_DISPLAY_BACKEND=wayland` or `=x11` before the binary/AppImage.
 
 **Raspberry Pi:** Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://aetherassembly.org/wiki/before-its-gone/installation) to fix it permanently.
 
-**Debian/Ubuntu/Raspberry Pi OS:** add the apt repo for automatic updates via `apt upgrade`:
+**Debian/Ubuntu/Raspberry Pi OS** — add the apt repo for automatic updates:
 
 ```bash
-
 curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
-
 echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
-
 sudo apt update && sudo apt install before-its-gone
-
 ```
 
-See [docs/packaging/linux/debian](docs/packaging/linux/debian/README.md) for details and the key fingerprint to verify.
+See [docs/packaging/linux/debian](docs/packaging/linux/debian/README.md) for the key fingerprint to verify.
 
 ---
 
