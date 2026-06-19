@@ -120,6 +120,12 @@ export class DigestScheduler {
       const todayStr = now.toISOString().slice(0, 10);
       if (this.lastFiredDate === todayStr) return;
 
+      // Persist-backed guard: prevent re-firing after an app restart within the same day
+      if (settings.lastSentAt) {
+        const lastSentDate = new Date(settings.lastSentAt).toISOString().slice(0, 10);
+        if (settings.digest === 'daily' && lastSentDate === todayStr) return;
+      }
+
       if (settings.digest === 'weekly') {
         const lastSent = settings.lastSentAt ? new Date(settings.lastSentAt) : null;
         if (lastSent) {

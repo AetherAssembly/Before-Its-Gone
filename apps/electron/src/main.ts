@@ -13,6 +13,7 @@ const isDevelopment = !app.isPackaged;
 
 let pendingSaveResolve: (() => void) | null = null;
 let pendingSaveReject: ((err: Error) => void) | null = null;
+let scannerSaveLock = false;
 const digestScheduler = new DigestScheduler();
 
 function configureLinuxDisplayBackend(): void {
@@ -118,19 +119,25 @@ app.whenReady().then(() => {
         win?.webContents.send('scanner:barcode-received', barcode);
       },
       async (data) => {
+        if (scannerSaveLock) throw new Error('A save is already in progress');
+        scannerSaveLock = true;
         const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
-        if (!win) throw new Error('No window available to save item');
+        if (!win) { scannerSaveLock = false; throw new Error('No window available to save item'); }
 
-        await new Promise<void>((resolve, reject) => {
-          pendingSaveResolve = resolve;
-          pendingSaveReject = reject;
-          win.webContents.send('scanner:do-save', data);
-          setTimeout(() => {
-            pendingSaveReject?.(new Error('Save timeout'));
-            pendingSaveResolve = null;
-            pendingSaveReject = null;
-          }, 10_000);
-        });
+        try {
+          await new Promise<void>((resolve, reject) => {
+            pendingSaveResolve = resolve;
+            pendingSaveReject = reject;
+            win.webContents.send('scanner:do-save', data);
+            setTimeout(() => {
+              pendingSaveReject?.(new Error('Save timeout'));
+              pendingSaveResolve = null;
+              pendingSaveReject = null;
+            }, 10_000);
+          });
+        } finally {
+          scannerSaveLock = false;
+        }
       },
       app.getPath('userData')
     );
