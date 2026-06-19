@@ -79,11 +79,11 @@ jobs:
       - name: Install build tools
         run: |
           if command -v dnf >/dev/null; then
-            dnf install -y --allowerasing rpm-build cpio
+            dnf install -y --allowerasing rpm-build cpio hicolor-icon-theme
           elif command -v zypper >/dev/null; then
-            zypper --non-interactive install rpm-build cpio
+            zypper --non-interactive install rpm-build cpio hicolor-icon-theme
           elif command -v urpmi >/dev/null; then
-            urpmi --auto rpm-build cpio
+            urpmi --auto rpm-build cpio hicolor-icon-theme
           else
             echo "No supported package manager found" >&2
             exit 1
@@ -116,4 +116,4 @@ jobs:
           find . | sort
 
       - name: Build rpm
-        run: rpmbuild -ba docs/packaging/linux/fedora/before-its-gone.spec
+        run: rpmbuild -bb docs/packaging/linux/fedora/before-its-gone.spec
