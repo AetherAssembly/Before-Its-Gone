@@ -169,7 +169,7 @@ npm install @aetherAssembly/ui
 
 ---
 
-## Development
+## Development / Build From Source
 
 ### Prerequisites
 
