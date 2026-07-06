@@ -23,7 +23,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.7",
     "react-i18next": "^17.0.8",
-    "recharts": "^3.9.0"
+    "recharts": "^3.9.2"
   },
   "devDependencies": {
     "@axe-core/react": "^4.12.1",
