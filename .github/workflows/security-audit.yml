@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: read
       # Needed to open issues on scheduled runs if a new CVE is found
       issues: write
 
@@ -24,9 +25,12 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          registry-url: https://npm.pkg.github.com
 
       - name: Install dependencies
         run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Fails on high or critical vulnerabilities.
       # --audit-level=high means moderate/low are reported but won't fail CI.

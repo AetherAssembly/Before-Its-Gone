@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   build-rpm:
@@ -30,9 +31,12 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: package-lock.json
+          registry-url: https://npm.pkg.github.com
 
       - name: Install dependencies
         run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build RPM
         run: npm run package:linux:rpm
