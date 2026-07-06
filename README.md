@@ -78,8 +78,6 @@ xattr -d com.apple.quarantine "/Applications/Before Its Gone.app"
 
 **Debian/Ubuntu/Raspberry Pi OS** — add the apt repo for automatic updates:
 
-> The Debian Repo is currently down, it will be back up as soon as I can. 
-
 ```bash
 curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
 echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
