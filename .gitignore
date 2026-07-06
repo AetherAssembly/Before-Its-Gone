@@ -39,3 +39,6 @@ Thumbs.db
 /docs/packaging/macos
 /docs/packaging/windows
 /docs/packaging/PUBLISHING.md
+
+# Test coverage reports
+packages/core/coverage/
