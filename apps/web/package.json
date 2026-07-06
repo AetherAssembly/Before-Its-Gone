@@ -16,7 +16,7 @@
   "dependencies": {
     "@aetherAssembly/core": "^1.0.0",
     "@aetherAssembly/ui": "^1.0.0",
-    "@supabase/supabase-js": "^2.108.2",
+    "@supabase/supabase-js": "^2.110.0",
     "@zxing/browser": "^0.2.0",
     "comlink": "^4.4.2",
     "i18next": "^26.3.3",
