@@ -15,6 +15,10 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 - **Screenshots in README:** inventory list, add item form, charts, shopping list, and settings views.
 - **`docs/demo-data.json`:** sample dataset with 15 items across all three locations and all three expiry statuses, importable via Data → Import JSON for development and testing.
 
+### Changed
+
+- **Dependency bumps:** `electron` 42.5.1 → 43.0.0 (electronVersion in packaging scripts updated to match), `@supabase/supabase-js` 2.108.2 → 2.110.0, `nodemailer` 9.0.1 → 9.0.3, `resend` 6.16.0 → 6.17.1, `recharts` 3.9.0 → 3.9.2, `i18next` 26.3.3 → 26.3.4, `vitest` + `@vitest/coverage-v8` 4.1.9 → 4.1.10, `prettier` 3.9.3 → 3.9.4, `@types/node` 26.0.1 → 26.1.0.
+
 ### Fixed
 
 - **Coverage report tracked in git:** `packages/core/coverage/` was committed despite `*.tsbuildinfo` already being gitignored. Added explicit `packages/core/coverage/` entry to `.gitignore` and removed the directory from the index.

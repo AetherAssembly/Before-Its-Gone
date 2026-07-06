@@ -17,22 +17,22 @@
   "scripts": {
     "dev": "npm run build && cross-env ELECTRON_OZONE_PLATFORM_HINT=auto electron .",
     "build": "tsc -p tsconfig.json",
-    "package:appimage": "electron-builder --config electron-builder.linux.yml --linux AppImage --publish never -c.electronVersion=42.0.1",
-    "package:linux": "electron-builder --config electron-builder.linux.yml --linux --publish never -c.electronVersion=42.0.1",
-    "package:linux:rpm": "electron-builder --config electron-builder.linux.yml --linux rpm --publish never -c.electronVersion=42.0.1",
-    "package:linux:arm64": "electron-builder --config electron-builder.linux.yml --linux --arm64 --publish never -c.electronVersion=42.0.1",
-    "package:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish never -c.electronVersion=42.0.1",
-    "package:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=42.0.1",
-    "publish:linux": "electron-builder --config electron-builder.linux.yml --linux --publish always -c.electronVersion=42.0.1",
-    "publish:linux:arm64": "electron-builder --config electron-builder.linux.yml --linux --arm64 --publish always -c.electronVersion=42.0.1",
-    "publish:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish always -c.electronVersion=42.0.1",
-    "publish:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish always -c.electronVersion=42.0.1"
+    "package:appimage": "electron-builder --config electron-builder.linux.yml --linux AppImage --publish never -c.electronVersion=43.0.0",
+    "package:linux": "electron-builder --config electron-builder.linux.yml --linux --publish never -c.electronVersion=43.0.0",
+    "package:linux:rpm": "electron-builder --config electron-builder.linux.yml --linux rpm --publish never -c.electronVersion=43.0.0",
+    "package:linux:arm64": "electron-builder --config electron-builder.linux.yml --linux --arm64 --publish never -c.electronVersion=43.0.0",
+    "package:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish never -c.electronVersion=43.0.0",
+    "package:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=43.0.0",
+    "publish:linux": "electron-builder --config electron-builder.linux.yml --linux --publish always -c.electronVersion=43.0.0",
+    "publish:linux:arm64": "electron-builder --config electron-builder.linux.yml --linux --arm64 --publish always -c.electronVersion=43.0.0",
+    "publish:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish always -c.electronVersion=43.0.0",
+    "publish:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.windows.yml --win nsis portable --publish always -c.electronVersion=43.0.0"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
-    "nodemailer": "^9.0.0",
+    "nodemailer": "^9.0.3",
     "qrcode": "^1.5.4",
-    "resend": "^6.16.0",
+    "resend": "^6.17.1",
     "selfsigned": "^5.5.0"
   },
   "devDependencies": {
