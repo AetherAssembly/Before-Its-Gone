@@ -23,6 +23,45 @@ Everything runs locally; the only outbound requests are Open Food Facts (barcode
 
 ---
 
+## Screenshots
+
+<details>
+<summary>Inventory list</summary>
+
+![Inventory list](docs/screenshots/inventory-list.png)
+
+</details>
+
+<details>
+<summary>Add item</summary>
+
+![Add item](docs/screenshots/inventory.png)
+
+</details>
+
+<details>
+<summary>Charts</summary>
+
+![Charts](docs/screenshots/charts.png)
+
+</details>
+
+<details>
+<summary>Shopping list</summary>
+
+![Shopping list](docs/screenshots/shopping-list.png)
+
+</details>
+
+<details>
+<summary>Settings</summary>
+
+![Settings](docs/screenshots/settings.png)
+
+</details>
+
+---
+
 ## Download
 
 **Linux & macOS:**
@@ -108,7 +147,7 @@ docker run -d -p 8080:80 --name before-its-gone ghcr.io/aetherAssembly/before-it
 Then open `http://localhost:8080` (or your server's IP). Pin a specific release with a version tag:
 
 ```bash
-docker pull ghcr.io/aetherAssembly/before-its-gone:1.2.1
+docker pull ghcr.io/aetherAssembly/before-its-gone:1.3.0
 ```
 
 **With Caddy** (automatic HTTPS):
@@ -206,6 +245,7 @@ npm run docker:pwa:down  # Stop the container
 ## Docs
 
 - [Architecture](docs/architecture.md): monorepo layout, storage map, IPC channels, build pipeline
+- [Data Model](docs/data-model.md): `InventoryItem` field reference
 - [Import & Export Format](docs/import-export-format.md): JSON, CSV, and barcode-list field reference
 - [Email Notifications](docs/email-notifications.md): Resend and SMTP setup, digest scheduling, pause/snooze
 - [Cloud Sync](docs/cloud-sync.md): Supabase project setup, SQL migration, and sync behaviour
