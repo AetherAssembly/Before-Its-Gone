@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+      - 'v*-beta.*'
   workflow_dispatch:
 
 permissions:
@@ -16,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
+      is_beta: ${{ steps.channel.outputs.is_beta }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -24,14 +26,29 @@ jobs:
         id: tag
         run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
+      - name: Detect channel
+        id: channel
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]]; then
+            echo "is_beta=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_beta=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          PRERELEASE_FLAG=""
+          if [[ "${{ steps.channel.outputs.is_beta }}" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
           gh release create "${{ steps.tag.outputs.tag }}" \
             --draft \
             --title "Before It's Gone ${{ steps.tag.outputs.tag }}" \
-            --notes "Release in progress..."
+            --notes "Release in progress..." \
+            $PRERELEASE_FLAG
 
   build:
     name: Build & upload (${{ matrix.os }})
@@ -42,13 +59,13 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            package_script: package:linux
+            package_script: ${{ needs.create-release.outputs.is_beta == 'true' && 'package:linux:beta' || 'package:linux' }}
           - os: ubuntu-24.04-arm
-            package_script: package:linux:arm64
+            package_script: ${{ needs.create-release.outputs.is_beta == 'true' && 'package:linux:arm64:beta' || 'package:linux:arm64' }}
           - os: macos-latest
-            package_script: package:macos
+            package_script: ${{ needs.create-release.outputs.is_beta == 'true' && 'package:macos:beta' || 'package:macos' }}
           - os: windows-latest
-            package_script: package:windows
+            package_script: ${{ needs.create-release.outputs.is_beta == 'true' && 'package:windows:beta' || 'package:windows' }}
 
     steps:
       - name: Checkout
@@ -119,17 +136,22 @@ jobs:
         run: npm run build --workspace packages/core --workspace packages/ui
 
       - name: Publish core
-        run: npm publish --workspace packages/core
+        run: |
+          NPM_TAG=$([[ "${{ needs.create-release.outputs.is_beta }}" == "true" ]] && echo "--tag beta" || echo "")
+          npm publish --workspace packages/core $NPM_TAG
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish ui
-        run: npm publish --workspace packages/ui
+        run: |
+          NPM_TAG=$([[ "${{ needs.create-release.outputs.is_beta }}" == "true" ]] && echo "--tag beta" || echo "")
+          npm publish --workspace packages/ui $NPM_TAG
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   attach-pkgbuild:
     name: Generate & attach PKGBUILD
+    if: needs.create-release.outputs.is_beta != 'true'
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -245,7 +267,8 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ needs.create-release.outputs.is_beta != 'true' }}
+            type=raw,value=beta,enable=${{ needs.create-release.outputs.is_beta == 'true' }}
 
       - name: Build and push
         uses: docker/build-push-action@v7
@@ -263,6 +286,7 @@ jobs:
   publish-release:
     name: Publish release
     needs: [build, publish-packages, attach-pkgbuild, publish-docker]
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -282,7 +306,8 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           VER="${TAG#v}"
           PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${TAG}$" | head -1 || true)
-          export TAG VER PREV_TAG
+          IS_BETA="${{ needs.create-release.outputs.is_beta }}"
+          export TAG VER PREV_TAG IS_BETA
           python3 << 'PYEOF'
           import os, re, hashlib, glob
           from pathlib import Path
@@ -355,7 +380,17 @@ jobs:
           )
 
           # --- Assemble body ---
+          is_beta = os.environ.get('IS_BETA', 'false') == 'true'
+
           parts = [f"## Before It's Gone: {tag}", ""]
+
+          if is_beta:
+              parts += [
+                  "> [!WARNING]",
+                  "> **This is a beta release** and may contain bugs. It is intended for testing only.",
+                  "> Install the [latest stable release](https://github.com/AetherAssembly/Before-Its-Gone/releases/latest) for everyday use.",
+                  "",
+              ]
 
           if added:
               parts += ["### What's new", "", added, ""]
@@ -411,6 +446,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          PRERELEASE_FLAG=""
+          if [[ "${{ needs.create-release.outputs.is_beta }}" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
           gh release edit "${GITHUB_REF#refs/tags/}" \
             --notes-file release-body.md \
-            --draft=false
+            --draft=false \
+            $PRERELEASE_FLAG

@@ -21,15 +21,22 @@ jobs:
           SPEC_VER=$(grep -m1 '^Version:' docs/packaging/linux/fedora/before-its-gone.spec | awk '{print $2}')
           CHANGELOG_VER=$(grep -m1 '^## \[' CHANGELOG.md | sed 's/## \[\([^]]*\)\].*/\1/')
 
-          echo "package.json : $PKG_VER"
-          echo "spec file    : $SPEC_VER"
-          echo "CHANGELOG.md : $CHANGELOG_VER"
+          # Strip prerelease suffix for spec comparison — RPM Version: cannot
+          # contain hyphens, so the spec always carries the base version
+          # (e.g. 1.3.1) while package.json may carry 1.3.1-beta.1.
+          PKG_VER_BASE="${PKG_VER%%-*}"
+
+          echo "package.json      : $PKG_VER (base: $PKG_VER_BASE)"
+          echo "spec file         : $SPEC_VER"
+          echo "CHANGELOG.md      : $CHANGELOG_VER"
 
           FAIL=false
-          if [ "$PKG_VER" != "$SPEC_VER" ]; then
-            echo "::error file=docs/packaging/linux/fedora/before-its-gone.spec::spec Version: ($SPEC_VER) does not match package.json ($PKG_VER)"
+          if [ "$PKG_VER_BASE" != "$SPEC_VER" ]; then
+            echo "::error file=docs/packaging/linux/fedora/before-its-gone.spec::spec Version: ($SPEC_VER) does not match package.json base version ($PKG_VER_BASE)"
             FAIL=true
           fi
+          # CHANGELOG top entry must match the full package.json version
+          # including any prerelease suffix (e.g. 1.3.1-beta.1).
           if [ "$PKG_VER" != "$CHANGELOG_VER" ]; then
             echo "::error file=CHANGELOG.md::CHANGELOG.md top entry ($CHANGELOG_VER) does not match package.json ($PKG_VER)"
             FAIL=true

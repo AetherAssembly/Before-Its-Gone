@@ -1,0 +1,36 @@
+appId: com.beforeitsgone.beta
+productName: Before Its Gone Beta
+icon: assets/app-icon.png
+copyright: Copyright 2026 AetherAssembly
+directories:
+  output: ../../release
+  buildResources: build
+files:
+  - dist/**/*
+extraResources:
+  - from: ../web/dist
+    to: web-dist
+    filter:
+      - '**/*'
+win:
+  target:
+    - nsis
+    - portable
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  runAfterFinish: true
+  installerSidebar: assets/installer-sidebar.png
+  license: assets/eula.rtf
+  include: build/installer.nsh
+  artifactName: 'before-its-gone-beta-setup-${version}.exe'
+portable:
+  artifactName: 'before-its-gone-beta-portable-${version}.exe'
+publish:
+  provider: github
+  owner: AetherAssembly
+  repo: Before-Its-Gone
+  channel: beta
+generateUpdatesFilesForAllChannels: true

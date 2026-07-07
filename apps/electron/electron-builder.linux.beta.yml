@@ -1,0 +1,40 @@
+appId: com.beforeitsgone.beta
+productName: Before-Its-Gone-Beta
+icon: assets/app-icon.png
+artifactName: before-its-gone-beta-${version}-${arch}.${ext}
+directories:
+  output: ../../release
+files:
+  - dist/**/*
+extraResources:
+  - from: ../web/dist
+    to: web-dist
+    filter:
+      - '**/*'
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+  category: Utility
+  executableName: before-its-gone
+  syncDesktopName: true
+  desktop:
+    entry:
+      Name: "Before It's Gone (Beta)"
+deb:
+  packageName: before-its-gone-beta
+  conflicts:
+    - before-its-gone
+  replaces:
+    - before-its-gone
+  provides:
+    - before-its-gone
+rpm:
+  packageName: before-its-gone-beta
+publish:
+  provider: github
+  owner: AetherAssembly
+  repo: Before-Its-Gone
+  channel: beta
+generateUpdatesFilesForAllChannels: true
