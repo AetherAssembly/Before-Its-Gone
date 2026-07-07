@@ -24,12 +24,6 @@ linux:
       Name: "Before It's Gone (Beta)"
 deb:
   packageName: before-its-gone-beta
-  conflicts:
-    - before-its-gone
-  replaces:
-    - before-its-gone
-  provides:
-    - before-its-gone
 rpm:
   packageName: before-its-gone-beta
 publish:
