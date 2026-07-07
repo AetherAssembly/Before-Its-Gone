@@ -1,0 +1,81 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  title-check:
+    name: PR title follows conventional commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const title = context.payload.pull_request.title || '';
+            const valid = /^(feat|fix|chore|ci|docs|refactor|test|security|release)(\(.+\))?!?:\s.+/.test(title);
+            if (!valid) {
+              core.setFailed(
+                `PR title "${title}" does not follow the conventional commit format.\n` +
+                'Expected: <type>: <description>  (e.g. "fix: handle empty filter list")\n' +
+                'Valid types: feat, fix, chore, ci, docs, refactor, test, security, release'
+              );
+            }
+
+  description-check:
+    name: PR has description
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const stripped = body.replace(/<!--.*?-->/gs, '').trim();
+            if (stripped.length < 20) {
+              core.setFailed(
+                'PR description is too short or empty. Please describe what changed and why.'
+              );
+            }
+
+  version-changelog-check:
+    name: Version bump has changelog entry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const fs = require('fs');
+
+            const base = context.payload.pull_request.base.sha;
+            const head = context.payload.pull_request.head.sha;
+
+            let changed;
+            try {
+              changed = execSync(`git diff --name-only ${base} ${head}`).toString().trim().split('\n');
+            } catch {
+              console.log('Could not read diff — skipping version check.');
+              return;
+            }
+
+            if (!changed.includes('package.json')) return;
+
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            const version = pkg.version;
+            const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+
+            if (!changelog.includes(`## [${version}]`)) {
+              core.setFailed(
+                `package.json was bumped to v${version} but CHANGELOG.md has no entry for [${version}]. Add a changelog entry before merging.`
+              );
+            } else {
+              console.log(`✓ v${version} found in CHANGELOG.md`);
+            }

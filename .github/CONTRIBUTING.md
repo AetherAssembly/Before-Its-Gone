@@ -27,21 +27,40 @@ Thanks for wanting to help! Here's everything you need to know to get started.
 
 **Prerequisites:** Node.js 22 or later, npm 10 or later.
 
+### GitHub Packages auth (required)
+
+Before Its Gone depends on `@aetherAssembly/core` and `@aetherAssembly/ui`, which are published to the GitHub Package Registry. GitHub Packages requires authentication even for public packages. You need a [personal access token](https://github.com/settings/tokens/new) with the `read:packages` scope.
+
+Add it to your global `~/.npmrc` (create the file if it doesn't exist):
+
+```
+//npm.pkg.github.com/:_authToken=YOUR_TOKEN
+```
+
+The repo's `.npmrc` already scopes `@aetherAssembly` to `npm.pkg.github.com`, so `npm install` will pick up the token automatically.
+
+### Clone and install
+
 ```bash
-# Clone and install all workspace dependencies
 git clone https://github.com/AetherAssembly/Before-Its-Gone.git
 cd Before-Its-Gone
 npm ci
 ```
 
-The repo is an npm workspaces monorepo with four packages:
+### Package structure
 
-| Package | Path | Purpose |
-| ------- | ---- | ------- |
-| `before-its-gone-electron` | `apps/electron` | Electron main process, IPC handlers, scanner server |
-| `before-its-gone-web` | `apps/web` | React renderer (Vite); also built as the self-hosted PWA |
-| `@before-its-gone/core` | `packages/core` | Shared business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/`; avoid calling storage functions directly. |
-| `@before-its-gone/ui` | `packages/ui` | Shared React components (InventoryCard). Uses components from `@aetherAssembly/ui` for shared styling. |
+The repo is an npm workspaces monorepo. It also depends on two upstream packages from the [aether-packages](https://github.com/AetherAssembly/aether-packages) repo, installed at the root:
+
+| Package | Source | Purpose |
+| ------- | ------ | ------- |
+| `@aetherAssembly/core` | [aether-packages](https://aetherassembly.org/wiki/aether-packages/) (upstream) | Storage adapters (`IDBAdapter`, `LocalStorageAdapter`) and shared TypeScript types |
+| `@aetherAssembly/ui` | [aether-packages](https://aetherassembly.org/wiki/aether-packages/) (upstream) | Shared React component library (`Button`, `Badge`, `Card`, etc.) |
+| `before-its-gone-electron` | `apps/electron` (local) | Electron main process, IPC handlers, scanner server |
+| `before-its-gone-web` | `apps/web` (local) | React renderer (Vite); also built as the self-hosted PWA |
+| `@aetherAssembly/big-core` | `packages/core` (local) | BIG's business logic: inventory CRUD, barcode profiles, expiry prediction, CSV/JSON import-export. Re-exports `LocalStorageAdapter` from `@aetherAssembly/core` for settings storage. All database interactions are routed through `InventoryService` and `ImportExportService` in `src/services/`. |
+| `@aetherAssembly/big-ui` | `packages/ui` (local) | BIG's React components (`InventoryCard`). Uses `Badge` and other primitives from `@aetherAssembly/ui`. |
+
+The upstream packages are consumed as versioned npm installs; you don't edit them here. Changes to shared types or storage adapters belong in the [aether-packages](https://github.com/AetherAssembly/aether-packages) repo.
 
 **Run in development (from repo root):**
 
@@ -118,7 +137,7 @@ Before adding a feature, identify which layer it belongs to:
 | ------------------ | ------------- |
 | A new data field on an inventory item | `packages/core/src/models.ts` |
 | A new filter or query | `packages/core/src/inventory.ts` |
-| A new storage key (localStorage) | `packages/core/src/storage.ts` using `LocalStorageAdapter` (re-exported from `@aetherAssembly/core`), key constant in `models.ts` |
+| A new storage key (localStorage) | `packages/core/src/storage.ts` using `LocalStorageAdapter` (re-exported from upstream `@aetherAssembly/core`), key constant in `models.ts` |
 | A new IndexedDB object store | `packages/core/src/storage.ts`: increment DB version, add upgrade branch |
 | A new UI component (reusable) | `packages/ui/src/` |
 | A new UI panel or tab | `apps/web/src/App.tsx` or a new `*Panel.tsx` sibling |

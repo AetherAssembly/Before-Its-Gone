@@ -38,6 +38,7 @@ const StatsCharts = lazy(() => import('./StatsCharts.js').then(m => ({ default: 
 import { ExpiryTimeline } from './ExpiryTimeline.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import { useFocusTrap } from './useFocusTrap.js';
+import { useVirtualizer } from './useVirtualizer.js';
 
 
 const TODAY_ISO = new Date().toISOString().slice(0, 10);
@@ -205,6 +206,15 @@ function App() {
   const searchRef = useRef<HTMLInputElement>(null);
   const addItemNameRef = useRef<HTMLInputElement>(null);
   const shortcutsRef = useRef<HTMLDivElement>(null);
+  const inventoryScrollRef = useRef<HTMLDivElement>(null);
+
+  // Virtualizer for the inventory list view
+  const rowVirtualizer = useVirtualizer({
+    count: items.length,
+    estimateSize: () => 200,
+    getScrollElement: () => inventoryScrollRef.current,
+    overscan: 5,
+  });
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   useFocusTrap(shortcutsRef, shortcutsOpen);
   const [barcodeImportProgress, setBarcodeImportProgress] = useState<{ done: number; total: number } | null>(null);
@@ -1586,32 +1596,52 @@ function App() {
           />
         ) : (
           <ErrorBoundary>
-          <div className="inventory-grid">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                draggable
-                onDragStart={() => setDraggedId(item.id)}
-                onDragEnd={() => setDraggedId(null)}
-              >
-                <InventoryCard
-                  item={item}
-                  onDelete={onDelete}
-                  onDecrement={onDecrement}
-                  onIncrement={onIncrement}
-                  onEdit={onEdit}
-                  onDetail={onOpenDrawer}
-                  selected={bulkMode ? selectedIds.has(item.id) : undefined}
-                  onToggleSelect={bulkMode ? onToggleSelect : undefined}
-                  warningWindowDays={settings.expiryWarningDays}
-                  onTagClick={onToggleTag}
-                  caloriesPer100g={item.barcode ? profileMap.get(item.barcode)?.caloriesPer100g : undefined}
-                  allergens={item.barcode ? profileMap.get(item.barcode)?.allergens : undefined}
-                />
+          {items.length === 0 ? (
+            <p>{t('inventory.noItems')}</p>
+          ) : (
+            <div
+              ref={inventoryScrollRef}
+              className="inventory-grid inventory-grid--virtual"
+              style={{ overflowY: 'auto', height: '70vh' }}
+            >
+              <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const item = items[virtualRow.index];
+                  return (
+                    <div
+                      key={item.id}
+                      ref={virtualRow.measureElement}
+                      draggable
+                      onDragStart={() => setDraggedId(item.id)}
+                      onDragEnd={() => setDraggedId(null)}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
+                      <InventoryCard
+                        item={item}
+                        onDelete={onDelete}
+                        onDecrement={onDecrement}
+                        onIncrement={onIncrement}
+                        onEdit={onEdit}
+                        onDetail={onOpenDrawer}
+                        selected={bulkMode ? selectedIds.has(item.id) : undefined}
+                        onToggleSelect={bulkMode ? onToggleSelect : undefined}
+                        warningWindowDays={settings.expiryWarningDays}
+                        onTagClick={onToggleTag}
+                        caloriesPer100g={item.barcode ? profileMap.get(item.barcode)?.caloriesPer100g : undefined}
+                        allergens={item.barcode ? profileMap.get(item.barcode)?.allergens : undefined}
+                      />
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-            {items.length === 0 ? <p>{t('inventory.noItems')}</p> : null}
-          </div>
+            </div>
+          )}
           </ErrorBoundary>
         )}
       </section>

@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.2.1
+Version:        1.3.0
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -64,6 +64,20 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Mon Jul 06 2026 Aster <support@aetherassembly.org> - 1.3.0-1
+- Add virtual scrolling to the inventory list so only visible cards are
+  rendered, reducing layout jank on large inventories and lower-end hardware.
+- Add Husky + lint-staged pre-commit hook; ESLint runs automatically on staged
+  .ts/.tsx files before every commit. Run npm install once to activate.
+- Extend unit test suite to 102 tests covering calculateExpiryStatus boundary
+  conditions, normalizeDate format variants, getShoppingList threshold logic,
+  and getFrequentItems sorting and limit behaviour.
+- Add docs/data-model.md: dedicated InventoryItem field reference linked from
+  the README Docs section.
+- Add docs/demo-data.json: 15-item sample dataset covering all three locations
+  and all three expiry statuses, importable via Data -> Import JSON.
+- Untrack packages/core/coverage/ from git and add an explicit .gitignore entry.
+
 * Thu Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.1-1
 - Rename workspace packages from `@before-its-gone/core` and `@before-its-gone/ui`
   to `@aetherAssembly/big-core` and `@aetherAssembly/big-ui` so the npm scope

@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   validate:
@@ -26,9 +27,12 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: package-lock.json
+          registry-url: https://npm.pkg.github.com
 
       - name: Install
         run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lint
         run: npm run lint

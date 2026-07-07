@@ -9,6 +9,7 @@
 [![Copr build status](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/)
 [![OBS build status](https://build.opensuse.org/projects/home:aster1630/packages/before-its-gone/badge.svg?type=default)](https://build.opensuse.org/package/show/home:aster1630/before-its-gone)
 [![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://aetherassembly.org/wiki/before-its-gone)
+[![GitLab Mirror](https://img.shields.io/badge/mirror-GitLab-FC6D26?logo=gitlab&logoColor=white)](https://gitlab.com/Aster1630/Before-Its-Gone)
 
 Offline-first app — desktop (Electron) or self-hosted PWA. No account required; all data stays on your device.
 
@@ -19,6 +20,45 @@ Offline-first app — desktop (Electron) or self-hosted PWA. No account required
 Track expiry dates and get notified before things go off. Includes a shopping list, waste log, recipe suggestions, optional email digests, and opt-in Supabase cloud sync. Dark/light mode, drag-and-drop, and keyboard shortcuts. Barcode scanning works in both modes: in-browser camera on the PWA, phone-relay on the desktop.
 
 Everything runs locally; the only outbound requests are Open Food Facts (barcode lookup), TheMealDB (recipe suggestions), and your own Supabase project if you enable sync.
+
+---
+
+## Screenshots
+
+<details>
+<summary>Inventory list</summary>
+
+![Inventory list](docs/screenshots/inventory-list.png)
+
+</details>
+
+<details>
+<summary>Add item</summary>
+
+![Add item](docs/screenshots/inventory.png)
+
+</details>
+
+<details>
+<summary>Charts</summary>
+
+![Charts](docs/screenshots/charts.png)
+
+</details>
+
+<details>
+<summary>Shopping list</summary>
+
+![Shopping list](docs/screenshots/shopping-list.png)
+
+</details>
+
+<details>
+<summary>Settings</summary>
+
+![Settings](docs/screenshots/settings.png)
+
+</details>
 
 ---
 
@@ -107,7 +147,7 @@ docker run -d -p 8080:80 --name before-its-gone ghcr.io/aetherAssembly/before-it
 Then open `http://localhost:8080` (or your server's IP). Pin a specific release with a version tag:
 
 ```bash
-docker pull ghcr.io/aetherAssembly/before-its-gone:1.2.1
+docker pull ghcr.io/aetherAssembly/before-its-gone:1.3.0
 ```
 
 **With Caddy** (automatic HTTPS):
@@ -169,7 +209,7 @@ npm install @aetherAssembly/ui
 
 ---
 
-## Development
+## Development / Build From Source
 
 ### Prerequisites
 
@@ -205,6 +245,7 @@ npm run docker:pwa:down  # Stop the container
 ## Docs
 
 - [Architecture](docs/architecture.md): monorepo layout, storage map, IPC channels, build pipeline
+- [Data Model](docs/data-model.md): `InventoryItem` field reference
 - [Import & Export Format](docs/import-export-format.md): JSON, CSV, and barcode-list field reference
 - [Email Notifications](docs/email-notifications.md): Resend and SMTP setup, digest scheduling, pause/snooze
 - [Cloud Sync](docs/cloud-sync.md): Supabase project setup, SQL migration, and sync behaviour

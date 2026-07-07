@@ -20,6 +20,7 @@ import {
   parseInventoryCSV,
   parseInventoryJSON,
   updateInventoryItem,
+  getFrequentItems,
 } from '../inventory';
 import type { InventoryItem } from '../models';
 
@@ -734,5 +735,162 @@ describe('createInventoryItem with existing item history', () => {
 
     const saved = mockUpsertItemHistory.mock.calls[0][0];
     expect(saved.useCount).toBe(4);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// calculateExpiryStatus: additional edge cases
+// ---------------------------------------------------------------------------
+
+describe('calculateExpiryStatus (additional edge cases)', () => {
+  const now = new Date('2025-06-15T12:00:00Z');
+
+  it('returns expiring-soon when item expires exactly today (msRemaining = 0)', () => {
+    // Same instant as now → msRemaining = 0 which is <= warningWindowDays * dayMs
+    const today = now.toISOString();
+    expect(calculateExpiryStatus(today, 2, now)).toBe('expiring-soon');
+  });
+
+  it('returns expiring-soon when item expires in exactly warningWindowDays days', () => {
+    const warningWindowDays = 3;
+    const exactBoundary = new Date(now.getTime() + warningWindowDays * 24 * 60 * 60 * 1000).toISOString();
+    expect(calculateExpiryStatus(exactBoundary, warningWindowDays, now)).toBe('expiring-soon');
+  });
+
+  it('returns fresh when item expires one ms beyond the warning window', () => {
+    const warningWindowDays = 3;
+    const justOutside = new Date(now.getTime() + warningWindowDays * 24 * 60 * 60 * 1000 + 1).toISOString();
+    expect(calculateExpiryStatus(justOutside, warningWindowDays, now)).toBe('fresh');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeDate: additional edge cases
+// ---------------------------------------------------------------------------
+
+describe('normalizeDate (additional edge cases)', () => {
+  const expectDate = (input: string, expectedDate: string) => {
+    const result = normalizeDate(input);
+    expect(result).not.toBeNull();
+    expect(result!.slice(0, 10)).toBe(expectedDate);
+    expect(result).toMatch(/T23:59:59\.000Z$/);
+  };
+
+  it('accepts MM/DD/YYYY format (additional explicit check)', () =>
+    expectDate('12/25/2025', '2025-12-25'));
+
+  it('accepts "Month DD, YYYY" format with full month name', () =>
+    expectDate('December 25, 2025', '2025-12-25'));
+
+  it('returns null for an invalid date string like "not-a-date"', () =>
+    expect(normalizeDate('not-a-date')).toBeNull());
+
+  it('returns null for an empty string', () =>
+    expect(normalizeDate('')).toBeNull());
+});
+
+// ---------------------------------------------------------------------------
+// getShoppingList: additional edge cases
+// ---------------------------------------------------------------------------
+
+describe('getShoppingList (additional edge cases)', () => {
+  it('excludes an item whose quantity is above its threshold', () => {
+    const items = [makeItem({ id: '1', quantity: 10, depletionThreshold: 2 })];
+    expect(getShoppingList(items)).toHaveLength(0);
+  });
+
+  it('includes an item whose quantity equals its threshold', () => {
+    const items = [makeItem({ id: '1', quantity: 2, depletionThreshold: 2 })];
+    const result = getShoppingList(items);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
+
+  it('includes an item whose quantity is below its threshold', () => {
+    const items = [makeItem({ id: '1', quantity: 1, depletionThreshold: 3 })];
+    const result = getShoppingList(items);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('1');
+  });
+
+  it('returns an empty array for an empty inventory', () => {
+    expect(getShoppingList([])).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getFrequentItems
+// ---------------------------------------------------------------------------
+
+const mockListItemHistory = vi.mocked(storage.listItemHistory);
+
+describe('getFrequentItems', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function makeHistory(id: string, useCount: number, lastUsedAt = '2025-01-01T00:00:00Z') {
+    return {
+      id,
+      name: `Item ${id}`,
+      barcode: null,
+      location: 'fridge' as const,
+      shelfLifeDays: 7,
+      category: null,
+      lastUsedAt,
+      useCount,
+    };
+  }
+
+  it('returns items sorted by useCount descending', async () => {
+    mockListItemHistory.mockResolvedValue([
+      makeHistory('a', 3),
+      makeHistory('b', 10),
+      makeHistory('c', 1),
+    ]);
+    const result = await getFrequentItems(10);
+    expect(result.map((h) => h.id)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('respects the limit parameter', async () => {
+    mockListItemHistory.mockResolvedValue([
+      makeHistory('a', 5),
+      makeHistory('b', 4),
+      makeHistory('c', 3),
+      makeHistory('d', 2),
+    ]);
+    const result = await getFrequentItems(2);
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('a');
+    expect(result[1].id).toBe('b');
+  });
+
+  it('defaults limit to 5 when not provided', async () => {
+    mockListItemHistory.mockResolvedValue([
+      makeHistory('a', 10),
+      makeHistory('b', 9),
+      makeHistory('c', 8),
+      makeHistory('d', 7),
+      makeHistory('e', 6),
+      makeHistory('f', 5),
+    ]);
+    const result = await getFrequentItems();
+    expect(result).toHaveLength(5);
+  });
+
+  it('returns empty array when there is no history', async () => {
+    mockListItemHistory.mockResolvedValue([]);
+    const result = await getFrequentItems();
+    expect(result).toEqual([]);
+  });
+
+  it('breaks useCount ties by lastUsedAt descending', async () => {
+    mockListItemHistory.mockResolvedValue([
+      makeHistory('older', 5, '2025-01-01T00:00:00Z'),
+      makeHistory('newer', 5, '2025-06-01T00:00:00Z'),
+    ]);
+    const result = await getFrequentItems(5);
+    expect(result[0].id).toBe('newer');
+    expect(result[1].id).toBe('older');
   });
 });
