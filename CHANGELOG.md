@@ -6,6 +6,13 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ## [1.3.1-beta.1] - Unreleased Beta
 
+### Added
+
+- **Beta release channel:** CI now builds and publishes a separate beta release for any tag matching `vX.X.X-beta.X`. Beta builds use a distinct package name (`before-its-gone-beta`) to avoid conflicts with stable across apt, RPM, and electron-builder targets.
+- **Beta auto-updater:** the Electron auto-updater detects beta builds at startup and switches to the `beta` update channel, so beta users receive beta updates and stable users are never prompted to install a prerelease.
+- **Beta apt distribution:** the apt repo at `apt.aetherassembly.org` now has a separate `beta` distribution. Users can opt in without affecting their stable install.
+- **Beta COPR and OBS projects:** separate `aster1630/before-its-gone-beta` COPR project and `home:aster1630:before-its-gone-beta` OBS project for rpm beta packaging.
+
 ### Changed
 
 - **App icon:** replaced the placeholder icon with the BIG carrot rocket logo across all targets (Electron, PWA 192px/512px, Linux release bundles). SVG and PNG assets updated.

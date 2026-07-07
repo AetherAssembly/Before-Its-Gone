@@ -42,5 +42,23 @@ jobs:
             FAIL=true
           fi
 
+          # If this is a prerelease, also check the beta spec. The beta spec
+          # stores the base version in Version: and the prerelease identifier
+          # in %global prerelease, e.g. Version: 1.3.1 + prerelease beta.1
+          # reconstructs to 1.3.1-beta.1.
+          if [[ "$PKG_VER" == *"-"* ]]; then
+            BETA_SPEC="docs/packaging/linux/fedora/beta/before-its-gone.spec"
+            BETA_SPEC_VER=$(grep -m1 '^Version:' "$BETA_SPEC" | awk '{print $2}')
+            BETA_PRERELEASE=$(grep -m1 '^%global prerelease' "$BETA_SPEC" | awk '{print $3}')
+            BETA_FULL_VER="${BETA_SPEC_VER}-${BETA_PRERELEASE}"
+
+            echo "beta spec         : $BETA_FULL_VER (Version: $BETA_SPEC_VER, prerelease: $BETA_PRERELEASE)"
+
+            if [ "$BETA_FULL_VER" != "$PKG_VER" ]; then
+              echo "::error file=$BETA_SPEC::beta spec reconstructed version ($BETA_FULL_VER) does not match package.json ($PKG_VER)"
+              FAIL=true
+            fi
+          fi
+
           if [ "$FAIL" = "true" ]; then exit 1; fi
           echo "All versions consistent: $PKG_VER"
