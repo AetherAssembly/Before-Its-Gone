@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.3.1] - Unreleased Beta
+
+### Changed
+
+- **App icon:** replaced the placeholder icon with the BIG carrot rocket logo across all targets (Electron, PWA 192px/512px, Linux release bundles). SVG and PNG assets updated.
+
+---
+
 ## [1.3.0] - 2026-07-06
 
 ### Added
