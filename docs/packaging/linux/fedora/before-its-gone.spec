@@ -64,7 +64,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
-* Mon Jul 07 2026 Aster <support@aetherassembly.org> - 1.3.1-beta.1-1
+* Tue Jul 07 2026 Aster <support@aetherassembly.org> - 1.3.1-beta.1-1
 - Replace placeholder app icon with the BIG carrot rocket logo across all
   targets: Electron asset, PWA icons (192px, 512px), and Linux release bundles.
 
