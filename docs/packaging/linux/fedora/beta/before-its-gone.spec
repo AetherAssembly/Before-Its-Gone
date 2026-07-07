@@ -7,12 +7,12 @@
 # The app under /opt is a self-contained Electron/Chromium bundle, same as
 # upstream ships it. Don't let rpmbuild scan its private .so files for
 # auto-Requires/Provides -- that produces noisy and sometimes wrong deps.
-%global __requires_exclude_from ^/opt/Before-Its-Gone/.*$
-%global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
+%global __requires_exclude_from ^/opt/Before-Its-Gone-Beta/.*$
+%global __provides_exclude_from ^/opt/Before-Its-Gone-Beta/.*$
 
 %global prerelease beta.1
 
-Name:           before-its-gone
+Name:           before-its-gone-beta
 Version:        1.3.1
 Release:        0.1.%{prerelease}%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
@@ -25,8 +25,8 @@ URL:            https://github.com/AetherAssembly/Before-Its-Gone
 # fetches sources once at import time, not per build-chroot -- a single
 # %%{_arch}-templated Source0 only ever caches the importer's own arch and
 # breaks every other chroot's build.
-Source0:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}-%{prerelease}/before-its-gone-%{version}-%{prerelease}-x86_64.rpm
-Source1:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}-%{prerelease}/before-its-gone-%{version}-%{prerelease}-aarch64.rpm
+Source0:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}-%{prerelease}/before-its-gone-beta-%{version}-%{prerelease}-x86_64.rpm
+Source1:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}-%{prerelease}/before-its-gone-beta-%{version}-%{prerelease}-aarch64.rpm
 
 Requires:       hicolor-icon-theme
 BuildRequires:  hicolor-icon-theme
@@ -61,9 +61,9 @@ cp -a usr %{buildroot}/
 rm -rf %{buildroot}/usr/lib/.build-id
 
 %files
-/opt/Before-Its-Gone
-/usr/share/applications/%{name}.desktop
-/usr/share/icons/hicolor/*/apps/%{name}.png
+/opt/Before-Its-Gone-Beta
+/usr/share/applications/before-its-gone.desktop
+/usr/share/icons/hicolor/*/apps/before-its-gone.png
 
 %changelog
 * Tue Jul 07 2026 Aster <support@aetherassembly.org> - 1.3.1-beta.1-1
@@ -85,7 +85,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
   and all three expiry statuses, importable via Data -> Import JSON.
 - Untrack packages/core/coverage/ from git and add an explicit .gitignore entry.
 
-* Thu Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.1-1
+* Fri Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.1-1
 - Rename workspace packages from `@before-its-gone/core` and `@before-its-gone/ui`
   to `@aetherAssembly/big-core` and `@aetherAssembly/big-ui` so the npm scope
   matches the AetherAssembly GitHub org and publishing to GitHub Packages succeeds.
