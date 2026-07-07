@@ -9,8 +9,8 @@
 [![apt stable](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version.json)](https://apt.aetherassembly.org)
 [![apt beta](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version-beta.json)](https://apt.aetherassembly.org)
 
-[![Copr build status](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/)
-[![OBS build status](https://build.opensuse.org/projects/home:aster1630/packages/before-its-gone/badge.svg?type=default)](https://build.opensuse.org/package/show/home:aster1630/before-its-gone)
+[![Copr build status](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone-beta/package/before-its-gone-beta/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone-beta/package/before-its-gone-beta/)
+[![OBS build status](https://build.opensuse.org/projects/home:aster1630/packages/before-its-gone-beta/badge.svg?type=default)](https://build.opensuse.org/package/show/home:aster1630/before-its-gone-beta)
 [![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://aetherassembly.org/wiki/before-its-gone)
 [![GitLab Mirror](https://img.shields.io/badge/mirror-GitLab-FC6D26?logo=gitlab&logoColor=white)](https://gitlab.com/Aster1630/Before-Its-Gone)
 
