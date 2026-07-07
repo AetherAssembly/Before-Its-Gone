@@ -3,8 +3,11 @@
 > Track what's in your fridge, freezer, and pantry before it expires.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/AetherAssembly/Before-Its-Gone/ci.yml?label=CI)](https://github.com/AetherAssembly/Before-Its-Gone/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?include_prereleases&label=release)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
+[![Release](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?label=stable)](https://github.com/AetherAssembly/Before-Its-Gone/releases/latest)
+[![Beta](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?include_prereleases&filter=*-beta*&label=beta&color=orange)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![apt stable](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version.json)](https://apt.aetherassembly.org)
+[![apt beta](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version-beta.json)](https://apt.aetherassembly.org)
 
 [![Copr build status](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone/package/before-its-gone/)
 [![OBS build status](https://build.opensuse.org/projects/home:aster1630/packages/before-its-gone/badge.svg?type=default)](https://build.opensuse.org/package/show/home:aster1630/before-its-gone)

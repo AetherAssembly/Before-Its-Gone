@@ -18,7 +18,7 @@ sudo dnf install before-its-gone
 Download `before-its-gone-<version>-x86_64.rpm` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo dnf install ./before-its-gone-1.2.1-x86_64.rpm
+sudo dnf install ./before-its-gone-1.3.1-beta.1-x86_64.rpm
 ```
 
 ## Uninstall
@@ -34,3 +34,16 @@ Tested against Fedora 42 and later, CentOS Stream 9/10, and Mageia 9. Fedora 40/
 ## Maintainers
 
 - Aster — `aster1630@aetherassembly.org`
+
+## Beta / pre-release builds
+
+Beta builds are published to a separate COPR project: [aster1630/before-its-gone-beta](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone-beta/). Enable it alongside (or instead of) the stable project:
+
+```bash
+sudo dnf copr enable aster1630/before-its-gone-beta
+sudo dnf install before-its-gone
+```
+
+The spec for the beta COPR project lives at `docs/packaging/linux/fedora/beta/` in the repo. Its `Version:` carries the base version (e.g. `1.3.1`) and `Release:` uses the `0.X.beta.Y` convention so RPM correctly sorts betas below the eventual stable release.
+
+The in-app updater on beta builds automatically checks the `beta` update channel and will offer newer betas as they are published.

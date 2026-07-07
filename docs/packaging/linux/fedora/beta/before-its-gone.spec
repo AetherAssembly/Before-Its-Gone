@@ -10,9 +10,11 @@
 %global __requires_exclude_from ^/opt/Before-Its-Gone/.*$
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
+%global prerelease beta.1
+
 Name:           before-its-gone
-Version:        1.3.0
-Release:        1%{?dist}
+Version:        1.3.1
+Release:        0.1.%{prerelease}%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
 License:        AGPL-3.0-only
@@ -23,8 +25,8 @@ URL:            https://github.com/AetherAssembly/Before-Its-Gone
 # fetches sources once at import time, not per build-chroot -- a single
 # %%{_arch}-templated Source0 only ever caches the importer's own arch and
 # breaks every other chroot's build.
-Source0:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}/before-its-gone-%{version}-x86_64.rpm
-Source1:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}/before-its-gone-%{version}-aarch64.rpm
+Source0:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}-%{prerelease}/before-its-gone-%{version}-%{prerelease}-x86_64.rpm
+Source1:        https://github.com/AetherAssembly/Before-Its-Gone/releases/download/v%{version}-%{prerelease}/before-its-gone-%{version}-%{prerelease}-aarch64.rpm
 
 Requires:       hicolor-icon-theme
 BuildRequires:  hicolor-icon-theme

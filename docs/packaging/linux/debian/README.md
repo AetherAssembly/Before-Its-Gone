@@ -1,4 +1,4 @@
-# Debian Packaging
+# Debian / Ubuntu / Raspberry Pi Packaging
 
 Before It's Gone ships a `.deb` package built by electron-builder on every tagged release.
 
@@ -24,7 +24,7 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 Download `before-its-gone-<version>-amd64.deb` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo apt install ./before-its-gone-1.2.1-amd64.deb
+sudo apt install ./before-its-gone-1.3.0-amd64.deb
 ```
 
 Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
@@ -48,3 +48,18 @@ Tested against Debian 13 (Trixie). Debian 12 (Bookworm) should work but is not o
 ## Maintainers
 
 - Aster — `aster1630@aetherassembly.org`
+
+## Beta / pre-release builds
+
+Beta builds are published to a separate `beta` distribution in the same apt repo. To opt in:
+
+```bash
+echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org beta main" \
+  | sudo tee /etc/apt/sources.list.d/beforeitsgone-beta.list
+
+sudo apt update && sudo apt install before-its-gone-beta
+```
+
+The beta package is named `before-its-gone-beta` so it can coexist alongside stable — installing one won't remove the other, though the `Conflicts` field prevents running both at the same time. To switch back to stable, remove `before-its-gone-beta` and install `before-its-gone`.
+
+The in-app updater on beta builds automatically checks the `beta` update channel and will offer newer betas as they are published.
