@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
-## [1.3.1-beta.1] - Unreleased Beta
+## [1.3.1-beta.1] - 2026-07-07
 
 ### Added
 
