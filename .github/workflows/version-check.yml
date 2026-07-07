@@ -31,9 +31,16 @@ jobs:
           echo "CHANGELOG.md      : $CHANGELOG_VER"
 
           FAIL=false
-          if [ "$PKG_VER_BASE" != "$SPEC_VER" ]; then
-            echo "::error file=docs/packaging/linux/fedora/before-its-gone.spec::spec Version: ($SPEC_VER) does not match package.json base version ($PKG_VER_BASE)"
-            FAIL=true
+          # Skip the stable spec check on prerelease versions — the stable spec
+          # only gets bumped on stable releases, so it will always lag behind
+          # during a beta cycle.
+          if [[ "$PKG_VER" != *"-"* ]]; then
+            if [ "$PKG_VER_BASE" != "$SPEC_VER" ]; then
+              echo "::error file=docs/packaging/linux/fedora/before-its-gone.spec::spec Version: ($SPEC_VER) does not match package.json base version ($PKG_VER_BASE)"
+              FAIL=true
+            fi
+          else
+            echo "spec file         : skipped (prerelease build)"
           fi
           # CHANGELOG top entry must match the full package.json version
           # including any prerelease suffix (e.g. 1.3.1-beta.1).
