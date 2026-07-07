@@ -454,3 +454,18 @@ jobs:
             --notes-file release-body.md \
             --draft=false \
             $PRERELEASE_FLAG
+
+  trigger-copr:
+    name: Trigger COPR rebuild
+    needs: [create-release, publish-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger COPR webhook
+        run: |
+          if [[ "${{ needs.create-release.outputs.is_beta }}" == "true" ]]; then
+            curl -sf -X POST \
+              "https://copr.fedorainfracloud.org/webhooks/github/241179/${{ secrets.COPR_WEBHOOK_TOKEN_BETA }}/before-its-gone-beta/"
+          else
+            curl -sf -X POST \
+              "https://copr.fedorainfracloud.org/webhooks/github/241179/${{ secrets.COPR_WEBHOOK_TOKEN }}/before-its-gone/"
+          fi
