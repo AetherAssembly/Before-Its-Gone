@@ -1,7 +1,7 @@
 {
   "name": "before-its-gone",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Before It's Gone: cross-platform food expiry tracker for Linux, macOS, and Windows",
   "workspaces": [
     "apps/*",
@@ -22,9 +22,13 @@
     "package:linux": "npm run build:electron && npm --workspace apps/electron run package:linux",
     "package:linux:rpm": "npm run build:electron && npm --workspace apps/electron run package:linux:rpm",
     "package:linux:arm64": "npm run build:electron && npm --workspace apps/electron run package:linux:arm64",
+    "package:linux:beta": "npm run build:electron && npm --workspace apps/electron run package:linux:beta",
+    "package:linux:arm64:beta": "npm run build:electron && npm --workspace apps/electron run package:linux:arm64:beta",
     "test:rpm-spec": "bash scripts/test-rpm-spec.sh",
     "package:macos": "npm run build:electron && npm --workspace apps/electron run package:macos",
+    "package:macos:beta": "npm run build:electron && npm --workspace apps/electron run package:macos:beta",
     "package:windows": "npm run build:electron && npm --workspace apps/electron run package:windows",
+    "package:windows:beta": "npm run build:electron && npm --workspace apps/electron run package:windows:beta",
     "package:appimage": "npm run build:electron && npm --workspace apps/electron run package:appimage",
     "checksum:linux": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>['.AppImage','.deb','.rpm'].some(e=>f.endsWith(e)));if(!files.length){console.log('No Linux artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",
     "checksum:windows": "node -e \"const{createHash}=require('crypto'),fs=require('fs'),p=require('path'),dir='release';if(!fs.existsSync(dir)){console.error('release/ not found');process.exit(0);}const files=fs.readdirSync(dir).filter(f=>f.endsWith('.exe'));if(!files.length){console.log('No Windows artifacts found in release/.');process.exit(0);}files.forEach(f=>{const h=createHash('sha256').update(fs.readFileSync(p.join(dir,f))).digest('hex');console.log(h+'  '+f);});\"",

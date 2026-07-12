@@ -20,3 +20,9 @@ Tested against current CachyOS (rolling release). Any up-to-date Arch install sh
 ## Maintainers
 
 - Aster — `aster1630@aetherassembly.org`
+
+## Beta / pre-release builds
+
+Beta releases do **not** generate an automatic PKGBUILD — the CI skips that step for `vX.X.X-beta.X` tags. To install a beta manually, download the `.AppImage` from the pre-release on the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page and run it directly, or write your own `PKGBUILD` pointing at the beta assets.
+
+The in-app updater on beta builds automatically checks the `beta` update channel and will offer newer betas as they are published.

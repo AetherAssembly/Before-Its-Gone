@@ -1,9 +1,13 @@
 name: Mirror to GitLab
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
       - main
+      - beta
       - dev
 
 jobs:

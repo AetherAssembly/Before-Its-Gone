@@ -51,6 +51,13 @@ app.setAppUserModelId('com.beforeitsgone.app');
 autoUpdater.autoDownload = true;
 autoUpdater.allowDowngrade = false;
 
+// Route beta builds to the beta update channel so they only receive
+// beta updates and don't accidentally pull stable releases.
+if (app.getVersion().includes('-beta')) {
+  autoUpdater.channel = 'beta';
+  autoUpdater.allowPrerelease = true;
+}
+
 performance.mark('main-init-start');
 
 function getRendererEntryPoint(): string {
