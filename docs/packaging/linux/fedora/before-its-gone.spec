@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.3.0
+Version:        1.3.1
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
