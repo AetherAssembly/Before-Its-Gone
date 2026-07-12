@@ -25,7 +25,7 @@
     "package:linux:arm64:beta": "electron-builder --config electron-builder.linux.beta.yml --linux --arm64 --publish never -c.electronVersion=43.0.0",
     "package:macos": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.yml --mac dmg --publish never -c.electronVersion=43.0.0",
     "package:macos:beta": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && electron-builder --config electron-builder.macos.beta.yml --mac dmg --publish never -c.electronVersion=43.0.0",
-    "package:windows": "npm run build:electron && npm --workspace apps/electron run package:windows",
+    "package:windows": "node -e \"require('fs').mkdirSync('../../release', {recursive: true})\" && npm run build && electron-builder --config electron-builder.windows.yml --win nsis portable --publish never -c.electronVersion=43.0.0",
     "package:windows:beta": "electron-builder --config electron-builder.windows.beta.yml --win nsis portable --publish never -c.electronVersion=43.0.0",
     "publish:linux": "electron-builder --config electron-builder.linux.yml --linux --publish always -c.electronVersion=43.0.0",
     "publish:linux:arm64": "electron-builder --config electron-builder.linux.yml --linux --arm64 --publish always -c.electronVersion=43.0.0",
