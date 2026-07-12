@@ -23,6 +23,8 @@ Use GitHub private vulnerability reporting if enabled for this repository, or co
 - **Contact form:** [https://forms.gle/T4i7GGzaT3HUrffm9](https://forms.gle/T4i7GGzaT3HUrffm9)
 - **Aster (GitHub):** [@Aster1630](https://github.com/Aster1630)
 
+<iframe src="https://discord.com/widget?id=1478549021982330992&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+
 Please include in your report:
 
 - A clear description of the issue

@@ -20,6 +20,11 @@ Download `before-its-gone-<version>-x86_64.rpm` from the [Releases](https://gith
 
 ```bash
 sudo zypper install ./before-its-gone-1.3.1-beta.1-x86_64.rpm
+
+# or
+
+sudo zypper install ./before-its-gone-1.3.1-arm64.rpm
+
 ```
 
 ## Uninstall
