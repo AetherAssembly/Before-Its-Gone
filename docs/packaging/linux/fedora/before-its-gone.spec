@@ -87,7 +87,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
   and all three expiry statuses, importable via Data -> Import JSON.
 - Untrack packages/core/coverage/ from git and add an explicit .gitignore entry.
 
-* Thu Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.1-1
+* Fri Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.1-1
 - Rename workspace packages from `@before-its-gone/core` and `@before-its-gone/ui`
   to `@aetherAssembly/big-core` and `@aetherAssembly/big-ui` so the npm scope
   matches the AetherAssembly GitHub org and publishing to GitHub Packages succeeds.
