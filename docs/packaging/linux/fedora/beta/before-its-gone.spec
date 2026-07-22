@@ -13,7 +13,7 @@
 %global prerelease beta.1
 
 Name:           before-its-gone-beta
-Version:        1.3.1
+Version:        1.3.2
 Release:        0.1.%{prerelease}%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
