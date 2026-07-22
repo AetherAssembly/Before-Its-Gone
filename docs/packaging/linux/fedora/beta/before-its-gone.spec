@@ -66,6 +66,15 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/before-its-gone.png
 
 %changelog
+* Wed Jul 22 2026 Aster <support@aetherassembly.org> - 1.3.2-beta.1-1
+- Fix app icon rendering at small sizes on Windows, macOS, and Linux: the
+  1.3.1 icon only filled the top-left corner of its 512x512 canvas, leaving
+  the rest transparent, so taskbar/dock/panel sizes (16-48px) looked
+  off-center or broken. PNG assets re-rendered to fill the full canvas.
+- Add a dedicated Recipes tab: recipe suggestions (TheMealDB, triggered when
+  3+ items are expiring or expired) now appear there instead of an inline
+  dismissible banner, with a badge on the tab showing the suggestion count.
+
 * Tue Jul 07 2026 Aster <support@aetherassembly.org> - 1.3.1-beta.1-1
 - Replace placeholder app icon with the BIG carrot rocket logo across all
   targets: Electron asset, PWA icons (192px, 512px), and Linux release bundles.
