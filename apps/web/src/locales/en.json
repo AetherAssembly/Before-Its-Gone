@@ -8,6 +8,7 @@
     "inventory": "Inventory",
     "shoppingList": "Shopping List",
     "wasteLog": "Waste Log",
+    "recipes": "Recipes",
     "settings": "Settings"
   },
   "inventory": {

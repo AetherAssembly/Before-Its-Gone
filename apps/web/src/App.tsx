@@ -176,7 +176,7 @@ function getExpiringThisWeek(items: InventoryItem[]): number {
 function App() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<AppSettings>(getInitialSettings);
-  const [activeTab, setActiveTab] = useState<'inventory' | 'shopping' | 'waste' | 'settings'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'shopping' | 'waste' | 'recipes' | 'settings'>('inventory');
   const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem(THEME_KEY) as 'dark' | 'light') ?? 'dark');
   const [wasteLog, setWasteLog] = useState<WasteLogEntry[]>([]);
 
@@ -261,7 +261,6 @@ function App() {
 
   type RecipeSuggestion = { idMeal: string; strMeal: string; strMealThumb: string };
   const [recipeBanner, setRecipeBanner] = useState<RecipeSuggestion[] | null>(null);
-  const RECIPE_DISMISS_KEY = 'before-its-gone.recipe-dismissed';
   const [appVersion, setAppVersion] = useState(() => import.meta.env.VITE_APP_VERSION ?? '');
   const [updateBanner, setUpdateBanner] = useState<{
     version: string;
@@ -431,8 +430,6 @@ function App() {
 
   useEffect(() => {
     if (expiringCount < 3) return;
-    const dismissedDate = localStorage.getItem(RECIPE_DISMISS_KEY);
-    if (dismissedDate === new Date().toISOString().slice(0, 10)) return;
 
     const firstExpiring = allItems.find((i) => calculateExpiryStatus(i.expiresAt, settings.expiryWarningDays) !== 'fresh');
     if (!firstExpiring) return;
@@ -507,7 +504,7 @@ function App() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const doBarcodeLookup = async (barcode: string) => {
+  const doBarcodeLookup = useCallback(async (barcode: string) => {
     const trimmed = barcode.trim();
     if (!trimmed) return;
 
@@ -532,7 +529,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast]);
 
   const onBarcodeBlur = () => { void doBarcodeLookup(form.barcode); };
 
@@ -569,7 +566,7 @@ function App() {
     setField('barcode', barcode);
     void doBarcodeLookup(barcode);
     setPwaScanOpen(false);
-  }, []);
+  }, [doBarcodeLookup]);
 
   const onClosePwaScan = useCallback(() => setPwaScanOpen(false), []);
 
@@ -984,35 +981,6 @@ function App() {
         <button className="update-banner-dismiss" onClick={() => setEmailPaused(false)} aria-label="Dismiss">&times;</button>
       </div>
     )}
-    {recipeBanner && recipeBanner.length > 0 && expiringCount >= 3 && (
-      <div className="recipe-banner">
-        <div className="recipe-banner-header">
-          <span>Use your expiring items - recipe ideas:</span>
-          <button
-            className="update-banner-dismiss"
-            onClick={() => {
-              localStorage.setItem(RECIPE_DISMISS_KEY, new Date().toISOString().slice(0, 10));
-              setRecipeBanner(null);
-            }}
-            aria-label="Dismiss"
-          >&times;</button>
-        </div>
-        <div className="recipe-cards">
-          {recipeBanner.map((meal) => (
-            <a
-              key={meal.idMeal}
-              className="recipe-card"
-              href={`https://www.themealdb.com/meal/${meal.idMeal}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <img src={meal.strMealThumb + '/preview'} alt={meal.strMeal} className="recipe-thumb" />
-              <span className="recipe-name">{meal.strMeal}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    )}
     <a href="#main-content" className="skip-link">Skip to main content</a>
     <main className="app-shell" id="main-content">
       <header className="app-header">
@@ -1102,6 +1070,18 @@ function App() {
         <button
           type="button"
           role="tab"
+          id="tab-recipes"
+          aria-selected={activeTab === 'recipes'}
+          aria-controls="panel-recipes"
+          className="tab-btn"
+          data-active={activeTab === 'recipes' ? 'true' : undefined}
+          onClick={() => setActiveTab('recipes')}
+        >
+          {t('tabs.recipes')}{recipeBanner && recipeBanner.length > 0 && expiringCount >= 3 && <span className="tab-badge" aria-hidden="true">{recipeBanner.length}</span>}{recipeBanner && recipeBanner.length > 0 && expiringCount >= 3 && <span className="sr-only">, {recipeBanner.length} suggestions</span>}
+        </button>
+        <button
+          type="button"
+          role="tab"
           id="tab-settings"
           aria-selected={activeTab === 'settings'}
           aria-controls="panel-settings"
@@ -1185,6 +1165,35 @@ function App() {
                 >
                   Clear waste log
                 </button>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
+      {activeTab === 'recipes' && (
+        <section className="panel" role="tabpanel" id="panel-recipes" aria-labelledby="tab-recipes" tabIndex={0}>
+          <h2>Recipe Ideas</h2>
+          {expiringCount < 3 ? (
+            <p className="status-msg">Recipe suggestions appear once 3 or more items are expiring soon or expired.</p>
+          ) : !recipeBanner || recipeBanner.length === 0 ? (
+            <p className="status-msg">No recipe suggestions found for your expiring items right now.</p>
+          ) : (
+            <>
+              <p className="status-msg">Use your expiring items - recipe ideas:</p>
+              <div className="recipe-cards">
+                {recipeBanner.map((meal) => (
+                  <a
+                    key={meal.idMeal}
+                    className="recipe-card"
+                    href={`https://www.themealdb.com/meal/${meal.idMeal}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img src={meal.strMealThumb + '/preview'} alt={meal.strMeal} className="recipe-thumb" />
+                    <span className="recipe-name">{meal.strMeal}</span>
+                  </a>
+                ))}
               </div>
             </>
           )}
