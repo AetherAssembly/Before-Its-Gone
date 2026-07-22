@@ -19,7 +19,7 @@ Tested against current CachyOS (rolling release). Any up-to-date Arch install sh
 
 ## Maintainers
 
-- Aster — `aster1630@aetherassembly.org`
+- Aster — `support@aetherassembly.org`
 
 ## Beta / pre-release builds
 

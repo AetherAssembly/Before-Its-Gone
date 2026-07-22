@@ -33,7 +33,7 @@ Tested against Fedora 42 and later, CentOS Stream 9/10, and Mageia 9. Fedora 40/
 
 ## Maintainers
 
-- Aster — `aster1630@aetherassembly.org`
+- Aster — `support@aetherassembly.org`
 
 ## Beta / pre-release builds
 

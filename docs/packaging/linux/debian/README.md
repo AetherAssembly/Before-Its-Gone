@@ -47,7 +47,7 @@ Tested against Debian 13 (Trixie). Debian 12 (Bookworm) should work but is not o
 
 ## Maintainers
 
-- Aster — `aster1630@aetherassembly.org`
+- Aster — `support@aetherassembly.org`
 
 ## Beta / pre-release builds
 
