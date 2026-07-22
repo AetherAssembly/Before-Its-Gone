@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.3.2-beta.1] - 2026-07-22
+
+### Added
+
+- **Recipes tab:** recipe suggestions (TheMealDB, triggered when 3+ items are expiring or expired) now live in a dedicated **Recipes** tab instead of an inline dismissible banner. The tab shows a badge with the suggestion count.
+
+### Fixed
+
+- **App icon rendering wrong at small sizes:** the icon shipped in 1.3.1 only filled the top-left ~301x301 px of its 512x512 canvas, leaving the rest transparent. At taskbar/dock/panel sizes (16-48px) this made the icon look off-center or broken on Windows, macOS, and Linux alike. The PNG has been re-rendered to fill the full canvas; the SVG sources were already correct and are unaffected.
+
+## [1.3.1] - 2026-07-11
+
+### Added
+
+- **Beta release channel:** CI now builds and publishes a separate beta release for any tag matching `vX.X.X-beta.X`. Beta builds use a distinct package name (`before-its-gone-beta`) to avoid conflicts with stable across apt, RPM, and electron-builder targets.
+- **Beta auto-updater:** the Electron auto-updater detects beta builds at startup and switches to the `beta` update channel, so beta users receive beta updates and stable users are never prompted to install a prerelease.
+- **Beta apt distribution:** the apt repo at `apt.aetherassembly.org` now has a separate `beta` distribution. Users can opt in without affecting their stable install.
+- **Beta COPR and OBS projects:** separate `aster1630/before-its-gone-beta` COPR project and `home:aster1630:before-its-gone-beta` OBS project for rpm beta packaging.
+
+### Changed
+
+- **App icon:** replaced the placeholder icon with the BIG carrot rocket logo across all targets (Electron, PWA 192px/512px, Linux release bundles). SVG and PNG assets updated.
+
 ## [1.3.1-beta.1] - 2026-07-07
 
 ### Added

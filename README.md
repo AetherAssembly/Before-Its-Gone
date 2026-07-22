@@ -150,7 +150,7 @@ docker run -d -p 8080:80 --name before-its-gone ghcr.io/aetherAssembly/before-it
 Then open `http://localhost:8080` (or your server's IP). Pin a specific release with a version tag:
 
 ```bash
-docker pull ghcr.io/aetherAssembly/before-its-gone:1.3.0
+docker pull ghcr.io/aetherAssembly/before-its-gone:1.3.1
 ```
 
 **With Caddy** (automatic HTTPS):
