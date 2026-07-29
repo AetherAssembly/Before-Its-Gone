@@ -72,10 +72,14 @@ rm -rf %{buildroot}/usr/lib/.build-id
 - Add a dedicated Recipes tab: recipe suggestions (TheMealDB, triggered when
   3+ items are expiring or expired) now appear there instead of an inline
   dismissible banner, with a badge on the tab showing the suggestion count.
-- Security: pin brace-expansion to ^5.0.8 via npm overrides, closing the
-  high-severity out-of-memory DoS (GHSA-mh99-v99m-4gvg) in every nested
-  copy pulled in by eslint, eslint-plugin-react, @electron/asar, and
-  dir-compare, without bumping eslint-plugin-react or electron-builder.
+- Security: pin minimatch to ^10.2.5 and brace-expansion to ^5.0.8 via npm
+  overrides, closing the high-severity out-of-memory DoS (GHSA-mh99-v99m-4gvg)
+  in every nested copy pulled in by eslint, eslint-plugin-react,
+  @electron/asar, dir-compare, glob, and filelist, without bumping
+  eslint-plugin-react or electron-builder. Overriding brace-expansion alone
+  broke lint (old bundled minimatch calls brace-expansion's old default
+  export, which 5.x replaced with a named `expand` export); forcing the
+  nested minimatch copies to 10.2.5 fixes the call convention too.
 
 * Wed Jul 22 2026 Aster <support@aetherassembly.org> - 1.3.2-beta.1-1
 - Fix app icon rendering at small sizes on Windows, macOS, and Linux: the

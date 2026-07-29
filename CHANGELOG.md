@@ -16,7 +16,7 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ### Security
 
-- **brace-expansion DoS (GHSA-mh99-v99m-4gvg):** added an `overrides` entry pinning `brace-expansion` to `^5.0.8` across the dependency tree, closing the high-severity out-of-memory DoS in every nested copy (eslint, eslint-plugin-react, @electron/asar, dir-compare, etc.) without bumping eslint-plugin-react or electron-builder to a breaking major version.
+- **brace-expansion DoS (GHSA-mh99-v99m-4gvg):** added `overrides` pinning `minimatch` to `^10.2.5` and `brace-expansion` to `^5.0.8` across the dependency tree, closing the high-severity out-of-memory DoS in every nested copy (eslint, eslint-plugin-react, @electron/asar, dir-compare, glob, filelist, etc.) without bumping eslint-plugin-react or electron-builder to a breaking major version. A plain `brace-expansion` override alone broke lint (`TypeError: expand is not a function`) because brace-expansion 5.x switched from a default export to a named `expand` export, which old bundled `minimatch@3.x`/`5.x`/`9.x` copies don't call correctly; forcing those nested `minimatch` copies up to `10.2.5` (already proven compatible elsewhere in this tree, via `app-builder-lib` and `@typescript-eslint/typescript-estree`) resolves the call convention along with the vulnerability.
 
 ## [1.3.2-beta.1] - 2026-07-22
 
