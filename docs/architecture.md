@@ -57,7 +57,6 @@ All inventory logic, storage, and shared types.
 - **localStorage** (via `LocalStorageAdapter` from `@aetherAssembly/core`, re-exported as `createLocalStorageAdapter`): user preferences and sync state. Keys:
   - `before-its-gone.settings`: `AppSettings` (expiry window, custom locations, etc.)
   - `before-its-gone.sync`: `SyncSettings` (Supabase URL, anon key, lastSyncedAt)
-  - `before-its-gone.recipe-dismiss-{date}`: recipe banner dismiss state
   - `supabase.auth.token`: Supabase session (managed by Supabase SDK)
 
 No `electron-store` is used anywhere. All renderer-accessible state lives in the browser storage APIs above.
@@ -75,7 +74,7 @@ Vite + React single-page application. Entry: `src/main.tsx` → `src/App.tsx`.
 - All React state (inventory list, filter state, active tab, form state, banners)
 - IPC calls to Electron (wrapped behind `window.beforeItsGone.*` feature-detect guards)
 - Settings loading/saving via `BrowserLocalStorageAdapter`
-- The tab shell: **Inventory**, **Shopping List**, **Waste Log**, **Data**, **Settings**
+- The tab shell: **Inventory**, **Shopping List**, **Waste Log**, **Recipes**, **Settings**
 
 `SettingsPanel.tsx` owns:
 

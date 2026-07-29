@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-06-08
+Last updated: 2026-07-22
 
 ## Overview
 
@@ -43,7 +43,7 @@ The application makes outbound network requests only in the following circumstan
 | Batch barcode enrichment | Open Food Facts | When you import a barcode list file |
 | Auto-update check | GitHub Releases | On desktop app startup (packaged builds only) |
 
-### Automatic when 3+ items are expiring (dismissible)
+### Automatic when 3+ items are expiring (shown in the Recipes tab)
 
 | Request | Destination | Data sent |
 | ------- | ----------- | --------- |

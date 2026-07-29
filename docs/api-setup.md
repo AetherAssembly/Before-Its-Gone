@@ -58,7 +58,7 @@ GET https://www.themealdb.com/api/json/v1/1/filter.php?i={ingredient}
 
 **Data sent:** The first word of the first expiring item's name (e.g. `chicken`, `milk`). No personal data.
 
-**Trigger:** Automatic when 3+ items are expiring or expired. Dismissed for the current calendar day if you click the × button. Re-appears the next day if items are still expiring.
+**Trigger:** Automatic when 3+ items are expiring or expired; suggestions are fetched in the background and shown in the **Recipes** tab (with a badge on the tab showing the suggestion count). No banner or dismiss action; just open the tab when you see the badge.
 
 **No configuration needed.**
 
@@ -131,8 +131,8 @@ Supabase auth sessions (JWT tokens) are managed by the Supabase SDK and stored i
 ### Recipe suggestions don't appear
 
 - At least 3 items must be in an expiring-soon or expired state simultaneously.
-- The banner is dismissed for the rest of the calendar day when you click ×. Dismiss date resets at midnight.
-- TheMealDB may not have recipes for every ingredient; the banner only appears if results are returned.
+- Check the **Recipes** tab; suggestions no longer appear as a banner, they're listed there once fetched.
+- TheMealDB may not have recipes for every ingredient; the tab shows an empty state if no results are returned.
 
 ### Resend test email not received
 

@@ -1055,23 +1055,7 @@ button:focus-visible {
   text-overflow: ellipsis;
 }
 
-/* Recipe banner */
-
-.recipe-banner {
-  background: rgba(var(--bg-panel), 0.95);
-  border-bottom: 1px solid var(--border);
-  padding: 0.75rem 1rem;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.recipe-banner-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
+/* Recipe suggestions */
 
 .recipe-cards {
   display: flex;
