@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.3.0
+Version:        1.3.1
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -81,7 +81,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
 * Tue Jul 07 2026 Aster <support@aetherassembly.org> - 1.3.1-beta.1-1
 - Replace placeholder app icon with the BIG carrot rocket logo across all
   targets: Electron asset, PWA icons (192px, 512px), and Linux release bundles.
-
+- Add Beta Workflow
 
 * Mon Jul 06 2026 Aster <support@aetherassembly.org> - 1.3.0-1
 - Add virtual scrolling to the inventory list so only visible cards are
@@ -97,7 +97,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
   and all three expiry statuses, importable via Data -> Import JSON.
 - Untrack packages/core/coverage/ from git and add an explicit .gitignore entry.
 
-* Thu Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.1-1
+* Fri Jun 19 2026 Aster <support@aetherassembly.org> - 1.2.1-1
 - Rename workspace packages from `@before-its-gone/core` and `@before-its-gone/ui`
   to `@aetherAssembly/big-core` and `@aetherAssembly/big-ui` so the npm scope
   matches the AetherAssembly GitHub org and publishing to GitHub Packages succeeds.
