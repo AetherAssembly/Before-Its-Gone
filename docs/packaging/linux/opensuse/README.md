@@ -16,14 +16,14 @@ sudo zypper refresh && sudo zypper install before-its-gone
 
 ## Manual Install (openSUSE Leap / Tumbleweed)
 
-Download `before-its-gone-<version>-x86_64.rpm` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
+Download `before-its-gone-1.3.3-x86_64.rpm` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo zypper install ./before-its-gone-1.3.2-beta.1-x86_64.rpm
+sudo zypper install ./before-its-gone-1.3.3-x86_64.rpm
 
 # or
 
-sudo zypper install ./before-its-gone-1.3.1-arm64.rpm
+sudo zypper install ./before-its-gone-1.3.3-arm64.rpm
 
 ```
 
@@ -47,7 +47,7 @@ Beta builds are published to a separate OBS project. To add it:
 
 ```bash
 sudo zypper addrepo https://download.opensuse.org/repositories/home:aster1630:before-its-gone-beta/openSUSE_Tumbleweed/home:aster1630:before-its-gone-beta.repo
-sudo zypper refresh && sudo zypper install before-its-gone
+sudo zypper refresh && sudo zypper install before-its-gone-beta
 ```
 
 The beta spec and `_service` file live at `docs/packaging/linux/fedora/beta/` in the repo. The `_service` file pins the full beta release URL; update both paths on each new beta.

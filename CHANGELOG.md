@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.3.3] - 2026-07-2
+
+### Added
+
+- **Recipes tab:** recipe suggestions (TheMealDB, triggered when 3+ items are expiring or expired) now live in a dedicated **Recipes** tab instead of an inline dismissible banner. The tab shows a badge with the suggestion count.
+
+### Fixed
+
+- **App icon rendering wrong at small sizes:** the icon shipped in 1.3.1 only filled the top-left ~301x301 px of its 512x512 canvas, leaving the rest transparent. At taskbar/dock/panel sizes (16-48px) this made the icon look off-center or broken on Windows, macOS, and Linux alike. The PNG has been re-rendered to fill the full canvas; the SVG sources were already correct and are unaffected.
+
+### Security
+
+- **brace-expansion DoS (GHSA-mh99-v99m-4gvg):** added an `overrides` entry pinning `brace-expansion` to `^5.0.8` across the dependency tree, closing the high-severity out-of-memory DoS in every nested copy (eslint, eslint-plugin-react, @electron/asar, dir-compare, etc.) without bumping eslint-plugin-react or electron-builder to a breaking major version.
+
 ## [1.3.2-beta.1] - 2026-07-22
 
 ### Added

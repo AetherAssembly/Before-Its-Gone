@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.3.1
+Version:        1.3.3
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -64,6 +64,19 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Wed Jul 29 2026 Aster <support@aetherassembly.org> - 1.3.3-1
+- Fix app icon rendering at small sizes on Windows, macOS, and Linux: the
+  1.3.1 icon only filled the top-left corner of its 512x512 canvas, leaving
+  the rest transparent, so taskbar/dock/panel sizes (16-48px) looked
+  off-center or broken. PNG assets re-rendered to fill the full canvas.
+- Add a dedicated Recipes tab: recipe suggestions (TheMealDB, triggered when
+  3+ items are expiring or expired) now appear there instead of an inline
+  dismissible banner, with a badge on the tab showing the suggestion count.
+- Security: pin brace-expansion to ^5.0.8 via npm overrides, closing the
+  high-severity out-of-memory DoS (GHSA-mh99-v99m-4gvg) in every nested
+  copy pulled in by eslint, eslint-plugin-react, @electron/asar, and
+  dir-compare, without bumping eslint-plugin-react or electron-builder.
+
 * Wed Jul 22 2026 Aster <support@aetherassembly.org> - 1.3.2-beta.1-1
 - Fix app icon rendering at small sizes on Windows, macOS, and Linux: the
   1.3.1 icon only filled the top-left corner of its 512x512 canvas, leaving
