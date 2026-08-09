@@ -87,7 +87,7 @@ if command -v apt &>/dev/null; then
   fi
   info "Installing with apt (sudo required)..."
   sudo apt update
-  sudo apt install -y before-its-gone-electron
+  sudo apt install -y before-its-gone
 
 elif command -v dnf &>/dev/null; then
   if dnf copr enable -y aster1630/before-its-gone &>/dev/null && sudo dnf install -y before-its-gone; then
