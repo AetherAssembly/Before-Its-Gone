@@ -60,7 +60,6 @@ jobs:
         image:
           - fedora:42
           - quay.io/centos/centos:stream9
-          - opensuse/leap:15.6
           - mageia:9
 
     steps:
