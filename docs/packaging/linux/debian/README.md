@@ -21,14 +21,14 @@ The repo is signed with the `AetherAssembly (apt package signing)` GPG key
 
 ## Manual install
 
-Download `before-its-gone-1.3.3-amd64.deb` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
+Download `before-its-gone-1.3.4-amd64.deb` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo apt install ./before-its-gone-1.3.3-amd64.deb
+sudo apt install ./before-its-gone-1.3.4-amd64.deb
 
 # or 
 
-sudo apt install ./before-its-gone-1.3.3-arm64.deb
+sudo apt install ./before-its-gone-1.3.4-arm64.deb
 
 ```
 

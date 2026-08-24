@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.3.4] - 2026-08-23
+
+## Changed
+
+- Bumped actions/stale `10` to `11`
+- Updated installation command to use correct package name
+- Removed test RPM spec from workflow
+
 ## [1.3.3] - 2026-07-2
 
 ### Added

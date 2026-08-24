@@ -16,14 +16,14 @@ sudo zypper refresh && sudo zypper install before-its-gone
 
 ## Manual Install (openSUSE Leap / Tumbleweed)
 
-Download `before-its-gone-1.3.3-x86_64.rpm` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
+Download `before-its-gone-1.3.4-x86_64.rpm` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
 
 ```bash
-sudo zypper install ./before-its-gone-1.3.3-x86_64.rpm
+sudo zypper install ./before-its-gone-1.3.4-x86_64.rpm
 
 # or
 
-sudo zypper install ./before-its-gone-1.3.3-arm64.rpm
+sudo zypper install ./before-its-gone-1.3.4-arm64.rpm
 
 ```
 

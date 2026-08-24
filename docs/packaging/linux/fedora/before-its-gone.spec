@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.3.3
+Version:        1.3.4
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -64,6 +64,11 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Sun Aug 23 2026 Aster <support@aetherassmebly.org> - 1.3.4-1
+- Bumped actions/stale `10` to `11`
+- Updated installation command to use correct package name
+- Removed test RPM spec from workflow
+
 * Wed Jul 29 2026 Aster <support@aetherassembly.org> - 1.3.3-1
 - Fix app icon rendering at small sizes on Windows, macOS, and Linux: the
   1.3.1 icon only filled the top-left corner of its 512x512 canvas, leaving

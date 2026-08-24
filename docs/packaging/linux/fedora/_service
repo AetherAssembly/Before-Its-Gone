@@ -2,11 +2,11 @@
   <service name="download_url">
     <param name="protocol">https</param>
     <param name="host">github.com</param>
-    <param name="path">/AetherAssembly/Before-Its-Gone/releases/download/v1.3.3/before-its-gone-1.3.3-x86_64.rpm</param>
+    <param name="path">/AetherAssembly/Before-Its-Gone/releases/download/v1.3.4/before-its-gone-1.3.4-x86_64.rpm</param>
   </service>
   <service name="download_url">
     <param name="protocol">https</param>
     <param name="host">github.com</param>
-    <param name="path">/AetherAssembly/Before-Its-Gone/releases/download/v1.3.3/before-its-gone-1.3.3-aarch64.rpm</param>
+    <param name="path">/AetherAssembly/Before-Its-Gone/releases/download/v1.3.4/before-its-gone-1.3.4-aarch64.rpm</param>
   </service>
 </services>
