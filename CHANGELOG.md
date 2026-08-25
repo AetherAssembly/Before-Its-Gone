@@ -6,7 +6,7 @@ The format is based on Keep a Changelog and this project uses semantic versionin
 
 ## [1.3.4] - 2026-08-23
 
-## Changed
+### Changed
 
 - Bumped actions/stale `10` to `11`
 - Updated installation command to use correct package name
