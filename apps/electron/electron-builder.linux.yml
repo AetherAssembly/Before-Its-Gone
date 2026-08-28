@@ -24,8 +24,12 @@ linux:
       Name: "Before It's Gone"
 deb:
   packageName: before-its-gone
+  license: AGPL-3.0-only
+  description: So your thoughts don't drift.
 rpm:
   packageName: before-its-gone
+  license: AGPL-3.0-only
+  description: So your thoughts don't drift
 publish:
   provider: github
   owner: AetherAssembly

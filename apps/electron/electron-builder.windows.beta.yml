@@ -24,6 +24,7 @@ nsis:
   runAfterFinish: true
   installerSidebar: assets/installer-sidebar.png
   license: assets/eula.rtf
+  copyright: Copyright 2026 AetherAssembly
   include: build/installer.nsh
   artifactName: 'before-its-gone-beta-setup-${version}.exe'
 portable:
