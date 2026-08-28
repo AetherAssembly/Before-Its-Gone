@@ -6,12 +6,12 @@
 [![Release](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?label=stable)](https://github.com/AetherAssembly/Before-Its-Gone/releases/latest)
 [![Beta](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?include_prereleases&filter=*-beta*&label=beta&color=orange)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![apt stable](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version.json)](https://apt.aetherassembly.org)
-[![apt beta](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version-beta.json)](https://apt.aetherassembly.org)
+[![apt stable](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/apt/badge-version.json)](https://apt.aetherassembly.org)
+[![apt beta](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/apt/badge-version-beta.json)](https://apt.aetherassembly.org)
 
 [![Copr build status](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone-beta/package/before-its-gone-beta/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone-beta/package/before-its-gone-beta/)
 [![OBS build status](https://build.opensuse.org/projects/home:aster1630/packages/before-its-gone-beta/badge.svg?type=default)](https://build.opensuse.org/package/show/home:aster1630/before-its-gone-beta)
-[![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://aetherassembly.org/wiki/before-its-gone)
+[![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://wiki.aetherassembly.org/before-its-gone)
 [![GitLab Mirror](https://img.shields.io/badge/mirror-GitLab-FC6D26?logo=gitlab&logoColor=white)](https://gitlab.com/Aster1630/Before-Its-Gone)
 
 Offline-first app — desktop (Electron) or self-hosted PWA. No account required; all data stays on your device.
@@ -116,7 +116,7 @@ xattr -d com.apple.quarantine "/Applications/Before Its Gone.app"
 
 **Linux (Wayland/X11):** the app auto-detects your session. To override, set `BIG_LINUX_DISPLAY_BACKEND=wayland` or `=x11` before the binary/AppImage.
 
-**Raspberry Pi:** Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://aetherassembly.org/wiki/before-its-gone/installation) to fix it permanently.
+**Raspberry Pi:** Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://wiki.aetherassembly.org/before-its-gone/installation) to fix it permanently.
 
 **Debian/Ubuntu/Raspberry Pi OS** — add the apt repo for automatic updates:
 
