@@ -81,8 +81,8 @@ download() {
 if command -v apt &>/dev/null; then
   if [[ ! -f /etc/apt/sources.list.d/beforeitsgone.list ]]; then
     info "Adding apt.aetherassembly.org repo (sudo required)..."
-    curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
-    echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \
+    curl -fsSL https://apt.aetherassembly.org/apt/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
+    echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org/apt/ stable main" \
       | sudo tee /etc/apt/sources.list.d/beforeitsgone.list >/dev/null
   fi
   info "Installing with apt (sudo required)..."
