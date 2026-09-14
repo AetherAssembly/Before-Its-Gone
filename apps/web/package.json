@@ -22,7 +22,7 @@
     "i18next": "^26.3.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.7",
-    "react-i18next": "^17.0.8",
+    "react-i18next": "^17.0.13",
     "recharts": "^3.9.2"
   },
   "devDependencies": {
