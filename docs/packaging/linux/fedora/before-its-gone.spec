@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.3.4
+Version:        1.3.5
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -64,6 +64,13 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Fri Oct 02 2026 Aster <support@aetherassembly.org> - 1.3.5-1
+- Update dependencies: nodemailer 9.0.3 -> 10.0.13, resend 6.17.1 ->
+  6.27.0, @types/nodemailer 8.0.1 -> 8.0.2, react-i18next 17.0.8 ->
+  17.0.13, recharts 3.9.2 -> 3.10.1, vite 8.1.3 -> 8.3.0, concurrently
+  9.2.4 -> 10.0.5, electron-builder 26.15.3 -> 26.16.1, and wait-on
+  9.0.1 -> 9.1.0.
+
 * Sun Aug 23 2026 Aster <support@aetherassmebly.org> - 1.3.4-1
 - Bumped actions/stale `10` to `11`
 - Updated installation command to use correct package name
