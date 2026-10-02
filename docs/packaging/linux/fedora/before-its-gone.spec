@@ -102,7 +102,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
   3+ items are expiring or expired) now appear there instead of an inline
   dismissible banner, with a badge on the tab showing the suggestion count.
 
-* Tue Jul 11 2026 Aster <support@aetherassembly.org> - 1.3.1-1
+* Sat Jul 11 2026 Aster <support@aetherassembly.org> - 1.3.1-1
 - Replace placeholder app icon with the BIG carrot rocket logo across all
   targets: Electron asset, PWA icons (192px, 512px), and Linux release bundles.
 - Add Beta Workflow
