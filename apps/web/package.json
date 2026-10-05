@@ -17,7 +17,7 @@
     "@aetherAssembly/core": "1.0.1",
     "@aetherAssembly/ui": "1.0.1",
     "@supabase/supabase-js": "^2.110.0",
-    "@zxing/browser": "^0.2.0",
+    "@zxing/browser": "^0.2.1",
     "comlink": "^4.4.2",
     "i18next": "^26.3.4",
     "react": "^19.2.0",
