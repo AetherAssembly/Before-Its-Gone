@@ -68,7 +68,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
-    "prettier": "^3.9.4",
+    "prettier": "^3.9.9",
     "typescript": "^6.0.3",
     "vitest": "^4.1.11",
     "wait-on": "^9.1.0"
