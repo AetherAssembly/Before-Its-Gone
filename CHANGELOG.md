@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.4.0] - 2026-10-06
+
+### Security
+
+- Updated Vitest and `@vitest/coverage-v8` to 4.1.11 to fix the path traversal and arbitrary file read vulnerability in `@vitest/mocker` (GHSA-82fw-gwwq-j7x9).
+- Overrode `shell-quote` to 1.11.0 or newer to fix a command-injection vulnerability affecting `concurrently` (GHSA-pqg4-j6r4-53mv).
+- Overrode `@electron/get` to 5.0.0 or newer to remove the vulnerable `global-agent`, `roarr`, and `sprintf-js` dependency chain.
+- Updated Electron Builder to 26.15.3, which includes the fixes for the reported Electron packaging advisories.
+
 ## [1.3.5] - 2026-10-02
 
 ### Changed

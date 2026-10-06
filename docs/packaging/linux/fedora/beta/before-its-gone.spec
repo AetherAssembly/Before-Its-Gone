@@ -13,7 +13,7 @@
 %global prerelease beta.1
 
 Name:           before-its-gone-beta
-Version:        1.3.2
+Version:        1.4.0
 Release:        0.1.%{prerelease}%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -66,6 +66,10 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/before-its-gone.png
 
 %changelog
+* Tue Oct 06 2026 Aster <support@aetherassembly.org> - 1.4.0-0.1.beta.1
+- Fix Vitest path traversal, shell-quote command injection, and vulnerable
+  Electron Builder dependency advisories; npm audit reports no vulnerabilities.
+
 * Wed Jul 22 2026 Aster <support@aetherassembly.org> - 1.3.2-beta.1-1
 - Fix app icon rendering at small sizes on Windows, macOS, and Linux: the
   1.3.1 icon only filled the top-left corner of its 512x512 canvas, leaving
