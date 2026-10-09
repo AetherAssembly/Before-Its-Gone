@@ -24,8 +24,10 @@ linux:
       Name: "Before It's Gone (Beta)"
 deb:
   packageName: before-its-gone-beta
+  description: So your thoughts don't drift.
 rpm:
   packageName: before-its-gone-beta
+  description: So your thoughts don't drift.
 publish:
   provider: github
   owner: AetherAssembly

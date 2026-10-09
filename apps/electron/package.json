@@ -1,7 +1,7 @@
 {
   "name": "before-its-gone-electron",
   "private": true,
-  "version": "1.3.3",
+  "version": "1.4.0",
   "description": "Electron desktop shell for Before It's Gone",
   "author": {
     "name": "AetherAssembly",
@@ -34,13 +34,13 @@
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^10.0.13",
     "qrcode": "^1.5.4",
-    "resend": "^6.17.1",
+    "resend": "^6.27.0",
     "selfsigned": "^5.5.0"
   },
   "devDependencies": {
-    "@types/nodemailer": "^8.0.1",
+    "@types/nodemailer": "^8.0.2",
     "@types/qrcode": "^1.5.5"
   }
 }

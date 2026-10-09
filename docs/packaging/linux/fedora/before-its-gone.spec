@@ -11,7 +11,7 @@
 %global __provides_exclude_from ^/opt/Before-Its-Gone/.*$
 
 Name:           before-its-gone
-Version:        1.3.3
+Version:        1.4.0
 Release:        1%{?dist}
 Summary:        Track what's in your fridge, freezer, and pantry before it expires
 
@@ -64,6 +64,22 @@ rm -rf %{buildroot}/usr/lib/.build-id
 /usr/share/icons/hicolor/*/apps/%{name}.png
 
 %changelog
+* Tue Oct 06 2026 Aster <support@aetherassembly.org> - 1.4.0-1
+- Fix Vitest path traversal, shell-quote command injection, and vulnerable
+  Electron Builder dependency advisories; npm audit reports no vulnerabilities.
+
+* Fri Oct 02 2026 Aster <support@aetherassembly.org> - 1.3.5-1
+- Update dependencies: nodemailer 9.0.3 -> 10.0.13, resend 6.17.1 ->
+  6.27.0, @types/nodemailer 8.0.1 -> 8.0.2, react-i18next 17.0.8 ->
+  17.0.13, recharts 3.9.2 -> 3.10.1, vite 8.1.3 -> 8.3.0, concurrently
+  9.2.4 -> 10.0.5, electron-builder 26.15.3 -> 26.16.1, and wait-on
+  9.0.1 -> 9.1.0.
+
+* Sun Aug 23 2026 Aster <support@aetherassmebly.org> - 1.3.4-1
+- Bumped actions/stale `10` to `11`
+- Updated installation command to use correct package name
+- Removed test RPM spec from workflow
+
 * Wed Jul 29 2026 Aster <support@aetherassembly.org> - 1.3.3-1
 - Fix app icon rendering at small sizes on Windows, macOS, and Linux: the
   1.3.1 icon only filled the top-left corner of its 512x512 canvas, leaving
@@ -90,7 +106,7 @@ rm -rf %{buildroot}/usr/lib/.build-id
   3+ items are expiring or expired) now appear there instead of an inline
   dismissible banner, with a badge on the tab showing the suggestion count.
 
-* Tue Jul 11 2026 Aster <support@aetherassembly.org> - 1.3.1-1
+* Sat Jul 11 2026 Aster <support@aetherassembly.org> - 1.3.1-1
 - Replace placeholder app icon with the BIG carrot rocket logo across all
   targets: Electron asset, PWA icons (192px, 512px), and Linux release bundles.
 - Add Beta Workflow

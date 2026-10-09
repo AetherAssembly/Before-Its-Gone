@@ -81,13 +81,13 @@ download() {
 if command -v apt &>/dev/null; then
   if [[ ! -f /etc/apt/sources.list.d/beforeitsgone.list ]]; then
     info "Adding apt.aetherassembly.org repo (sudo required)..."
-    curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
-    echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \
+    curl -fsSL https://apt.aetherassembly.org/apt/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
+    echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org/apt/ stable main" \
       | sudo tee /etc/apt/sources.list.d/beforeitsgone.list >/dev/null
   fi
   info "Installing with apt (sudo required)..."
   sudo apt update
-  sudo apt install -y before-its-gone-electron
+  sudo apt install -y before-its-gone
 
 elif command -v dnf &>/dev/null; then
   if dnf copr enable -y aster1630/before-its-gone &>/dev/null && sudo dnf install -y before-its-gone; then

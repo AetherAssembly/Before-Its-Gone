@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog and this project uses semantic versioning.
 
+## [1.4.0] - 2026-10-06
+
+### Security
+
+- Updated Vitest and `@vitest/coverage-v8` to 4.1.11 to fix the path traversal and arbitrary file read vulnerability in `@vitest/mocker` (GHSA-82fw-gwwq-j7x9).
+- Overrode `shell-quote` to 1.11.0 or newer to fix a command-injection vulnerability affecting `concurrently` (GHSA-pqg4-j6r4-53mv).
+- Overrode `@electron/get` to 5.0.0 or newer to remove the vulnerable `global-agent`, `roarr`, and `sprintf-js` dependency chain.
+- Updated Electron Builder to 26.15.3, which includes the fixes for the reported Electron packaging advisories.
+
+## [1.3.5] - 2026-10-02
+
+### Changed
+
+- Bumped `nodemailer` 9.0.3 -> 10.0.13, `resend` 6.17.1 -> 6.27.0, `@types/nodemailer` 8.0.1 -> 8.0.2, `react-i18next` 17.0.8 -> 17.0.13, `recharts` 3.9.2 -> 3.10.1, `vite` 8.1.3 -> 8.3.0, `concurrently` 9.2.4 -> 10.0.5, `electron-builder` 26.15.3 -> 26.16.1, and `wait-on` 9.0.1 -> 9.1.0
+
+## [1.3.4] - 2026-08-23
+
+### Changed
+
+- Bumped actions/stale `10` to `11`
+- Updated installation command to use correct package name
+- Removed test RPM spec from workflow
+
 ## [1.3.3] - 2026-07-2
 
 ### Added

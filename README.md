@@ -6,12 +6,10 @@
 [![Release](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?label=stable)](https://github.com/AetherAssembly/Before-Its-Gone/releases/latest)
 [![Beta](https://img.shields.io/github/v/release/AetherAssembly/Before-Its-Gone?include_prereleases&filter=*-beta*&label=beta&color=orange)](https://github.com/AetherAssembly/Before-Its-Gone/releases)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![apt stable](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version.json)](https://apt.aetherassembly.org)
-[![apt beta](https://img.shields.io/endpoint?url=https://apt.aetherassembly.org/badge-version-beta.json)](https://apt.aetherassembly.org)
 
 [![Copr build status](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone-beta/package/before-its-gone-beta/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/aster1630/before-its-gone-beta/package/before-its-gone-beta/)
 [![OBS build status](https://build.opensuse.org/projects/home:aster1630/packages/before-its-gone-beta/badge.svg?type=default)](https://build.opensuse.org/package/show/home:aster1630/before-its-gone-beta)
-[![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://aetherassembly.org/wiki/before-its-gone)
+[![Wiki](https://img.shields.io/badge/wiki-documentation-555555?logo=github&logoColor=white)](https://wiki.aetherassembly.org/before-its-gone)
 [![GitLab Mirror](https://img.shields.io/badge/mirror-GitLab-FC6D26?logo=gitlab&logoColor=white)](https://gitlab.com/Aster1630/Before-Its-Gone)
 
 Offline-first app — desktop (Electron) or self-hosted PWA. No account required; all data stays on your device.
@@ -116,13 +114,15 @@ xattr -d com.apple.quarantine "/Applications/Before Its Gone.app"
 
 **Linux (Wayland/X11):** the app auto-detects your session. To override, set `BIG_LINUX_DISPLAY_BACKEND=wayland` or `=x11` before the binary/AppImage.
 
-**Raspberry Pi:** Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://aetherassembly.org/wiki/before-its-gone/installation) to fix it permanently.
+**Raspberry Pi:** Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://wiki.aetherassembly.org/before-its-gone/installation) to fix it permanently.
 
 **Debian/Ubuntu/Raspberry Pi OS** — add the apt repo for automatic updates:
 
+> The APT repo is currently down and unsure when it will be properly fixed. Until further noticed please download the `.deb` file and install it manually.
+
 ```bash
-curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
-echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
+curl -fsSL https://apt.aetherassembly.org/apt/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
+echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org/apt/ stable main" | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
 sudo apt update && sudo apt install before-its-gone
 ```
 
@@ -150,7 +150,7 @@ docker run -d -p 8080:80 --name before-its-gone ghcr.io/aetherAssembly/before-it
 Then open `http://localhost:8080` (or your server's IP). Pin a specific release with a version tag:
 
 ```bash
-docker pull ghcr.io/aetherAssembly/before-its-gone:1.3.1
+docker pull ghcr.io/aetherAssembly/before-its-gone:1.3.4
 ```
 
 **With Caddy** (automatic HTTPS):
