@@ -1,50 +1,60 @@
 # Debian / Ubuntu / Raspberry Pi Packaging
 
-Before It's Gone ships a `.deb` package built by electron-builder on every tagged release.
+Before It's Gone provides Debian packages for amd64 and arm64.
 
-## Install via the apt repository (recommended)
+## Installation
 
-Before It's Gone hosts its own apt repository, so `apt upgrade` picks up new releases automatically — no need to manually re-download a `.deb` for every version:
+#### Stable APT repository (recommended)
 
-```bash
+The signing-key fingerprint must be `32B72F22E77E21F510B31849A7B44812A39EEB9C`. Both applications use this key. The repository supports **amd64** and **arm64**, including 64-bit Raspberry Pi OS; 32-bit armhf is not supported.
 
-curl -fsSL https://apt.aetherassembly.org/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
+Only stable releases are published to APT. New stable releases may take up to 12 hours to appear. Beta releases are available directly from GitHub; there is no beta APT channel.
 
-echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org stable main" \ | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
+```sh
+sudo apt update
+sudo apt install ca-certificates curl gnupg
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://apt.aetherassembly.org/before-its-gone/apt-repo-public.asc -o /tmp/aetherassembly-apt-public.asc
+gpg --show-keys --with-fingerprint /tmp/aetherassembly-apt-public.asc
 
-sudo apt update && sudo apt install before-its-gone
-
+# Confirm the fingerprint below before continuing.
+sudo install -m 0644 /tmp/aetherassembly-apt-public.asc /etc/apt/keyrings/aetherassembly.asc
+echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/aetherassembly.asc] https://apt.aetherassembly.org/before-its-gone stable main" \
+  | sudo tee /etc/apt/sources.list.d/before-its-gone.list >/dev/null
+rm /tmp/aetherassembly-apt-public.asc
+sudo apt update
+sudo apt install before-its-gone
 ```
 
-The repo is signed with the `AetherAssembly (apt package signing)` GPG key
-(fingerprint `92F8 0D23 A67E 45A2 8777 468A 6857 0D83 9957 FDE7`) — verify it matches before trusting it.
+To update later:
 
-## Manual install
-
-Download `before-its-gone-1.3.4-amd64.deb` from the [Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases) page, then:
-
-```bash
-sudo apt install ./before-its-gone-1.3.4-amd64.deb
-
-# or 
-
-sudo apt install ./before-its-gone-1.3.4-arm64.deb
-
+```sh
+sudo apt update
+sudo apt install --only-upgrade before-its-gone
 ```
 
-Using `apt install ./` (not `dpkg -i`) ensures apt resolves any missing dependencies automatically.
+If you previously configured the old AetherAssembly repository, remove its obsolete source entry (including any beta entry) before adding the new one. Do not remove other applications' source entries.
+
+#### Manual Debian package
+
+Download the matching stable `.deb` from GitHub Releases, then install it with:
+
+```sh
+sudo apt install ./before-its-gone-<version>-amd64.deb
+# For ARM64, use the asset ending in arm64.deb instead.
+```
+
+Using `apt install ./` resolves missing dependencies automatically.
 
 ## Uninstall
 
-```bash
+```sh
 sudo apt remove before-its-gone
+sudo rm -f /etc/apt/sources.list.d/before-its-gone.list
+sudo apt update
 ```
 
-If you added the apt repo, also remove it:
-
-```bash
-sudo rm /etc/apt/sources.list.d/beforeitsgone.list /usr/share/keyrings/beforeitsgone.gpg
-```
+Keep `/etc/apt/keyrings/aetherassembly.asc` if another configured AetherAssembly repository still uses it. Remove the key only when no remaining source refers to it.
 
 ## Supported versions
 
@@ -52,19 +62,8 @@ Tested against Debian 13 (Trixie). Debian 12 (Bookworm) should work but is not o
 
 ## Maintainers
 
-- Aster — `support@aetherassembly.org`
+- AetherAssembly — `apt@aetherassembly.org`
 
-## Beta / pre-release builds
+## Beta / prerelease builds
 
-Beta builds are published to a separate `beta` distribution in the same apt repo. To opt in:
-
-```bash
-echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org beta main" \
-  | sudo tee /etc/apt/sources.list.d/beforeitsgone-beta.list
-
-sudo apt update && sudo apt install before-its-gone-beta
-```
-
-The beta package is named `before-its-gone-beta` so it can coexist alongside stable — installing one won't remove the other, though the `Conflicts` field prevents running both at the same time. To switch back to stable, remove `before-its-gone-beta` and install `before-its-gone`.
-
-The in-app updater on beta builds automatically checks the `beta` update channel and will offer newer betas as they are published.
+Download beta Debian packages directly from [GitHub Releases](https://github.com/AetherAssembly/Before-Its-Gone/releases). Beta packages use the name `before-its-gone-beta`; they are not distributed through APT.

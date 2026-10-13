@@ -116,17 +116,49 @@ xattr -d com.apple.quarantine "/Applications/Before Its Gone.app"
 
 **Raspberry Pi:** Electron may log a SUID sandbox warning on first launch. The app still runs; see the [wiki](https://wiki.aetherassembly.org/before-its-gone/installation) to fix it permanently.
 
-**Debian/Ubuntu/Raspberry Pi OS** — add the apt repo for automatic updates:
+**Debian/Ubuntu/Raspberry Pi OS — stable APT repository:**
 
-> The APT repo is currently down and unsure when it will be properly fixed. Until further noticed please download the `.deb` file and install it manually.
+#### Stable APT repository (recommended)
 
-```bash
-curl -fsSL https://apt.aetherassembly.org/apt/beforeitsgone.gpg.pub | sudo gpg --dearmor -o /usr/share/keyrings/beforeitsgone.gpg
-echo "deb [signed-by=/usr/share/keyrings/beforeitsgone.gpg] https://apt.aetherassembly.org/apt/ stable main" | sudo tee /etc/apt/sources.list.d/beforeitsgone.list
-sudo apt update && sudo apt install before-its-gone
+The signing-key fingerprint must be `32B72F22E77E21F510B31849A7B44812A39EEB9C`. Both applications use this key. The repository supports **amd64** and **arm64**, including 64-bit Raspberry Pi OS; 32-bit armhf is not supported.
+
+Only stable releases are published to APT. New stable releases may take up to 12 hours to appear. Beta releases are available directly from GitHub; there is no beta APT channel.
+
+```sh
+sudo apt update
+sudo apt install ca-certificates curl gnupg
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://apt.aetherassembly.org/before-its-gone/apt-repo-public.asc -o /tmp/aetherassembly-apt-public.asc
+gpg --show-keys --with-fingerprint /tmp/aetherassembly-apt-public.asc
+
+# Confirm the fingerprint below before continuing.
+sudo install -m 0644 /tmp/aetherassembly-apt-public.asc /etc/apt/keyrings/aetherassembly.asc
+echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/aetherassembly.asc] https://apt.aetherassembly.org/before-its-gone stable main" \
+  | sudo tee /etc/apt/sources.list.d/before-its-gone.list >/dev/null
+rm /tmp/aetherassembly-apt-public.asc
+sudo apt update
+sudo apt install before-its-gone
 ```
 
-See [docs/packaging/linux/debian](docs/packaging/linux/debian/README.md) for the key fingerprint to verify.
+To update later:
+
+```sh
+sudo apt update
+sudo apt install --only-upgrade before-its-gone
+```
+
+If you previously configured the old AetherAssembly repository, remove its obsolete source entry (including any beta entry) before adding the new one. Do not remove other applications' source entries.
+
+#### Manual Debian package
+
+Download the matching stable `.deb` from GitHub Releases, then install it with:
+
+```sh
+sudo apt install ./before-its-gone-<version>-amd64.deb
+# For ARM64, use the asset ending in arm64.deb instead.
+```
+
+See [Debian packaging documentation](docs/packaging/linux/debian/README.md) for repository removal instructions.
 
 ---
 
@@ -150,7 +182,7 @@ docker run -d -p 8080:80 --name before-its-gone ghcr.io/aetherAssembly/before-it
 Then open `http://localhost:8080` (or your server's IP). Pin a specific release with a version tag:
 
 ```bash
-docker pull ghcr.io/aetherAssembly/before-its-gone:1.3.4
+docker pull ghcr.io/aetherAssembly/before-its-gone:1.4.0
 ```
 
 **With Caddy** (automatic HTTPS):
